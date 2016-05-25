@@ -1,5 +1,6 @@
-from flask import Flask, render_template, request, session, redirect, jsonify, flash, url_for, g
+from flask import Flask, render_template, request, session, redirect, jsonify, flash, url_for, g, abort
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func
 from bs4 import BeautifulSoup
 from functools import wraps
 import bcrypt
@@ -10,6 +11,7 @@ import base64
 import json
 import re
 import string
+import random
 import passwordmeter
 
 app = Flask(__name__)
@@ -76,6 +78,26 @@ def login_required(f):
         return f(*args, **kwargs)
 
     return decorated_function
+
+
+def random_string(length):
+    return ''.join(random.choice(string.lowercase) for i in range(length))
+
+
+@app.before_request
+def csrf_protect():
+    if request.method == 'POST':
+        token = session.pop('_csrf_token', None)
+        if not token or token != request.form.get('_csrf_token'):
+            abort(403)
+
+
+def generate_csrf_token():
+    if '_csrf_token' not in session:
+        session['_csrf_token'] = random_string(16)
+    return session['_csrf_token']
+
+app.jinja_env.globals['csrf_token'] = generate_csrf_token
 
 
 @app.route('/')
@@ -458,6 +480,10 @@ def add_account_post(site_id):
     if site.id == 1:  # FurAffinity
         s = requests.session()
 
+        if Account.query.filter_by(site_id=site.id).filter_by(user_id=g.user.id).filter(func.lower(Account.username)==func.lower(request.form['username'])).first():
+            flash('This account has already been added.')
+            return redirect(url_for('upload_form'))
+
         r = s.post('https://www.furaffinity.net/login/', cookies={'b': session['fa_cookie_b']}, data={
             'action': 'login',
             'name': request.form['username'],
@@ -499,6 +525,10 @@ def add_account_post(site_id):
         if 'login' not in j:
             flash('Invalid API Token')
             return redirect(url_for('add_account_form', site_id=site.id))
+
+        if Account.query.filter_by(site_id=site.id).filter_by(user_id=g.user.id).filter(func.lower(Account.username)==func.lower(j['login'])).first():
+            flash('This account has already been added.')
+            return redirect(url_for('upload_form'))
 
         account = Account(site.id, session['id'], j['login'], request.form[
                           'api_token'], request.form['site_password'])
@@ -571,6 +601,7 @@ def add_account_post(site_id):
 
     return redirect(url_for('upload_form'))
 
+
 @app.route('/remove/<int:account_id>')
 @login_required
 def remove_form(account_id):
@@ -585,6 +616,7 @@ def remove_form(account_id):
         return redirect(url_for('upload_form'))
 
     return render_template('remove.html', account=account)
+
 
 @app.route('/remove', methods=['POST'])
 @login_required

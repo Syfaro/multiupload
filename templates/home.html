@@ -22,6 +22,8 @@
 			<div class="col-sm-12 col-md-6">
 				<h2>Register</h2>
 				<form method="POST" action="/register">
+					<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
 					<div class="form-group">
 						<input type="text" class="form-control" name="username" placeholder="Username">
 					</div>
@@ -43,6 +45,8 @@
 			<div class="col-sm-12 col-md-6">
 				<h2>Login</h2>
 				<form method="POST" action="/login">
+					<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
 					<div class="form-group">
 						<input type="text" class="form-control" name="username" placeholder="Username">
 					</div>

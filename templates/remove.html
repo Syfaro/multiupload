@@ -12,6 +12,7 @@
 
 				<p>
 					<form method="POST" action="/remove">
+						<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 						<input type="hidden" name="id" value="{{ account.id }}">
 						<button type="submit" class="btn btn-danger">Yes</button>
 						<a href="/upload" class="btn btn-default">No</a>
