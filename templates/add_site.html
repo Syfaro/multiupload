@@ -1,0 +1,21 @@
+{% extends '_main.html' %}
+
+{% block body %}
+	<div class="container">
+		<div class="row">
+			<div class="col-sm-12">
+				<h1>Add site</h1>
+
+				{% for site in sites %}
+					<a href="/add/{{ site.id }}" class="btn btn-primary">{{ site.name }}</a>
+				{% endfor %}
+			</div>
+		</div>
+
+		<div class="row" style="margin-top: 20px">
+			<div class="col-sm-12">
+				<a href="/upload" class="btn btn-default btn-sm">Return</a>
+			</div>
+		</div>
+	</div>
+{% endblock %}

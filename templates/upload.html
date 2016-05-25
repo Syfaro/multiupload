@@ -1,0 +1,111 @@
+{% extends '_main.html' %}
+
+{% block body %}
+	<div class="container">
+		<div class="row">
+			<div class="col-sm-12">
+				<h1>Upload new art</h1>
+
+				<p>Hello, {{ user.username }}!</p>
+			</div>
+		</div>
+	</div>
+
+	{{ flashes() }}
+
+	<div class="container">
+		<form method="POST" action="/upload" enctype="multipart/form-data">
+
+			<div class="row">
+				<div class="col-sm-12 col-md-3">
+					<h2>Basic info</h2>
+
+					<div class="form-group">
+						<input type="text" class="form-control" name="title" placeholder="Title" value="{{ request.form.title }}">
+					</div>
+
+					<div class="form-group">
+						<textarea class="form-control description" name="description" placeholder="Description">{{ request.form.description }}</textarea>
+					</div>
+
+					<div class="form-group">
+						<textarea class="form-control keywords" name="keywords" placeholder="Keywords">{{ request.form.keywords }}</textarea>
+					</div>
+
+					<div class="radio">
+						<label>
+							<input type="radio" name="rating" value="general"> General
+						</label>
+					</div>
+
+					<div class="radio">
+						<label>
+							<input type="radio" name="rating" value="mature"> Mature
+						</label>
+					</div>
+
+					<div class="radio">
+						<label>
+							<input type="radio" name="rating" value="explicit"> Explicit
+						</label>
+					</div>
+				</div>
+
+				<div class="col-sm-12 col-md-6">
+					<h2>Image</h2>
+
+					<div class="form-group">
+						<input type="file" class="form-control upload-image" name="image" accept="image/*">
+					</div>
+
+					<img class="img-responsive block-center preview-image">
+				</div>
+
+				<div class="col-sm-12 col-md-3">
+					<h2>Upload to</h2>
+
+					{% for account in user.accounts %}
+						<div class="checkbox">
+							<label>
+								<input type="checkbox" name="account" value="{{ account.id }}" checked>
+								{{ account.site.name }} - {{ account.username }}
+								<a href="/remove/{{ account.id }}" class="btn btn-xs btn-danger">Remove</a>
+							</label>
+						</div>
+					{% endfor %}
+
+					<a href="/add" class="btn btn-xs btn-default">Add account</a>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-sm-12 col-md-4 col-md-offset-4 text-center">
+					<h2>Upload</h2>
+
+					<div class="form-group">
+						<input type="password" class="form-control" name="site_password" placeholder="Password on this site">
+					</div>
+
+					<button type="submit" class="btn btn-lg btn-primary">Upload</button>
+				</div>
+			</div>
+
+		</form>
+	</div>
+
+	<script>
+		var imagePreview = document.querySelector('.preview-image');
+
+		document.querySelector('.upload-image').addEventListener('change', function () {
+			imagePreview.src = URL.createObjectURL(this.files[0]);
+		});
+
+		[document.querySelector('.description'), document.querySelector('.keywords')].forEach(function (item) {
+			item.addEventListener('input', function () {
+				this.style.height = '';
+				this.style.height = Math.min(this.scrollHeight+10, 200) + 'px';
+			});
+		});
+	</script>
+{% endblock %}
+

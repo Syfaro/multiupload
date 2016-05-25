@@ -1,0 +1,77 @@
+{% extends '_main.html' %}
+
+{% block body %}
+	<div class="jumbotron">
+		<div class="container">
+			<h1>Furry Art Multiuploader</h1>
+
+			<p>
+				A simple way to post your art to multiple sites and accounts.
+			</p>
+
+			<p>
+				Now supporting {{ count }} sites!
+			</p>
+		</div>
+	</div>
+
+	{{ flashes() }}
+
+	<div class="container">
+		<div class="row">
+			<div class="col-sm-12 col-md-6">
+				<h2>Register</h2>
+				<form method="POST" action="/register">
+					<div class="form-group">
+						<input type="text" class="form-control" name="username" placeholder="Username">
+					</div>
+
+					<div class="form-group">
+						<input type="password" class="form-control" name="password" placeholder="Password">
+					</div>
+
+					<div class="form-group">
+						<input type="password" class="form-control" name="confirm_password" placeholder="Confirm password">
+					</div>
+
+					<div class="form-group">
+						<button type="submit" class="btn btn-default">Register</button>
+					</div>
+				</form>
+			</div>
+
+			<div class="col-sm-12 col-md-6">
+				<h2>Login</h2>
+				<form method="POST" action="/login">
+					<div class="form-group">
+						<input type="text" class="form-control" name="username" placeholder="Username">
+					</div>
+
+					<div class="form-group">
+						<input type="password" class="form-control" name="password" placeholder="Password">
+					</div>
+
+					<div class="form-group">
+						<button type="submit" class="btn btn-primary">Login</button>
+					</div>
+				</form>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-sm-12 col-md-4 col-md-offset-4">
+				<h2>About</h2>
+
+				<p>
+					Unlike many furry websites, we have a strong focus on privacy.
+					All login data is fully encrypted with the user's own password.
+					This means, even if our database was comprimised, no data could be obtained by a malicious user.
+				</p>
+
+				<p>
+					For those technically inclined, passwords are hashed using bcrypt with 12 rounds. Account login data is encrypted with AES256 using an open source library available <a href="https://github.com/andrewcooke/simple-crypt">here</a>.
+				</p>
+			</div>
+		</div>
+	</div>
+{% endblock %}

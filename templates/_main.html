@@ -1,0 +1,38 @@
+{% macro flashes() -%}
+	{% with messages = get_flashed_messages() %}
+		{% if messages %}
+			<div class="container">
+				<div class="row">
+					<div class="col-sm-12">
+						{% for message in messages %}
+							<div class="alert alert-info">{{ message }}</div>
+						{% endfor %}
+					</div>
+				</div>
+			</div>
+		{% endif %}
+	{% endwith %}
+{%- endmacro %}
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+
+	<title>Furry Art Multiuploader</title>
+
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+</head>
+<body>
+	{% block body %}{% endblock %}
+
+	<div class="container">
+		<footer class="footer text-right">
+			{% if user is defined %}
+				<a href="/logout">Log out</a>
+			{% endif %}
+		</footer>
+	</div>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{% extends '_main.html' %}
+
+{% block body %}
+	<div class="container">
+		<div class="row">
+			<div class="col-sm-12 col-md-4 col-md-offset-4">
+				<h1>Post uploaded</h1>
+
+				<ul>
+					{% for upload in uploads %}
+						<li><a href="{{ upload.link }}">{{ upload.name }}</a></li>
+					{% endfor %}
+				</ul>
+
+				<a href="/upload" class="btn btn-primary">Upload another?</a>
+			</div>
+		</div>
+	</div>
+{% endblock %}
