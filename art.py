@@ -1,6 +1,7 @@
-from flask import Flask, render_template, request, session, redirect, jsonify, flash
+from flask import Flask, render_template, request, session, redirect, jsonify, flash, url_for, g
 from flask_sqlalchemy import SQLAlchemy
 from bs4 import BeautifulSoup
+from functools import wraps
 import bcrypt
 import simplecrypt
 import pymysql
@@ -9,6 +10,7 @@ import base64
 import json
 import re
 import string
+import passwordmeter
 
 app = Flask(__name__)
 
@@ -60,13 +62,31 @@ class Account(db.Model):
         self.credentials = simplecrypt.encrypt(password, credentials)
 
 
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not 'id' in session:
+            return redirect(url_for('home'))
+
+        user = User.query.get(session['id'])
+
+        if not user:
+            return redirect(url_for('home'))
+
+        g.user = user
+
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
 @app.route('/')
 def home():
     if 'id' in session:
         user = User.query.get(session['id'])
 
         if user:
-            return redirect('/upload')
+            return redirect(url_for('upload_form'))
 
     count = Site.query.count()
 
@@ -77,53 +97,58 @@ def home():
 def logout():
     session.pop('id', None)
 
-    return redirect('/')
+    return redirect(url_for('home'))
 
 
 @app.route('/login', methods=['POST'])
 def login():
     if 'username' not in request.form or request.form['username'] == '':
         flash('Missing username.')
-        return redirect('/')
+        return redirect(url_for('home'))
 
     if 'password' not in request.form or request.form['password'] == '':
         flash('Missing password.')
-        return redirect('/')
+        return redirect(url_for('home'))
 
     user = User.query.filter_by(username=request.form['username']).first()
 
     if not user or not user.verify(request.form['password']):
         flash('Invalid username or password.')
-        return redirect('/')
+        return redirect(url_for('home'))
 
     session['id'] = user.id
 
-    return redirect('/upload')
+    return redirect(url_for('upload_form'))
 
 
 @app.route('/register', methods=['POST'])
 def register():
     if 'username' not in request.form or request.form['username'] == '':
         flash('Missing username.')
-        return redirect('/')
+        return redirect(url_for('home'))
 
     if 'password' not in request.form or request.form['password'] == '':
         flash('Missing password.')
-        return redirect('/')
+        return redirect(url_for('home'))
 
     if 'confirm_password' not in request.form or request.form['confirm_password'] == '':
         flash('Missing password confirmation.')
-        return redirect('/')
+        return redirect(url_for('home'))
+
+    strength, improvements = passwordmeter.test(request.form['password'])
+    if strength < 0.5:
+        flash('Weak password.')
+        return redirect(url_for('home'))
 
     by_username = User.query.filter_by(
         username=request.form['username'].lower()).first()
     if by_username is not None:
         flash('Username is already in use.')
-        return redirect('/')
+        return redirect(url_for('home'))
 
     if request.form['password'] != request.form['confirm_password']:
         flash('Password does not match confirmation.')
-        return redirect('/')
+        return redirect(url_for('home'))
 
     user = User(request.form['username'], request.form['password'])
 
@@ -132,55 +157,41 @@ def register():
 
     session['id'] = user.id
 
-    return redirect('/upload')
+    return redirect(url_for('upload_form'))
 
 
 @app.route('/upload', methods=['GET'])
+@login_required
 def upload_form():
-    if not 'id' in session:
-        return redirect('/')
-
-    user = User.query.get(session['id'])
-
-    if not user:
-        return redirect('/')
-
-    return render_template('upload.html', user=user)
+    return render_template('upload.html', user=g.user)
 
 
 @app.route('/upload', methods=['POST'])
+@login_required
 def upload_post():
-    if not 'id' in session:
-        return redirect('/')
-
-    user = User.query.get(session['id'])
-
-    if not user:
-        return redirect('/')
-
     if request.form['title'] == '':
         flash('Missing title.')
-        return render_template('upload.html', user=user)
+        return render_template('upload.html', user=g.user)
 
     if request.form['description'] == '':
         flash('Missing description.')
-        return render_template('upload.html', user=user)
+        return render_template('upload.html', user=g.user)
 
     if request.form['keywords'] == '':
         flash('Missing keywords.')
-        return render_template('upload.html', user=user)
+        return render_template('upload.html', user=g.user)
 
     if not request.files.get('image', None):
         flash('Missing image.')
-        return render_template('upload.html', user=user)
+        return render_template('upload.html', user=g.user)
 
-    if len(request.form['account']) == 0:
+    if len(request.form.getlist('account')) == 0:
         flash('No site selected.')
-        return render_template('upload.html', user=user)
+        return render_template('upload.html', user=g.user)
 
     if not request.form.get('rating'):
         flash('No content rating selected.')
-        return render_template('upload.html', user=user)
+        return render_template('upload.html', user=g.user)
 
     has_less_2 = len(request.form['keywords'].split(' ')) < 2
 
@@ -188,19 +199,19 @@ def upload_post():
     for a in request.form.getlist('account'):
         account = Account.query.get(a)
 
-        if not account or account.user_id != user.id:
+        if not account or account.user_id != g.user.id:
             flash('Account does not exist or does not belong to current user.')
-            return render_template('upload.html', user=user)
+            return render_template('upload.html', user=g.user)
 
         if account.site.id == 2 and has_less_2:
             flash('Weasyl requires at least two tags.')
-            return render_template('upload.html', user=user)
+            return render_template('upload.html', user=g.user)
 
         accounts.append(account)
 
-    if not user.verify(request.form['site_password']):
+    if not g.user.verify(request.form['site_password']):
         flash('Incorrect password.')
-        return render_template('upload.html', user=user)
+        return render_template('upload.html', user=g.user)
 
     upload = request.files.get('image', None)
 
@@ -232,7 +243,11 @@ def upload_post():
                 'submission_type': 'submission'
             }, cookies=j)
             soup = BeautifulSoup(r.content, 'html.parser')
-            key = soup.select('input[name="key"]')[0]['value']
+            try:
+                key = soup.select('input[name="key"]')[0]['value']
+            except:
+                flash('Unable to upload to FurAffinity on account %s. Make sure the site is online. If this problem continues, you may need to remove the account and add it again.' % (account.username))
+                continue
             r = s.post('https://www.furaffinity.net/submit/', data={
                 'part': '3',
                 'submission_type': 'submission',
@@ -241,7 +256,11 @@ def upload_post():
                 'submission': image
             }, cookies=j)
             soup = BeautifulSoup(r.content, 'html.parser')
-            key = soup.select('input[name="key"]')[0]['value']
+            try:
+                key = soup.select('input[name="key"]')[0]['value']
+            except:
+                flash('Unable to upload to FurAffinity on account %s. Make sure the site is online. If this problem continues, you may need to remove the account and add it again.' % (account.username))
+                continue
             r = s.post('https://www.furaffinity.net/submit/', data={
                 'part': '5',
                 'submission_type': 'submission',
@@ -270,7 +289,11 @@ def upload_post():
                 'X-Weasyl-API-Key': decrypted
             })
             soup = BeautifulSoup(r.content, 'html.parser')
-            token = soup.select('input[name="token"]')[0]['value']
+            try:
+                token = soup.select('input[name="token"]')[0]['value']
+            except:
+                flash('Unable to upload to Weasyl on account %s. Make sure the site is online. If this problem continues, you may need to remove the account and add it again.' % (account.username))
+                continue
             r = s.post('https://www.weasyl.com/submit/visual', data={
                 'token': token,
                 'title': request.form['title'],
@@ -298,7 +321,16 @@ def upload_post():
                 'refresh_token': j['refresh']
             })
 
-            j = json.loads(r.content)
+            try:
+                j = json.loads(r.content)
+            except:
+                flash('Unable to upload to FurryNetwork on character %s. Make sure the site is online. If this problem continues, you may need to remove the account and add it again.' % (account.username))
+                continue
+
+            if not 'access_token' in j:
+                flash('It appears your access token to FurryNetwork on character %s has expired. Please remove the account and add it again.' % (account.username))
+                continue
+
             token = j['access_token']
 
             r = s.get('https://beta.furrynetwork.com/api/user', data={
@@ -307,12 +339,20 @@ def upload_post():
                 'Authorization': 'Bearer %s' % (token)
             })
 
-            j = json.loads(r.content)
+            try:
+                j = json.loads(r.content)
+            except:
+                flash('It appears that FurryNetwork was down while trying to post on character %s. Please try again later.' % (account.username))
+                continue
 
             username = ''
             for character in j['characters']:
                 if character['id'] == character_id:
                     username = character['name']
+
+            if username == '':
+                flash('It appears the character %s was removed from FurryNetwork. Please remove this character.' % (user.username))
+                continue
 
             params = {
                 'resumableChunkNumber': '1',
@@ -334,7 +374,11 @@ def upload_post():
                 'Authorization': 'Bearer %s' % (token)
             }, params=params, data=image[1])
 
-            j = json.loads(r.content)
+            try:
+                j = json.loads(r.content)
+            except:
+                flash('It appears that FurryNetwork was down while trying to post on character %s. Please try again later.' % (account.username))
+                continue
 
             rating = 2
             if request.form['rating'] == 'general':
@@ -362,21 +406,18 @@ def upload_post():
 
 
 @app.route('/add')
+@login_required
 def add():
-    if not 'id' in session:
-        return redirect('/')
-
     sites = Site.query.all()
 
     return render_template('add_site.html', sites=sites)
 
 
 @app.route('/add/<int:site_id>', methods=['GET'])
+@login_required
 def add_account_form(site_id):
-    if not 'id' in session:
-        return redirect('/')
-
     site = Site.query.get(site_id)
+
     if not site:
         return 'Unknown site ID!'
 
@@ -396,22 +437,17 @@ def add_account_form(site_id):
 
 
 @app.route('/add/<int:site_id>', methods=['POST'])
+@login_required
 def add_account_post(site_id):
-    if not 'id' in session:
-        return redirect('/')
-
     site = Site.query.get(site_id)
+
     if not site:
         flash('Unknown site ID.')
-        return redirect('/add')
+        return redirect(url_for('add_account_form'))
 
-    user = User.query.get(session['id'])
-    if not user:
-        return redirect('/')
-
-    if not user.verify(request.form['site_password']):
+    if not g.user.verify(request.form['site_password']):
         flash('You need to correctly enter the password for this website.')
-        return redirect('/add/%d' % (site_id))
+        return redirect(url_for('add_account_form', site_id=site.id))
 
     if site.id == 1:  # FurAffinity
         s = requests.session()
@@ -426,7 +462,7 @@ def add_account_post(site_id):
         if 'a' not in r.cookies:
             flash(
                 'Please make sure you entered your username, password, and the captcha correctly.')
-            return redirect('/add/%d' % (site.id))
+            return redirect(url_for('add_account_form', site_id=site.id))
 
         secure_data = {
             'a': r.cookies['a'],
@@ -448,11 +484,15 @@ def add_account_post(site_id):
             'X-Weasyl-API-Key': request.form['api_token']
         })
 
-        j = json.loads(r.content)
+        try:
+            j = json.loads(r.content)
+        except:
+            flash('Invalid API Token')
+            return redirect(url_for('add_account_form', site_id=site.id))
 
         if 'login' not in j:
             flash('Invalid API Token')
-            return redirect('/add/%d' % (site.id))
+            return redirect(url_for('add_account_form', site_id=site.id))
 
         account = Account(site.id, session['id'], j['login'], request.form[
                           'api_token'], request.form['site_password'])
@@ -469,7 +509,15 @@ def add_account_post(site_id):
             'client_secret': ''
         })
 
-        j = json.loads(r.content)
+        try:
+            j = json.loads(r.content)
+        except:
+            flash('Invalid username and password, or site is down.')
+            return redirect(url_for('add_account_form', site_id=site.id))
+
+        if 'refresh_token' not in j:
+            flash('Invalid username and password.')
+            return redirect(url_for('add_account_form', site_id=site.id))
 
         refresh_token = j['refresh_token']
 
@@ -479,10 +527,14 @@ def add_account_post(site_id):
             'Authorization': 'Bearer %s' % (j['access_token'])
         })
 
-        j = json.loads(r.content)
+        try:
+            j = json.loads(r.content)
+        except:
+            flash('Site is likely down, please try again later.')
+            return redirect(url_for('add_account_form', site_id=site.id))
 
         previous_accounts = Account.query.filter_by(
-            user_id=user.id).filter_by(site_id=site.id).all()
+            user_id=g.user.id).filter_by(site_id=site.id).all()
 
         for character in j['characters']:
             character_exists = False
@@ -494,6 +546,7 @@ def add_account_post(site_id):
                 j = json.loads(account_data)
 
                 if j['character_id'] == character['id']:
+                    flash('Character %s already in database.' % (character['name']))
                     character_exists = True
                     break
 
@@ -509,32 +562,27 @@ def add_account_post(site_id):
 
         db.session.commit()
 
-    return redirect('/upload')
+    return redirect(url_for('upload_form'))
 
 
 @app.route('/remove/<int:account_id>')
+@login_required
 def remove(account_id):
-    if not 'id' in session:
-        return redirect('/')
-
-    user = User.query.get(session['id'])
-    if not user:
-        return redirect('/')
-
     account = Account.query.get(account_id)
+
     if not account:
         flash('Account does not exist.')
-        return redirect('/upload')
+        return redirect(url_for('upload_form'))
 
-    if account.user_id != user.id:
+    if account.user_id != g.user.id:
         flash('Account does not belong to you.')
-        return redirect('/upload')
+        return redirect(url_for('upload_form'))
 
     db.session.delete(account)
     db.session.commit()
 
     flash('Account removed.')
-    return redirect('/upload')
+    return redirect(url_for('upload_form'))
 
 if __name__ == '__main__':
     db.create_all()
