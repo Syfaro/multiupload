@@ -22,15 +22,15 @@
 					<h2>Basic info</h2>
 
 					<div class="form-group">
-						<input type="text" class="form-control" name="title" placeholder="Title" value="{{ request.form.title }}">
+						<input type="text" class="form-control" name="title" placeholder="Title" value="{{ request.form.title }}" autocomplete="off">
 					</div>
 
 					<div class="form-group">
-						<textarea class="form-control description" name="description" placeholder="Description">{{ request.form.description }}</textarea>
+						<textarea class="form-control description" name="description" placeholder="Description" autocomplete="off">{{ request.form.description }}</textarea>
 					</div>
 
 					<div class="form-group">
-						<textarea class="form-control keywords" name="keywords" placeholder="Keywords">{{ request.form.keywords }}</textarea>
+						<textarea class="form-control keywords" name="keywords" placeholder="Keywords" autocomplete="off">{{ request.form.keywords }}</textarea>
 
 						<p class="help-block">Seperate keywords with spaces.</p>
 					</div>
@@ -86,7 +86,7 @@
 					<h2>Upload</h2>
 
 					<div class="form-group">
-						<input type="password" class="form-control" name="site_password" placeholder="Password on this site">
+						<input type="password" class="form-control" name="site_password" placeholder="Multiuploader password" autocomplete="off">
 					</div>
 
 					<button type="submit" class="btn btn-lg btn-primary">Upload</button>

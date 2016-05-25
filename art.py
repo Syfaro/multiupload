@@ -427,6 +427,13 @@ def upload_post():
                 'status': 'public'
             }))
 
+            try:
+                j = json.loads(r.content)
+            except:
+                flash('It appears that FurryNetwork was down while trying to post on character %s. You may need to manually set the title, description, tags, and set it to be public.' % (
+                    account.username))
+                continue
+
             uploads.append({'link': 'https://beta.furrynetwork.com/artwork/%d/' %
                             (j['id']), 'name': '%s - %s' % (site.name, account.username)})
 
@@ -480,7 +487,7 @@ def add_account_post(site_id):
     if site.id == 1:  # FurAffinity
         s = requests.session()
 
-        if Account.query.filter_by(site_id=site.id).filter_by(user_id=g.user.id).filter(func.lower(Account.username)==func.lower(request.form['username'])).first():
+        if Account.query.filter_by(site_id=site.id).filter_by(user_id=g.user.id).filter(func.lower(Account.username) == func.lower(request.form['username'])).first():
             flash('This account has already been added.')
             return redirect(url_for('upload_form'))
 
@@ -526,7 +533,7 @@ def add_account_post(site_id):
             flash('Invalid API Token')
             return redirect(url_for('add_account_form', site_id=site.id))
 
-        if Account.query.filter_by(site_id=site.id).filter_by(user_id=g.user.id).filter(func.lower(Account.username)==func.lower(j['login'])).first():
+        if Account.query.filter_by(site_id=site.id).filter_by(user_id=g.user.id).filter(func.lower(Account.username) == func.lower(j['login'])).first():
             flash('This account has already been added.')
             return redirect(url_for('upload_form'))
 
