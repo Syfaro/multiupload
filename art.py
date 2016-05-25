@@ -571,11 +571,25 @@ def add_account_post(site_id):
 
     return redirect(url_for('upload_form'))
 
-
 @app.route('/remove/<int:account_id>')
 @login_required
-def remove(account_id):
+def remove_form(account_id):
     account = Account.query.get(account_id)
+
+    if not account:
+        flash('Account does not exist.')
+        return redirect(url_for('upload_form'))
+
+    if account.user_id != g.user.id:
+        flash('Account does not belong to you.')
+        return redirect(url_for('upload_form'))
+
+    return render_template('remove.html', account=account)
+
+@app.route('/remove', methods=['POST'])
+@login_required
+def remove():
+    account = Account.query.get(request.form['id'])
 
     if not account:
         flash('Account does not exist.')

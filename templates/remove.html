@@ -1,0 +1,23 @@
+{% extends '_main.html' %}
+
+{% block body %}
+	<div class="container">
+		<div class="row">
+			<div class="col-sm-12">
+				<h1>Remove account</h1>
+
+				<p>
+					Are you sure you wish to remove account {{ account.username }} on {{ account.site.name }}?
+				</p>
+
+				<p>
+					<form method="POST" action="/remove">
+						<input type="hidden" name="id" value="{{ account.id }}">
+						<button type="submit" class="btn btn-danger">Yes</button>
+						<a href="/upload" class="btn btn-default">No</a>
+					</form>
+				</p>
+			</div>
+		</div>
+	</div>
+{% endblock %}
