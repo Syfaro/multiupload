@@ -14,9 +14,7 @@ import passwordmeter
 
 app = Flask(__name__)
 
-app.config[
-    'SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root@127.0.0.1/fa?charset=utf8'
-app.config['SECRET_KEY'] = 'a_secret_token'
+app.config.from_object('config')
 
 db = SQLAlchemy(app)
 
@@ -246,7 +244,8 @@ def upload_post():
             try:
                 key = soup.select('input[name="key"]')[0]['value']
             except:
-                flash('Unable to upload to FurAffinity on account %s. Make sure the site is online. If this problem continues, you may need to remove the account and add it again.' % (account.username))
+                flash('Unable to upload to FurAffinity on account %s. Make sure the site is online. If this problem continues, you may need to remove the account and add it again.' % (
+                    account.username))
                 continue
             r = s.post('https://www.furaffinity.net/submit/', data={
                 'part': '3',
@@ -259,7 +258,8 @@ def upload_post():
             try:
                 key = soup.select('input[name="key"]')[0]['value']
             except:
-                flash('Unable to upload to FurAffinity on account %s. Make sure the site is online. If this problem continues, you may need to remove the account and add it again.' % (account.username))
+                flash('Unable to upload to FurAffinity on account %s. Make sure the site is online. If this problem continues, you may need to remove the account and add it again.' % (
+                    account.username))
                 continue
             r = s.post('https://www.furaffinity.net/submit/', data={
                 'part': '5',
@@ -292,7 +292,8 @@ def upload_post():
             try:
                 token = soup.select('input[name="token"]')[0]['value']
             except:
-                flash('Unable to upload to Weasyl on account %s. Make sure the site is online. If this problem continues, you may need to remove the account and add it again.' % (account.username))
+                flash('Unable to upload to Weasyl on account %s. Make sure the site is online. If this problem continues, you may need to remove the account and add it again.' % (
+                    account.username))
                 continue
             r = s.post('https://www.weasyl.com/submit/visual', data={
                 'token': token,
@@ -324,11 +325,13 @@ def upload_post():
             try:
                 j = json.loads(r.content)
             except:
-                flash('Unable to upload to FurryNetwork on character %s. Make sure the site is online. If this problem continues, you may need to remove the account and add it again.' % (account.username))
+                flash('Unable to upload to FurryNetwork on character %s. Make sure the site is online. If this problem continues, you may need to remove the account and add it again.' % (
+                    account.username))
                 continue
 
             if not 'access_token' in j:
-                flash('It appears your access token to FurryNetwork on character %s has expired. Please remove the account and add it again.' % (account.username))
+                flash('It appears your access token to FurryNetwork on character %s has expired. Please remove the account and add it again.' % (
+                    account.username))
                 continue
 
             token = j['access_token']
@@ -342,7 +345,8 @@ def upload_post():
             try:
                 j = json.loads(r.content)
             except:
-                flash('It appears that FurryNetwork was down while trying to post on character %s. Please try again later.' % (account.username))
+                flash('It appears that FurryNetwork was down while trying to post on character %s. Please try again later.' % (
+                    account.username))
                 continue
 
             username = ''
@@ -351,7 +355,8 @@ def upload_post():
                     username = character['name']
 
             if username == '':
-                flash('It appears the character %s was removed from FurryNetwork. Please remove this character.' % (user.username))
+                flash('It appears the character %s was removed from FurryNetwork. Please remove this character.' % (
+                    user.username))
                 continue
 
             params = {
@@ -377,7 +382,8 @@ def upload_post():
             try:
                 j = json.loads(r.content)
             except:
-                flash('It appears that FurryNetwork was down while trying to post on character %s. Please try again later.' % (account.username))
+                flash('It appears that FurryNetwork was down while trying to post on character %s. Please try again later.' % (
+                    account.username))
                 continue
 
             rating = 2
@@ -546,7 +552,8 @@ def add_account_post(site_id):
                 j = json.loads(account_data)
 
                 if j['character_id'] == character['id']:
-                    flash('Character %s already in database.' % (character['name']))
+                    flash('Character %s already in database.' %
+                          (character['name']))
                     character_exists = True
                     break
 
@@ -586,4 +593,4 @@ def remove(account_id):
 
 if __name__ == '__main__':
     db.create_all()
-    app.run(debug=True)
+    app.run()
