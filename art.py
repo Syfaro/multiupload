@@ -134,7 +134,7 @@ def register():
         return redirect(url_for('home'))
 
     strength, improvements = passwordmeter.test(request.form['password'])
-    if strength < 0.5:
+    if strength < 0.3:
         flash('Weak password.')
         return redirect(url_for('home'))
 
