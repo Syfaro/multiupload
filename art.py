@@ -350,7 +350,7 @@ def upload_post():
 
             j = json.loads(decrypted)
 
-            rating = '2'
+            rating = '1'
             if request.form['rating'] == 'general':
                 rating = '0'
             elif request.form['rating'] == 'mature':
