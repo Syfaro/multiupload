@@ -195,26 +195,18 @@ def upload_form():
 
 
 def parse_description(description, uploading_to):
-    exp = '<\|(\S+)\|>'
+    exp = '<\|(\S+),(\d),(\d)\|>'
     match = re.search(exp, description)
 
-    i = 0
-
     while match:
-        if i > 12:
-            break
-        i += 1
-
-        start, end = match.span(1)
-
-        split_link = description[start:end].split(',')
+        start, end = match.span(0)
 
         try:
-            username, linking_to, link_type = split_link
-            linking_to = int(linking_to)
-            link_type = int(link_type)
+            username = match.group(1)
+            linking_to = int(match.group(3))
+            link_type = int(match.group(2))
         except:
-            continue
+            return False
 
         new_text = ''
 
@@ -270,7 +262,7 @@ def parse_description(description, uploading_to):
                     new_text = '[{0}](https://beta.furrynetwork.com/{0})'.format(
                         username)
 
-        description = description[0:start-2] + new_text + description[end+2:]
+        description = description[0:start] + new_text + description[end:]
 
         match = re.search(exp, description)
 
