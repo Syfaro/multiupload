@@ -5,7 +5,6 @@ from bs4 import BeautifulSoup
 from functools import wraps
 import bcrypt
 import simplecrypt
-import pymysql
 import requests
 import base64
 import json
