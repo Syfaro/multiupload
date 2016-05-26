@@ -14,7 +14,7 @@
 	{{ flashes() }}
 
 	<div class="container">
-		<form method="POST" action="/upload" enctype="multipart/form-data">
+		<form method="POST" action="/upload" enctype="multipart/form-data" name="upload">
 			<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 
 			<div class="row">
@@ -27,6 +27,11 @@
 
 					<div class="form-group">
 						<textarea class="form-control description" name="description" placeholder="Description" autocomplete="off">{{ request.form.description }}</textarea>
+					</div>
+
+					<div class="form-group">
+						<button type="button" class="btn btn-default" data-toggle="modal" data-target=".add-user-modal">Add user link</button>
+						<button type="button" class="btn btn-default" data-toggle="modal" data-target=".description-preview-modal">Preview description</button>
 					</div>
 
 					<div class="form-group">
@@ -96,6 +101,148 @@
 		</form>
 	</div>
 
+	{# <div class="modal fade">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+					<h4>Link a user</h4>
+				</div>
+
+				<div class="modal-body">
+					<form>
+						{% for site in sites %}
+							<div class="form-group">
+								<input type="text" name="name[{{ site.id }}]" class="form-control" placeholder="Name on {{ site.name }}">
+							</div>
+						{% endfor %}
+
+						<div class="radio">
+							<label>
+								<input type="radio" name="link_type" value="0" checked> Just link
+							</label>
+						</div>
+
+						<div class="radio">
+							<label>
+								<input type="radio" name="link_type" value="1"> Just profile picture
+							</label>
+
+							<p class="help-block">
+								Note that this option may not be available on all sites. It may appear as a link.
+							</p>
+						</div>
+
+						<div class="radio">
+							<label>
+								<input type="radio" name="link_type" value="2"> Link and profile picture
+							</label>
+
+							<p class="help-block">
+								Note that this option may not be available on all sites. It may appear as a link.
+							</p>
+						</div>
+					</form>
+				</div>
+
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+					<button type="button" class="btn btn-primary add-user-link">Add user link</button>
+				</div>
+			</div>
+		</div>
+	</div> #}
+
+	<div class="modal add-user-modal fade">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+					<h4>Link a user</h4>
+				</div>
+
+				<div class="modal-body">
+					<form>
+						<div class="form-group">
+							<input type="text" name="username" class="form-control" placeholder="Username">
+						</div>
+
+						<div class="well">
+							<label>
+								Please select which site this user is on.
+							</label>
+
+							{% for site in sites %}
+								<div class="radio">
+									<label>
+										<input type="radio" name="site_name" value="{{ site.id }}"> {{ site.name }}
+									</label>
+								</div>
+							{% endfor %}
+						</div>
+
+						<div class="well">
+							<label>
+								Please select what kind of link you want it to be.
+							</label>
+
+							<div class="radio">
+								<label>
+									<input type="radio" name="link_type" value="0" checked> Just link
+								</label>
+							</div>
+
+							<div class="radio">
+								<label>
+									<input type="radio" name="link_type" value="1"> Just profile picture
+								</label>
+
+								<p class="help-block">
+									Note that this option may not be available on all sites. It may appear as a link.
+								</p>
+							</div>
+
+							<div class="radio">
+								<label>
+									<input type="radio" name="link_type" value="2"> Link and profile picture
+								</label>
+
+								<p class="help-block">
+									Note that this option may not be available on all sites. It may appear as a link.
+								</p>
+							</div>
+						</div>
+					</form>
+				</div>
+
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+					<button type="button" class="btn btn-primary add-user-link">Add user link</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal description-preview-modal fade">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+					<h4>Preview description</h4>
+				</div>
+
+				<div class="modal-body">
+				</div>
+
+				<div class="modal-footer">
+					<button type="button" class="btn btn-primary" data-dismiss="modal">Done</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 	<script>
 		var imagePreview = document.querySelector('.preview-image');
 
@@ -107,6 +254,53 @@
 			item.addEventListener('input', function () {
 				this.style.height = '';
 				this.style.height = Math.min(this.scrollHeight+10, 200) + 'px';
+			});
+		});
+
+		document.querySelector('.add-user-link').addEventListener('click', function () {
+			$('.add-user-modal').modal('hide');
+
+			var values = [
+				document.querySelector('.add-user-modal input[name="username"]').value,
+				document.querySelector('.add-user-modal input[name="site_name"]:checked').value,
+				document.querySelector('.add-user-modal input[name="link_type"]:checked').value
+			];
+
+			var output = '<|' + values.join(',') + '|>';
+
+			var textArea = document.querySelector('textarea[name="description"]');
+
+			var caretPos = textArea.selectionStart;
+			textArea.value = textArea.value.substring(0, caretPos) + output + textArea.value.substring(caretPos);
+
+			document.querySelector('.add-user-modal input[name="username"]').value = '';
+		});
+
+		$('.description-preview-modal').on('show.bs.modal', function () {
+			var body = document.querySelector('.description-preview-modal .modal-body');
+			body.innerHTML = 'Loading&hellip;';
+
+			$.ajax({
+				type: 'GET',
+				url: '/preview/description',
+				data: $('input[name="account"], .description').serialize()
+			}).always(function (data) {
+				body.innerHTML = '';
+
+				for (var i = 0; i < data.descriptions.length; i++) {
+					var description = data.descriptions[i];
+
+					var name = document.createElement('label');
+					name.innerHTML = description.site;
+
+					var well = document.createElement('div');
+					well.classList.add('well');
+
+					well.innerHTML = description.description;
+
+					body.appendChild(name);
+					body.appendChild(well);
+				}
 			});
 		});
 	</script>

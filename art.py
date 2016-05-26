@@ -191,7 +191,101 @@ def register():
 @app.route('/upload', methods=['GET'])
 @login_required
 def upload_form():
-    return render_template('upload.html', user=g.user)
+    return render_template('upload.html', user=g.user, sites=Site.query.all())
+
+
+def parse_description(description, uploading_to):
+    exp = '<\|(\S+)\|>'
+    match = re.search(exp, description)
+
+    while match:
+        start, end = match.span(1)
+
+        split_link = description[start:end].split(',')
+
+        try:
+            username, linking_to, link_type = split_link
+            linking_to = int(linking_to)
+            link_type = int(link_type)
+        except:
+            continue
+
+        new_text = ''
+
+        if uploading_to == linking_to:  # Uploading to same site
+            if uploading_to == 1:  # FurAffinity
+                if link_type == 0:  # Just link
+                    new_text = ':link%s:' % (username)
+                elif link_type == 1:  # Just icon
+                    new_text = ':%sicon:' % (username)
+                elif link_type == 2:  # Both
+                    new_text = ':icon%s:' % (username)
+            elif uploading_to == 2:  # Weasyl
+                if link_type == 0:
+                    new_text = '<~%s>' % (username)
+                elif link_type == 1:
+                    new_text = '<!%s>' % (username)
+                elif link_type == 2:
+                    new_text = '<!~%s>' % (username)
+            elif uploading_to == 3:  # FurryNetwork
+                new_text = '[{0}](https://beta.furrynetwork.com/{0}/)'.format(
+                    username)
+        else:  # Uploading to other site
+            if uploading_to == 1:  # Uploading to FurAffinity
+                if linking_to == 1:
+                    new_text = '[url=https://www.furaffinity.net/user/{0}/]{0}[/url]'.format(
+                        username)
+                elif linking_to == 2:
+                    new_next = '[url=https://www.weasyl.com/~{0}]{0}[/url]'.format(
+                        username)
+                elif linking_to == 3:
+                    new_text = '[url=https://beta.furrynetwork.com/{0}]{0}[/url]'.format(
+                        username)
+            # Uploading to FN or Weasyl (same format type)
+            elif uploading_to == 2 and linking_to == 1 and link_type != 0:
+                new_text = '[{0}](https://www.furaffinity.net/user/{0}/)'.format(
+                    username)
+            elif uploading_to == 2 or uploading_to == 3:
+                # If linking to FA, we can guess profile pictures
+                if linking_to == 1:
+                    if link_type == 0:
+                        new_text = '[{0}](https://www.furaffinity.net/user/{0}/)'.format(
+                            username)
+                    elif link_type == 1:
+                        new_text = '[![{0}](https://a.facdn.net/{1}.gif "{0}")](https://www.furaffinity.net/user/{0}/)'.format(
+                            username, username.lower())
+                    elif link_type == 2:
+                        new_text = '[{0} ![{0}](https://a.facdn.net/{1}.gif "{0}")](https://www.furaffinity.net/user/{0}/)'.format(
+                            username, username.lower())
+                elif linking_to == 2:  # Weasyl
+                    new_text = '[{0}](https://www.weasyl.com/~{0})'.format(
+                        username)
+                elif linking_to == 3:  # FurryNetwork
+                    new_text = '[{0}](https://beta.furrynetwork.com/{0})'.format(
+                        username)
+
+        description = description[0:start-2] + new_text + description[end+2:]
+
+        match = re.search(exp, description)
+
+    return description
+
+
+@app.route('/preview/description')
+def preview_description():
+    descriptions = []
+    sites_done = []
+    for site in request.args.getlist('account'):
+        account = Account.query.filter_by(
+            user_id=session['id']).filter_by(id=int(site)).first()
+        site = account.site
+        if site.id in sites_done:
+            continue
+        descriptions.append({'site': site.name, 'description': parse_description(
+            request.args['description'], site.id)})
+        sites_done.append(site.id)
+
+    return jsonify({'descriptions': descriptions})
 
 
 @app.route('/upload', methods=['POST'])
@@ -199,27 +293,27 @@ def upload_form():
 def upload_post():
     if request.form['title'] == '':
         flash('Missing title.')
-        return render_template('upload.html', user=g.user)
+        return render_template('upload.html', user=g.user, sites=Site.query.all())
 
     if request.form['description'] == '':
         flash('Missing description.')
-        return render_template('upload.html', user=g.user)
+        return render_template('upload.html', user=g.user, sites=Site.query.all())
 
     if request.form['keywords'] == '':
         flash('Missing keywords.')
-        return render_template('upload.html', user=g.user)
+        return render_template('upload.html', user=g.user, sites=Site.query.all())
 
     if not request.files.get('image', None):
         flash('Missing image.')
-        return render_template('upload.html', user=g.user)
+        return render_template('upload.html', user=g.user, sites=Site.query.all())
 
     if len(request.form.getlist('account')) == 0:
         flash('No site selected.')
-        return render_template('upload.html', user=g.user)
+        return render_template('upload.html', user=g.user, sites=Site.query.all())
 
     if not request.form.get('rating'):
         flash('No content rating selected.')
-        return render_template('upload.html', user=g.user)
+        return render_template('upload.html', user=g.user, sites=Site.query.all())
 
     has_less_2 = len(request.form['keywords'].split(' ')) < 2
 
@@ -229,17 +323,17 @@ def upload_post():
 
         if not account or account.user_id != g.user.id:
             flash('Account does not exist or does not belong to current user.')
-            return render_template('upload.html', user=g.user)
+            return render_template('upload.html', user=g.user, sites=Site.query.all())
 
         if account.site.id == 2 and has_less_2:
             flash('Weasyl requires at least two tags.')
-            return render_template('upload.html', user=g.user)
+            return render_template('upload.html', user=g.user, sites=Site.query.all())
 
         accounts.append(account)
 
     if not g.user.verify(request.form['site_password']):
         flash('Incorrect password.')
-        return render_template('upload.html', user=g.user)
+        return render_template('upload.html', user=g.user, sites=Site.query.all())
 
     upload = request.files.get('image', None)
 
@@ -251,6 +345,7 @@ def upload_post():
             request.form['site_password'], account.credentials)
 
         site = account.site
+        description = parse_description(request.form['description'], site.id)
 
         if site.id == 1:
             s = requests.session()
@@ -297,7 +392,7 @@ def upload_post():
                 'submission_type': 'submission',
                 'key': key,
                 'title': request.form['title'],
-                'message': request.form['description'],
+                'message': description,
                 'keywords': request.form['keywords'],
                 'rating': rating
             }, cookies=j, headers=headers)
@@ -331,7 +426,7 @@ def upload_post():
             r = s.post('https://www.weasyl.com/submit/visual', data={
                 'token': token,
                 'title': request.form['title'],
-                'content': request.form['description'],
+                'content': description,
                 'tags': request.form['keywords'],
                 'rating': rating
             }, headers=new_header, files={
@@ -427,7 +522,7 @@ def upload_post():
 
             r = s.patch('https://beta.furrynetwork.com/api/artwork/%d' % (j['id']), headers=new_header, data=json.dumps({
                 'rating': rating,
-                'description': request.form['description'],
+                'description': description,
                 'title': request.form['title'],
                 'tags': request.form['keywords'].split(' '),
                 'collections': [],
