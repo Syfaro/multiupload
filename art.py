@@ -198,7 +198,13 @@ def parse_description(description, uploading_to):
     exp = '<\|(\S+)\|>'
     match = re.search(exp, description)
 
+    i = 0
+
     while match:
+        if i > 12:
+            break
+        i += 1
+
         start, end = match.span(1)
 
         split_link = description[start:end].split(',')
