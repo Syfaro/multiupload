@@ -38,7 +38,10 @@ class User(db.Model):
             password.encode('utf-8'), bcrypt.gensalt())
 
     def verify(self, password):
-        return bcrypt.hashpw(password.encode('utf-8'), self.password.encode('utf-8')) == self.password
+        # apparently Python 2 sets self.password to a Unicode object??
+        if type(self.password).__name__ == 'unicode':
+            return bcrypt.hashpw(password.encode('utf-8'), self.password.encode('utf-8')) == self.password.encode('utf-8')
+        return bcrypt.hashpw(password.encode('utf-8'), self.password) == self.password
 
 
 class Site(db.Model):
