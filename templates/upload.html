@@ -296,7 +296,7 @@
 					var well = document.createElement('div');
 					well.classList.add('well');
 
-					well.innerHTML = description.description;
+					$(well).text(description.description);
 
 					body.appendChild(name);
 					body.appendChild(well);

@@ -236,7 +236,7 @@ def parse_description(description, uploading_to):
                     new_text = '[url=https://www.furaffinity.net/user/{0}/]{0}[/url]'.format(
                         username)
                 elif linking_to == 2:
-                    new_next = '[url=https://www.weasyl.com/~{0}]{0}[/url]'.format(
+                    new_text = '[url=https://www.weasyl.com/~{0}]{0}[/url]'.format(
                         username)
                 elif linking_to == 3:
                     new_text = '[url=https://beta.furrynetwork.com/{0}]{0}[/url]'.format(
