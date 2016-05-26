@@ -19,6 +19,8 @@ app.config.from_object('config')
 
 db = SQLAlchemy(app)
 
+rng = random.SystemRandom()
+
 headers = {
     'User-Agent': 'Furry Multiupload 0.1 / Syfaro <syfaro@foxpaw.in>'
 }
@@ -87,7 +89,7 @@ def login_required(f):
 
 
 def random_string(length):
-    return ''.join(random.choice(string.ascii_lowercase) for i in range(length))
+    return ''.join(rng.choice(string.ascii_lowercase) for i in range(length))
 
 
 @app.before_request
