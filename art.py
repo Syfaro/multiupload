@@ -20,6 +20,10 @@ app.config.from_object('config')
 
 db = SQLAlchemy(app)
 
+headers = {
+    'User-Agent': 'Furry Multiupload 0.1 / Syfaro <syfaro@foxpaw.in>'
+}
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -257,11 +261,12 @@ def upload_post():
             elif request.form['rating'] == 'explicit':
                 rating = '1'
 
-            r = s.get('https://www.furaffinity.net/submit/', cookies=j)
+            r = s.get(
+                'https://www.furaffinity.net/submit/', cookies=j, headers=headers)
             r = s.post('https://www.furaffinity.net/submit/', data={
                 'part': '2',
                 'submission_type': 'submission'
-            }, cookies=j)
+            }, cookies=j, headers=headers)
             soup = BeautifulSoup(r.content, 'html.parser')
             try:
                 key = soup.select('input[name="key"]')[0]['value']
@@ -275,7 +280,7 @@ def upload_post():
                 'key': key
             }, files={
                 'submission': image
-            }, cookies=j)
+            }, cookies=j, headers=headers)
             soup = BeautifulSoup(r.content, 'html.parser')
             try:
                 key = soup.select('input[name="key"]')[0]['value']
@@ -291,7 +296,7 @@ def upload_post():
                 'message': request.form['description'],
                 'keywords': request.form['keywords'],
                 'rating': rating
-            }, cookies=j)
+            }, cookies=j, headers=headers)
 
             uploads.append(
                 {'link': r.url, 'name': '%s - %s' % (site.name, account.username)})
@@ -307,9 +312,11 @@ def upload_post():
             elif request.form['rating'] == 'explicit':
                 rating = '40'
 
-            r = s.get('https://www.weasyl.com/submit/visual', headers={
-                'X-Weasyl-API-Key': decrypted
-            })
+            new_header = headers.copy()
+            new_header['X-Weasyl-API-Key'] = decrypted
+
+            r = s.get(
+                'https://www.weasyl.com/submit/visual', headers=new_header)
             soup = BeautifulSoup(r.content, 'html.parser')
             try:
                 token = soup.select('input[name="token"]')[0]['value']
@@ -323,9 +330,7 @@ def upload_post():
                 'content': request.form['description'],
                 'tags': request.form['keywords'],
                 'rating': rating
-            }, headers={
-                'X-Weasyl-API-Key': decrypted
-            }, files={
+            }, headers=new_header, files={
                 'submitfile': image
             })
 
@@ -336,13 +341,14 @@ def upload_post():
             s = requests.session()
 
             j = json.loads(decrypted)
+
             character_id = j['character_id']
 
             r = s.post('https://beta.furrynetwork.com/api/oauth/token', {
                 'grant_type': 'refresh_token',
                 'client_id': '123',
                 'refresh_token': j['refresh']
-            })
+            }, headers=headers)
 
             try:
                 j = json.loads(r.content)
@@ -358,11 +364,12 @@ def upload_post():
 
             token = j['access_token']
 
+            new_header = headers.copy()
+            new_header['Authorization'] = 'Bearer %s' % (token)
+
             r = s.get('https://beta.furrynetwork.com/api/user', data={
                 'user_id': j['user_id']
-            }, headers={
-                'Authorization': 'Bearer %s' % (token)
-            })
+            }, headers=new_header)
 
             try:
                 j = json.loads(r.content)
@@ -393,13 +400,11 @@ def upload_post():
                 'resumableTotalChunks': '1'
             }
 
-            r = s.get('https://beta.furrynetwork.com/api/submission/%s/artwork/upload' % (username), headers={
-                'Authorization': 'Bearer %s' % (token)
-            }, params=params)
+            r = s.get('https://beta.furrynetwork.com/api/submission/%s/artwork/upload' %
+                      (username), headers=new_header, params=params)
 
-            r = s.post('https://beta.furrynetwork.com/api/submission/%s/artwork/upload' % (username), headers={
-                'Authorization': 'Bearer %s' % (token)
-            }, params=params, data=image[1])
+            r = s.post('https://beta.furrynetwork.com/api/submission/%s/artwork/upload' %
+                       (username), headers=new_header, params=params, data=image[1])
 
             try:
                 j = json.loads(r.content)
@@ -416,9 +421,7 @@ def upload_post():
             elif request.form['rating'] == 'explicit':
                 rating = 2
 
-            r = s.patch('https://beta.furrynetwork.com/api/artwork/%d' % (j['id']), headers={
-                'Authorization': 'Bearer %s' % (token)
-            }, data=json.dumps({
+            r = s.patch('https://beta.furrynetwork.com/api/artwork/%d' % (j['id']), headers=new_header, data=json.dumps({
                 'rating': rating,
                 'description': request.form['description'],
                 'title': request.form['title'],
@@ -461,10 +464,11 @@ def add_account_form(site_id):
     if site.id == 1:  # FurAffinity
         s = requests.session()
 
-        r = s.get('https://www.furaffinity.net/login/')
+        r = s.get('https://www.furaffinity.net/login/', headers=headers)
         session['fa_cookie_b'] = r.cookies['b']
 
-        captcha = s.get('https://www.furaffinity.net/captcha.jpg')
+        captcha = s.get(
+            'https://www.furaffinity.net/captcha.jpg', headers=headers)
 
         extra_data['captcha'] = base64.b64encode(captcha.content)
 
@@ -496,7 +500,7 @@ def add_account_post(site_id):
             'name': request.form['username'],
             'pass': request.form['password'],
             'captcha': request.form['captcha']
-        }, allow_redirects=False)
+        }, allow_redirects=False, headers=headers)
 
         if 'a' not in r.cookies:
             flash(
@@ -519,9 +523,11 @@ def add_account_post(site_id):
         session.pop('fa_cookie_b', None)
 
     elif site.id == 2:
-        r = requests.get('https://www.weasyl.com/api/whoami', headers={
-            'X-Weasyl-API-Key': request.form['api_token']
-        })
+        new_header = headers.copy()
+        new_header['X-Weasyl-API-Key'] = request.form['api_token']
+
+        r = requests.get(
+            'https://www.weasyl.com/api/whoami', headers=new_header)
 
         try:
             j = json.loads(r.content)
@@ -550,7 +556,7 @@ def add_account_post(site_id):
             'grant_type': 'password',
             'client_id': '123',
             'client_secret': ''
-        })
+        }, headers=headers)
 
         try:
             j = json.loads(r.content)
@@ -564,11 +570,12 @@ def add_account_post(site_id):
 
         refresh_token = j['refresh_token']
 
+        new_header = headers.copy()
+        new_header['Authorization'] = 'Bearer %s' % (j['access_token'])
+
         r = requests.get('https://beta.furrynetwork.com/api/user', data={
             'user_id': j['user_id']
-        }, headers={
-            'Authorization': 'Bearer %s' % (j['access_token'])
-        })
+        }, headers=new_header)
 
         try:
             j = json.loads(r.content)
