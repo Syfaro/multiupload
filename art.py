@@ -405,7 +405,7 @@ def upload_post():
             if request.form['rating'] == 'general':
                 rating = '10'
             elif request.form['rating'] == 'mature':
-                rating = '20'
+                rating = '30'
             elif request.form['rating'] == 'explicit':
                 rating = '40'
 
