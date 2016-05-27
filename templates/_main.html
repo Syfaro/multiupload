@@ -14,6 +14,26 @@
 	{% endwith %}
 {%- endmacro %}
 
+<!--
+        ,-.      .-,
+        |-.\ __ /.-|
+        \  `    `  /
+        / _     _  \
+        | _`q  p _ |
+        '._=/  \=_.'
+          {`\()/`}`\
+          {      }  \
+          |{    }    \
+          \ '--'   .- \
+          |-      /    \
+          | | | | |     ;
+          | | |.;.,..__ |
+        .-"";`         `|
+       /    |           /
+       `-../____,..---'`
+
+-->
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -23,15 +43,34 @@
 	<title>Furry Art Multiuploader</title>
 
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+
+	<style>
+		/* CSS classes just to make my name purple, what of it? :3 */
+
+		.syfaro {
+			color: #a77bdb;
+		}
+
+		.syfaro:hover {
+			color: #7f50c3;
+			text-decoration: none;
+		}
+	</style>
 </head>
 <body>
 	{% block body %}{% endblock %}
 
 	<div class="container">
-		<footer class="footer text-right">
+		<footer class="footer">
 			{% if user is defined %}
-				<a href="/changepass">Change password</a> &middot; <a href="/logout">Log out</a>
+				<div class="pull-right">
+					<a href="/changepass">Change password</a> &middot; <a href="/logout">Log out</a>
+				</div>
 			{% endif %}
+
+			<div class="pull-left">
+				<a href="mailto:Syfaro<syfaro@foxpaw.in>?subject=Multiuploader">Bug? Suggestion?</a>
+			</div>
 		</footer>
 	</div>
 </body>
