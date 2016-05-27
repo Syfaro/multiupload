@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 from bs4 import BeautifulSoup
 from functools import wraps
+from raven.contrib.flask import Sentry
 import bcrypt
 import simplecrypt
 import requests
@@ -18,6 +19,7 @@ app = Flask(__name__)
 app.config.from_object('config')
 
 db = SQLAlchemy(app)
+sentry = Sentry(app)
 
 rng = random.SystemRandom()
 
