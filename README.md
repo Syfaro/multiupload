@@ -24,6 +24,14 @@ Generate a config file:
 python generate_config.py >config.py
 ~~~
 
+Customize it as necessary.
+
+Create the database.  For development purposes, SQLite3 will do:
+
+~~~sh
+sqlite3 <db.sql test.db
+~~~
+
 Run it:
 
 ~~~sh
