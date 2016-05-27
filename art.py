@@ -116,9 +116,11 @@ def home():
         if user:
             return redirect(url_for('upload_form'))
 
-    count = Site.query.count()
+    sites = Site.query.all()
 
-    return render_template('home.html', count=count)
+    text = ', '.join([site.name for site in sites[0:-1]]) + ' and ' + sites[-1].name
+
+    return render_template('home.html', text=text)
 
 
 @app.route('/logout')
