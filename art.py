@@ -42,7 +42,13 @@ class User(db.Model):
             password.encode('utf-8'), bcrypt.gensalt())
 
     def verify(self, password):
-        return bcrypt.hashpw(password.encode('utf-8'), self.password.encode('utf-8')) == self.password.encode('utf-8')
+        # in Python 2, self.password can be either a `unicode` or a `buffer`
+        selfpassword = self.password
+        if type(selfpassword).__name__ == 'unicode':
+            selfpassword = selfpassword.encode('utf-8')
+        elif type(selfpassword).__name__ == 'buffer':
+            selfpassword = str(selfpassword)
+        return bcrypt.hashpw(password.encode('utf-8'), selfpassword) == selfpassword
 
 
 class Site(db.Model):
