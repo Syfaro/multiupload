@@ -165,6 +165,10 @@ def register():
         flash('Missing password confirmation.')
         return redirect(url_for('home'))
 
+    if len(request.form['username']) > 16:
+        flash('Username is too long.')
+        return redirect(url_for('home'))
+
     strength, improvements = passwordmeter.test(request.form['password'])
     if strength < 0.3:
         flash('Weak password. You may wish to try the following suggestions.<br><ul><li>%s</ul></ul>' % ('</li><li>'.join(improvements.values())))
