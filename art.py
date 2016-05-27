@@ -110,9 +110,10 @@ def generate_csrf_token():
 
 app.jinja_env.globals['csrf_token'] = generate_csrf_token
 
+
 def git_version():
     from subprocess import Popen, PIPE
-    gitproc = Popen(['git', 'rev-parse','HEAD'], stdout = PIPE)
+    gitproc = Popen(['git', 'rev-parse', 'HEAD'], stdout=PIPE)
     (stdout, _) = gitproc.communicate()
     return stdout.strip()
 
@@ -278,18 +279,19 @@ def parse_description(description, uploading_to):
 
         match = re.search(exp, description)
 
-    if uploading_to == 1: # FA doesn't support Markdown, try and convert some stuff
+    # FA doesn't support Markdown, try and convert some stuff
+    if uploading_to == 1:
         url = re.compile('\[([^\]]+)\]\(([^)"]+)(?: \"([^\"]+)\")?\)')
         match = url.match(description)
 
         while match:
             start, end = match.span(0)
 
-            new_link = '[url={url}]{text}[/url]'.format(text=match.group(1), url=match.group(2))
+            new_link = '[url={url}]{text}[/url]'.format(
+                text=match.group(1), url=match.group(2))
             description = description[0:start] + new_link + description[end:]
 
             match = url.match(description)
-
 
     return description
 
@@ -383,42 +385,50 @@ def upload_post():
             elif request.form['rating'] == 'explicit':
                 rating = '1'
 
-            r = s.get(
-                'https://www.furaffinity.net/submit/', cookies=j, headers=headers)
-            r = s.post('https://www.furaffinity.net/submit/', data={
-                'part': '2',
-                'submission_type': 'submission'
-            }, cookies=j, headers=headers)
-            soup = BeautifulSoup(r.content, 'html.parser')
             try:
+                r = s.get(
+                    'https://www.furaffinity.net/submit/', cookies=j, headers=headers)
+                r = s.post('https://www.furaffinity.net/submit/', data={
+                    'part': '2',
+                    'submission_type': 'submission'
+                }, cookies=j, headers=headers)
+
+                soup = BeautifulSoup(r.content, 'html.parser')
                 key = soup.select('input[name="key"]')[0]['value']
             except:
                 flash('Unable to upload to FurAffinity on account %s. Make sure the site is online. If this problem continues, you may need to remove the account and add it again.' % (
                     account.username))
                 continue
-            r = s.post('https://www.furaffinity.net/submit/', data={
-                'part': '3',
-                'submission_type': 'submission',
-                'key': key
-            }, files={
-                'submission': image
-            }, cookies=j, headers=headers)
-            soup = BeautifulSoup(r.content, 'html.parser')
+
             try:
+                r = s.post('https://www.furaffinity.net/submit/', data={
+                    'part': '3',
+                    'submission_type': 'submission',
+                    'key': key
+                }, files={
+                    'submission': image
+                }, cookies=j, headers=headers)
+
+                soup = BeautifulSoup(r.content, 'html.parser')
                 key = soup.select('input[name="key"]')[0]['value']
             except:
                 flash('Unable to upload to FurAffinity on account %s. Make sure the site is online. If this problem continues, you may need to remove the account and add it again.' % (
                     account.username))
                 continue
-            r = s.post('https://www.furaffinity.net/submit/', data={
-                'part': '5',
-                'submission_type': 'submission',
-                'key': key,
-                'title': request.form['title'],
-                'message': description,
-                'keywords': request.form['keywords'],
-                'rating': rating
-            }, cookies=j, headers=headers)
+
+            try:
+                r = s.post('https://www.furaffinity.net/submit/', data={
+                    'part': '5',
+                    'submission_type': 'submission',
+                    'key': key,
+                    'title': request.form['title'],
+                    'message': description,
+                    'keywords': request.form['keywords'],
+                    'rating': rating
+                }, cookies=j, headers=headers)
+            except:
+                flash('An error occured while uploading to FurAffinity on account %s. Make sure the site is online.' % (account.username))
+                continue
 
             uploads.append(
                 {'link': r.url, 'name': '%s - %s' % (site.name, account.username)})
@@ -437,24 +447,30 @@ def upload_post():
             new_header = headers.copy()
             new_header['X-Weasyl-API-Key'] = decrypted
 
-            r = s.get(
-                'https://www.weasyl.com/submit/visual', headers=new_header)
-            soup = BeautifulSoup(r.content, 'html.parser')
             try:
+                r = s.get(
+                    'https://www.weasyl.com/submit/visual', headers=new_header)
+
+                soup = BeautifulSoup(r.content, 'html.parser')
                 token = soup.select('input[name="token"]')[0]['value']
             except:
                 flash('Unable to upload to Weasyl on account %s. Make sure the site is online. If this problem continues, you may need to remove the account and add it again.' % (
                     account.username))
                 continue
-            r = s.post('https://www.weasyl.com/submit/visual', data={
-                'token': token,
-                'title': request.form['title'],
-                'content': description,
-                'tags': request.form['keywords'],
-                'rating': rating
-            }, headers=new_header, files={
-                'submitfile': image
-            })
+
+            try:
+                r = s.post('https://www.weasyl.com/submit/visual', data={
+                    'token': token,
+                    'title': request.form['title'],
+                    'content': description,
+                    'tags': request.form['keywords'],
+                    'rating': rating
+                }, headers=new_header, files={
+                    'submitfile': image
+                })
+            except:
+                flash('An error occured while uploading to Weasyl on account %s. Make sure the site is online.' % (account.username))
+                continue
 
             uploads.append(
                 {'link': r.url, 'name': '%s - %s' % (site.name, account.username)})
@@ -466,13 +482,13 @@ def upload_post():
 
             character_id = j['character_id']
 
-            r = s.post('https://beta.furrynetwork.com/api/oauth/token', {
-                'grant_type': 'refresh_token',
-                'client_id': '123',
-                'refresh_token': j['refresh']
-            }, headers=headers)
-
             try:
+                r = s.post('https://beta.furrynetwork.com/api/oauth/token', {
+                    'grant_type': 'refresh_token',
+                    'client_id': '123',
+                    'refresh_token': j['refresh']
+                }, headers=headers)
+
                 j = json.loads(r.content)
             except:
                 flash('Unable to upload to FurryNetwork on character %s. Make sure the site is online. If this problem continues, you may need to remove the account and add it again.' % (
@@ -489,11 +505,11 @@ def upload_post():
             new_header = headers.copy()
             new_header['Authorization'] = 'Bearer %s' % (token)
 
-            r = s.get('https://beta.furrynetwork.com/api/user', data={
-                'user_id': j['user_id']
-            }, headers=new_header)
-
             try:
+                r = s.get('https://beta.furrynetwork.com/api/user', data={
+                    'user_id': j['user_id']
+                }, headers=new_header)
+
                 j = json.loads(r.content)
             except:
                 flash('It appears that FurryNetwork was down while trying to post on character %s. Please try again later.' % (
@@ -522,13 +538,13 @@ def upload_post():
                 'resumableTotalChunks': '1'
             }
 
-            r = s.get('https://beta.furrynetwork.com/api/submission/%s/artwork/upload' %
-                      (username), headers=new_header, params=params)
-
-            r = s.post('https://beta.furrynetwork.com/api/submission/%s/artwork/upload' %
-                       (username), headers=new_header, params=params, data=image[1])
-
             try:
+                r = s.get('https://beta.furrynetwork.com/api/submission/%s/artwork/upload' %
+                          (username), headers=new_header, params=params)
+
+                r = s.post('https://beta.furrynetwork.com/api/submission/%s/artwork/upload' %
+                           (username), headers=new_header, params=params, data=image[1])
+
                 j = json.loads(r.content)
             except:
                 flash('It appears that FurryNetwork was down while trying to post on character %s. Please try again later.' % (
@@ -543,16 +559,16 @@ def upload_post():
             elif request.form['rating'] == 'explicit':
                 rating = 2
 
-            r = s.patch('https://beta.furrynetwork.com/api/artwork/%d' % (j['id']), headers=new_header, data=json.dumps({
-                'rating': rating,
-                'description': description,
-                'title': request.form['title'],
-                'tags': request.form['keywords'].split(' '),
-                'collections': [],
-                'status': 'public'
-            }))
-
             try:
+                r = s.patch('https://beta.furrynetwork.com/api/artwork/%d' % (j['id']), headers=new_header, data=json.dumps({
+                    'rating': rating,
+                    'description': description,
+                    'title': request.form['title'],
+                    'tags': request.form['keywords'].split(' '),
+                    'collections': [],
+                    'status': 'public'
+                }))
+
                 j = json.loads(r.content)
             except:
                 flash('It appears that FurryNetwork was down while trying to post on character %s. You may need to manually set the title, description, tags, and set it to be public.' % (
@@ -820,6 +836,7 @@ def change_password():
 
     flash('Password changed.')
     return redirect(url_for('upload_form'))
+
 
 @app.route('/switchtheme')
 @login_required
