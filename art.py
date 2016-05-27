@@ -108,6 +108,13 @@ def generate_csrf_token():
 app.jinja_env.globals['csrf_token'] = generate_csrf_token
 
 
+def english_series(items):
+    items = tuple(items)
+    if len(items) <= 1:
+        return "".join(items)
+    return ", ".join(x for x in items[:-1]) + ' and ' + items[-1]
+
+
 @app.route('/')
 def home():
     if 'id' in session:
@@ -116,9 +123,7 @@ def home():
         if user:
             return redirect(url_for('upload_form'))
 
-    sites = Site.query.all()
-
-    text = ', '.join([site.name for site in sites[0:-1]]) + ' and ' + sites[-1].name
+    text = english_series(site.name for site in Site.query.all())
 
     return render_template('home.html', text=text)
 
@@ -171,7 +176,8 @@ def register():
 
     strength, improvements = passwordmeter.test(request.form['password'])
     if strength < 0.3:
-        flash('Weak password. You may wish to try the following suggestions.<br><ul><li>%s</ul></ul>' % ('</li><li>'.join(improvements.values())))
+        flash('Weak password. You may wish to try the following suggestions.<br><ul><li>%s</ul></ul>' %
+              ('</li><li>'.join(improvements.values())))
         return redirect(url_for('home'))
 
     by_username = User.query.filter_by(
@@ -770,7 +776,8 @@ def change_password():
 
     strength, improvements = passwordmeter.test(new_password)
     if strength < 0.3:
-        flash('Weak password. You may wish to try the following suggestions.<br><ul><li>%s</ul></ul>' % ('</li><li>'.join(improvements.values())))
+        flash('Weak password. You may wish to try the following suggestions.<br><ul><li>%s</ul></ul>' %
+              ('</li><li>'.join(improvements.values())))
         return redirect(url_for('change_password_form'))
 
     if not g.user.verify(current_password):
