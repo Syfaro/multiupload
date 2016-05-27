@@ -5,7 +5,7 @@
 				<div class="row">
 					<div class="col-sm-12">
 						{% for message in messages %}
-							<div class="alert alert-info">{{ message }}</div>
+							<div class="alert alert-info">{{ message | safe }}</div>
 						{% endfor %}
 					</div>
 				</div>
@@ -30,7 +30,7 @@
 	<div class="container">
 		<footer class="footer text-right">
 			{% if user is defined %}
-				<a href="/logout">Log out</a>
+				<a href="/changepass">Change password</a> &middot; <a href="/logout">Log out</a>
 			{% endif %}
 		</footer>
 	</div>

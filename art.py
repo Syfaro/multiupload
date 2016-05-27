@@ -165,7 +165,7 @@ def register():
 
     strength, improvements = passwordmeter.test(request.form['password'])
     if strength < 0.3:
-        flash('Weak password.')
+        flash('Weak password. You may wish to try the following suggestions.<br><ul><li>%s</ul></ul>' % ('</li><li>'.join(improvements.values())))
         return redirect(url_for('home'))
 
     by_username = User.query.filter_by(
@@ -203,8 +203,8 @@ def parse_description(description, uploading_to):
 
         try:
             username = match.group(1)
-            linking_to = int(match.group(3))
-            link_type = int(match.group(2))
+            linking_to = int(match.group(2))
+            link_type = int(match.group(3))
         except:
             return False
 
@@ -240,21 +240,10 @@ def parse_description(description, uploading_to):
                     new_text = '[url=https://beta.furrynetwork.com/{0}]{0}[/url]'.format(
                         username)
             # Uploading to FN or Weasyl (same format type)
-            elif uploading_to == 2 and linking_to == 1 and link_type != 0:
-                new_text = '[{0}](https://www.furaffinity.net/user/{0}/)'.format(
-                    username)
             elif uploading_to == 2 or uploading_to == 3:
-                # If linking to FA, we can guess profile pictures
                 if linking_to == 1:
-                    if link_type == 0:
-                        new_text = '[{0}](https://www.furaffinity.net/user/{0}/)'.format(
-                            username)
-                    elif link_type == 1:
-                        new_text = '[![{0}](https://a.facdn.net/{1}.gif "{0}")](https://www.furaffinity.net/user/{0}/)'.format(
-                            username, username.lower())
-                    elif link_type == 2:
-                        new_text = '[{0} ![{0}](https://a.facdn.net/{1}.gif "{0}")](https://www.furaffinity.net/user/{0}/)'.format(
-                            username, username.lower())
+                    new_text = '[{0}](https://www.furaffinity.net/user/{0}/)'.format(
+                        username)
                 elif linking_to == 2:  # Weasyl
                     new_text = '[{0}](https://www.weasyl.com/~{0})'.format(
                         username)
@@ -746,6 +735,53 @@ def remove():
     db.session.commit()
 
     flash('Account removed.')
+    return redirect(url_for('upload_form'))
+
+
+@app.route('/changepass', methods=['GET'])
+@login_required
+def change_password_form():
+    return render_template('change_password.html')
+
+
+@app.route('/changepass', methods=['POST'])
+@login_required
+def change_password():
+    current_password = request.form.get('current_password', None)
+    if not current_password:
+        flash('Missing current password.')
+        return redirect(url_for('change_password_form'))
+
+    new_password = request.form.get('new_password', None)
+    if not new_password:
+        flash('Missing new password.')
+        return redirect(url_for('change_password_form'))
+
+    new_password_confirm = request.form.get('new_password_confirm', None)
+    if not new_password_confirm or new_password != new_password_confirm:
+        flash('Password confirmation does not match.')
+        return redirect(url_for('change_password_form'))
+
+    strength, improvements = passwordmeter.test(new_password)
+    if strength < 0.3:
+        flash('Weak password. You may wish to try the following suggestions.<br><ul><li>%s</ul></ul>' % ('</li><li>'.join(improvements.values())))
+        return redirect(url_for('change_password_form'))
+
+    if not g.user.verify(current_password):
+        flash('Current password is incorrect.')
+        return redirect(url_for('change_password_form'))
+
+    g.user.password = bcrypt.hashpw(
+        new_password.encode('utf-8'), bcrypt.gensalt())
+
+    for account in Account.query.filter_by(user_id=g.user.id).all():
+        decrypted = simplecrypt.decrypt(current_password, account.credentials)
+        encrypted = simplecrypt.encrypt(new_password, decrypted)
+        account.credentials = encrypted
+
+    db.session.commit()
+
+    flash('Password changed.')
     return redirect(url_for('upload_form'))
 
 if __name__ == '__main__':
