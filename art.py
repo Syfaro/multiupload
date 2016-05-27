@@ -267,6 +267,19 @@ def parse_description(description, uploading_to):
 
         match = re.search(exp, description)
 
+    if uploading_to == 1: # FA doesn't support Markdown, try and convert some stuff
+        url = re.compile('\[([^\]]+)\]\(([^)"]+)(?: \"([^\"]+)\")?\)')
+        match = url.match(description)
+
+        while match:
+            start, end = match.span(0)
+
+            new_link = '[url={url}]{text}[/url]'.format(text=match.group(1), url=match.group(2))
+            description = description[0:start] + new_link + description[end:]
+
+            match = url.match(description)
+
+
     return description
 
 
