@@ -42,10 +42,7 @@ class User(db.Model):
             password.encode('utf-8'), bcrypt.gensalt())
 
     def verify(self, password):
-        # apparently Python 2 sets self.password to a Unicode object??
-        if type(self.password).__name__ == 'unicode':
-            return bcrypt.hashpw(password.encode('utf-8'), self.password.encode('utf-8')) == self.password.encode('utf-8')
-        return bcrypt.hashpw(password.encode('utf-8'), self.password) == self.password
+        return bcrypt.hashpw(password.encode('utf-8'), self.password.encode('utf-8')) == self.password.encode('utf-8')
 
 
 class Site(db.Model):
@@ -115,7 +112,7 @@ def git_version():
     from subprocess import Popen, PIPE
     gitproc = Popen(['git', 'rev-parse', 'HEAD'], stdout=PIPE)
     (stdout, _) = gitproc.communicate()
-    return stdout.strip()
+    return stdout.strip().decode('utf-8')
 
 app.jinja_env.globals['git_version'] = git_version()[-7:]
 
@@ -282,7 +279,7 @@ def parse_description(description, uploading_to):
     # FA doesn't support Markdown, try and convert some stuff
     if uploading_to == 1:
         url = re.compile('\[([^\]]+)\]\(([^)"]+)(?: \"([^\"]+)\")?\)')
-        match = url.match(description)
+        match = url.search(description)
 
         while match:
             start, end = match.span(0)
@@ -427,7 +424,8 @@ def upload_post():
                     'rating': rating
                 }, cookies=j, headers=headers)
             except:
-                flash('An error occured while uploading to FurAffinity on account %s. Make sure the site is online.' % (account.username))
+                flash('An error occured while uploading to FurAffinity on account %s. Make sure the site is online.' % (
+                    account.username))
                 continue
 
             uploads.append(
@@ -469,7 +467,8 @@ def upload_post():
                     'submitfile': image
                 })
             except:
-                flash('An error occured while uploading to Weasyl on account %s. Make sure the site is online.' % (account.username))
+                flash('An error occured while uploading to Weasyl on account %s. Make sure the site is online.' % (
+                    account.username))
                 continue
 
             uploads.append(
