@@ -265,7 +265,7 @@ def parse_description(description, uploading_to):
                     new_text = '[url=https://beta.furrynetwork.com/{0}]{0}[/url]'.format(
                         username)
                 elif linking_to == 4:
-                    new_text = '[url=https://inkbunny.com/{0}]{0}[/url]'.format(username)
+                    new_text = '[url=https://inkbunny.net/{0}]{0}[/url]'.format(username)
             # Uploading to FN or Weasyl (same format type)
             elif uploading_to == 2 or uploading_to == 3:
                 if linking_to == 1:
@@ -278,7 +278,7 @@ def parse_description(description, uploading_to):
                     new_text = '[{0}](https://beta.furrynetwork.com/{0})'.format(
                         username)
                 elif linking_to == 4:
-                    new_text = '[{0}](https://inkbunny.com/{0})'.format(username)
+                    new_text = '[{0}](https://inkbunny.net/{0})'.format(username)
             elif uploading_to == 4:
                 if linking_to == 1:
                     new_text = '[fa]%s[/fa]' % (username)
