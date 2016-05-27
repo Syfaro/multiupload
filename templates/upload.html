@@ -30,8 +30,8 @@
 					</div>
 
 					<div class="form-group">
-						<button type="button" class="btn btn-default" data-toggle="modal" data-target=".add-user-modal">Add user link</button>
-						<button type="button" class="btn btn-default" data-toggle="modal" data-target=".description-preview-modal">Preview description</button>
+						<button type="button" class="btn btn-default btn-sm" data-toggle="modal" data-target=".add-user-modal">Add user link</button>
+						<button type="button" class="btn btn-default btn-sm" data-toggle="modal" data-target=".description-preview-modal">Preview description</button>
 
 						<p class="help-block">
 							Markdown URLs will be converted for sites that do not support it.
@@ -245,8 +245,8 @@
 		</div>
 	</div>
 
-	<script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
-	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+	<script src="{{ url_for('static', filename='js/jquery-2.2.4.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
 	<script>
 		var imagePreview = document.querySelector('.preview-image');
 

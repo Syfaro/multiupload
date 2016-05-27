@@ -42,7 +42,13 @@
 
 	<title>Furry Art Multiuploader</title>
 
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+	<link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon" type="image/x-icon">
+
+	{% if not user or not user.dark_theme %}
+		<link rel="stylesheet" href="{{ url_for('static', filename='css/flatly.min.css') }}">
+	{% else %}
+		<link rel="stylesheet" href="{{ url_for('static', filename='css/darkly.min.css') }}">
+	{% endif %}
 
 	<style>
 		/* CSS classes just to make my name purple, what of it? :3 */
@@ -60,17 +66,27 @@
 <body>
 	{% block body %}{% endblock %}
 
-	<div class="container">
+	<div class="container" style="margin-top: 1em; margin-bottom: 1em">
 		<footer class="footer">
-			{% if user is defined %}
-				<div class="pull-right">
-					<a href="/changepass">Change password</a> &middot; <a href="/logout">Log out</a>
+			<div class="row">
+				<div class="col-xs-4 text-left">
+					<a href="mailto:Syfaro<syfaro@foxpaw.in>?subject=Multiuploader">Bug? Suggestion?</a>
 				</div>
-			{% endif %}
 
-			<div class="pull-left">
-				<a href="mailto:Syfaro<syfaro@foxpaw.in>?subject=Multiuploader">Bug? Suggestion?</a>
-				<a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=syfaro%40foxpaw%2ein&lc=US&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted" target="_blank" class="syfaro">&hearts;</a>
+				<div class="col-xs-4 text-center text-muted">
+					 {{ git_version }}
+					 <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=syfaro%40foxpaw%2ein&lc=US&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted" target="_blank" class="syfaro">&hearts;</a>
+				</div>
+
+				{% if user is defined %}
+					<div class="col-xs-4 text-right">
+						<ul class="list-inline">
+							<li><a href="/switchtheme">{% if user.dark_theme %}Light theme{% else %}Dark theme{% endif %}</a></li>
+							<li><a href="/changepass">Change password</a></li>
+							<li><a href="/logout">Log out</a></li>
+						</ul>
+					</div>
+				{% endif %}
 			</div>
 		</footer>
 	</div>

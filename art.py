@@ -32,6 +32,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(16), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
+    dark_theme = db.Column(db.Boolean)
 
     accounts = db.relationship('Account', backref='user', lazy='dynamic')
 
@@ -108,6 +109,14 @@ def generate_csrf_token():
     return session['_csrf_token']
 
 app.jinja_env.globals['csrf_token'] = generate_csrf_token
+
+def git_version():
+    from subprocess import Popen, PIPE
+    gitproc = Popen(['git', 'rev-parse','HEAD'], stdout = PIPE)
+    (stdout, _) = gitproc.communicate()
+    return stdout.strip()
+
+app.jinja_env.globals['git_version'] = git_version()[-7:]
 
 
 def english_series(items):
@@ -553,7 +562,7 @@ def upload_post():
             uploads.append({'link': 'https://beta.furrynetwork.com/artwork/%d/' %
                             (j['id']), 'name': '%s - %s' % (site.name, account.username)})
 
-    return render_template('after_upload.html', uploads=uploads)
+    return render_template('after_upload.html', uploads=uploads, user=g.user)
 
 
 @app.route('/add')
@@ -561,7 +570,7 @@ def upload_post():
 def add():
     sites = Site.query.all()
 
-    return render_template('add_site.html', sites=sites)
+    return render_template('add_site.html', sites=sites, user=g.user)
 
 
 @app.route('/add/<int:site_id>', methods=['GET'])
@@ -585,7 +594,7 @@ def add_account_form(site_id):
 
         extra_data['captcha'] = base64.b64encode(captcha.content)
 
-    return render_template('add_site/%d.html' % (site_id), site=site, extra_data=extra_data)
+    return render_template('add_site/%d.html' % (site_id), site=site, extra_data=extra_data, user=g.user)
 
 
 @app.route('/add/<int:site_id>', methods=['POST'])
@@ -742,7 +751,7 @@ def remove_form(account_id):
         flash('Account does not belong to you.')
         return redirect(url_for('upload_form'))
 
-    return render_template('remove.html', account=account)
+    return render_template('remove.html', account=account, user=g.user)
 
 
 @app.route('/remove', methods=['POST'])
@@ -768,7 +777,7 @@ def remove():
 @app.route('/changepass', methods=['GET'])
 @login_required
 def change_password_form():
-    return render_template('change_password.html')
+    return render_template('change_password.html', user=g.user)
 
 
 @app.route('/changepass', methods=['POST'])
@@ -810,6 +819,15 @@ def change_password():
     db.session.commit()
 
     flash('Password changed.')
+    return redirect(url_for('upload_form'))
+
+@app.route('/switchtheme')
+@login_required
+def switchtheme():
+    g.user.dark_theme = not g.user.dark_theme
+
+    db.session.commit()
+
     return redirect(url_for('upload_form'))
 
 if __name__ == '__main__':
