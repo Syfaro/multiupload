@@ -249,17 +249,23 @@ def parse_description(description, uploading_to):
             elif uploading_to == 3:  # FurryNetwork
                 new_text = '[{0}](https://beta.furrynetwork.com/{0}/)'.format(
                     username)
+            elif uploading_to == 4:
+                if link_type == 0:
+                    new_text = '[name]%s[/name]' % (username)
+                elif link_type == 1:
+                    new_text = '[icon]%s[/icon]' % (username)
+                elif link_type == 2:
+                    new_text = '[iconname]%s[/iconname]' % (username)
         else:  # Uploading to other site
             if uploading_to == 1:  # Uploading to FurAffinity
-                if linking_to == 1:
-                    new_text = '[url=https://www.furaffinity.net/user/{0}/]{0}[/url]'.format(
-                        username)
-                elif linking_to == 2:
+                if linking_to == 2:
                     new_text = '[url=https://www.weasyl.com/~{0}]{0}[/url]'.format(
                         username)
                 elif linking_to == 3:
                     new_text = '[url=https://beta.furrynetwork.com/{0}]{0}[/url]'.format(
                         username)
+                elif linking_to == 4:
+                    new_text = '[url=https://inkbunny.com/{0}]{0}[/url]'.format(username)
             # Uploading to FN or Weasyl (same format type)
             elif uploading_to == 2 or uploading_to == 3:
                 if linking_to == 1:
@@ -271,13 +277,22 @@ def parse_description(description, uploading_to):
                 elif linking_to == 3:  # FurryNetwork
                     new_text = '[{0}](https://beta.furrynetwork.com/{0})'.format(
                         username)
+                elif linking_to == 4:
+                    new_text = '[{0}](https://inkbunny.com/{0})'.format(username)
+            elif uploading_to == 4:
+                if linking_to == 1:
+                    new_text = '[fa]%s[/fa]' % (username)
+                elif linking_to == 2:
+                    new_text = '[w]%s[/w]' % (username)
+                elif linking_to == 3:
+                    new_text = '[url=https://beta.furrynetwork.com/{0}/]{0}[/url]'.format(username)
 
         description = description[0:start] + new_text + description[end:]
 
         match = re.search(exp, description)
 
-    # FA doesn't support Markdown, try and convert some stuff
-    if uploading_to == 1:
+    # FA and Inkbunny don't support Markdown, try and convert some stuff
+    if uploading_to == 1 or uploading_to == 4:
         url = re.compile('\[([^\]]+)\]\(([^)"]+)(?: \"([^\"]+)\")?\)')
         match = url.search(description)
 
