@@ -32,7 +32,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(16), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
-    dark_theme = db.Column(db.Boolean)
+    dark_theme = db.Column(db.Boolean, default=0)
 
     accounts = db.relationship('Account', backref='user', lazy='dynamic')
 
