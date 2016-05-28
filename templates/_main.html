@@ -1,9 +1,9 @@
-{% macro flashes() -%}
+{% macro flashes(width='col-sm-12') -%}
 	{% with messages = get_flashed_messages() %}
 		{% if messages %}
 			<div class="container">
 				<div class="row">
-					<div class="col-sm-12">
+					<div class="{{ width }}">
 						{% for message in messages %}
 							<div class="alert alert-info">{{ message | safe }}</div>
 						{% endfor %}
