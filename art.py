@@ -765,6 +765,33 @@ def add_account_post(site_id):
 
         db.session.commit()
 
+    elif site.id == 4:
+        if Account.query.filter_by(site_id=site.id).filter_by(user_id=g.user.id).filter(func.lower(Account.username) == func.lower(request.form['username'])).first():
+            flash('This account has already been added.')
+            return redirect(url_for('upload_form'))
+
+        try:
+            r = requests.get('https://inkbunny.net/api_login.php', params={
+                'username': request.form['username'],
+                'password': request.form['password']
+            })
+
+            j = json.loads(r.content.decode('utf-8'))
+
+            if not 'sid' in j or j['sid'] == '':
+                raise Exception('Invalid username or password.')
+        except:
+            flash('Invalid username and password.')
+            return redirect(url_for('add_account_form', site_id=site.id))
+
+        account = Account(site.id, session['id'], request.form['username'], json.dumps({
+            'username': request.form['username'],
+            'password': request.form['password']
+        }), request.form['site_password'])
+
+        db.session.add(account)
+        db.session.commit()
+
     return redirect(url_for('upload_form'))
 
 
