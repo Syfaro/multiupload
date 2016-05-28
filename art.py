@@ -650,7 +650,8 @@ def upload_post():
                     'submission_id': j['submission_id'],
                     'title': request.form['title'],
                     'desc': description,
-                    'keywords': request.form['keywords']
+                    'keywords': request.form['keywords'],
+                    'visibility': 'yes'
                 }
 
                 if request.form['rating'] == 'mature':
