@@ -1171,7 +1171,9 @@ def settings_sofurry_remap():
     for account in sofurry_accounts:
         remap = account.config.filter_by(key='remap_sofurry').first()
 
-        print(request.form.get('account[%d]' % (account.id)))
+        if not remap:
+            remap = AccountConfig(account.id, 'remap_sofurry', 'no')
+            db.session.add(remap)
 
         if request.form.get('account[%d]' % (account.id)) == 'on':
             remap.val = 'yes'
