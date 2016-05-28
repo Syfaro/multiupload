@@ -73,6 +73,9 @@ class Account(db.Model):
         self.username = username
         self.credentials = simplecrypt.encrypt(password, credentials)
 
+    def __getitem__(self, arg):
+        return self.config.filter_by(key=arg).first()
+
 
 class AccountConfig(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -1151,7 +1154,7 @@ def settings():
         if account.site_id != 5:
             continue
 
-        remap = account.config.filter_by(key='remap_sofurry').first()
+        remap = account['remap_sofurry']
 
         sofurry.append({
             'id': account.id,
@@ -1169,7 +1172,7 @@ def settings_sofurry_remap():
         account for account in g.user.accounts if account.site_id == 5 and account.user_id == g.user.id]
 
     for account in sofurry_accounts:
-        remap = account.config.filter_by(key='remap_sofurry').first()
+        remap = account['remap_sofurry']
 
         if not remap:
             remap = AccountConfig(account.id, 'remap_sofurry', 'no')
