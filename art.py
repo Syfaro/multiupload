@@ -671,7 +671,7 @@ def upload_post():
                 continue
 
             uploads.append({
-                'link': 'https://inkbunny.net/submissionview.php?id=%d' % (j['submission_id']),
+                'link': 'https://inkbunny.net/submissionview.php?id=%s' % (j['submission_id']),
                 'name': '%s - %s' % (site.name, account.username)
             })
 
