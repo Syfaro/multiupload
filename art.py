@@ -490,8 +490,10 @@ def upload_post():
                     account.username))
                 continue
 
-            uploads.append(
-                {'link': r.url, 'name': '%s - %s' % (site.name, account.username)})
+            uploads.append({
+                'link': r.url,
+                'name': '%s - %s' % (site.name, account.username)
+            })
 
         elif site.id == 3:
             s = requests.session()
@@ -602,15 +604,76 @@ def upload_post():
                     account.username))
                 continue
 
-            uploads.append({'link': 'https://beta.furrynetwork.com/artwork/%d/' %
-                            (j['id']), 'name': '%s - %s' % (site.name, account.username)})
+            uploads.append({
+                'link': 'https://beta.furrynetwork.com/artwork/%d/' % (j['id']),
+                'name': '%s - %s' % (site.name, account.username)
+            })
 
         elif site.id == 4:
             s = requests.session()
 
-            creds = json.loads(decrypted)
+            creds = json.loads(decrypted.decode('utf-8'))
 
-            r = s.get('https://inkbunny.net/api_login.php', params=creds)
+            try:
+                r = s.post('https://inkbunny.net/api_login.php', data=creds)
+                j = json.loads(r.content.decode('utf-8'))
+                if 'error_message' in j:
+                    flash('Inkbunny returned error for account %s: %s' %
+                          (account.username, j['error_message']))
+                if 'sid' not in j:
+                    raise Exception('Invalid username and password.')
+            except:
+                flash('Unable to login to Inkbunny on account %s. Make sure the site is online. If this problem continues, you may need to remove the account and add it again.' % (
+                    account.username))
+                continue
+
+            try:
+                r = s.post('https://inkbunny.net/api_upload.php', data={
+                    'sid': j['sid']
+                }, files={
+                    'uploadedfile[]': image
+                }, headers=headers)
+                j = json.loads(r.content.decode('utf-8'))
+                if 'error_message' in j:
+                    flash('Inkbunny returned error for account %s: %s' %
+                          (account.username, j['error_message']))
+                if 'submission_id' not in j:
+                    raise Exception('Unable to upload.')
+            except:
+                flash('Unable to upload to Inkbunny on account %s.' %
+                      (account.username))
+                continue
+
+            try:
+                data = {
+                    'sid': j['sid'],
+                    'submission_id': j['submission_id'],
+                    'title': request.form['title'],
+                    'desc': description,
+                    'keywords': request.form['keywords']
+                }
+
+                if request.form['rating'] == 'mature':
+                    data['tag[2]'] = 'yes'
+                elif request.form['rating'] == 'explicit':
+                    data['tag[4]'] = 'yes'
+
+                r = s.post(
+                    'https://inkbunny.net/api_editsubmission.php', data=data)
+                j = json.loads(r.content.decode('utf-8'))
+
+                if 'error_message' in j:
+                    flash('Inkbunny returned error for account %s: %s' %
+                          (account.username, j['error_message']))
+            except:
+                flash('Unable to update Inkbunny submission on account %s.' %
+                      (account.username))
+                continue
+
+            uploads.append({
+                'link': 'https://inkbunny.net/submissionview.php?id=%d' % (j['submission_id']),
+                'name': '%s - %s' % (site.name, account.username)
+            })
 
     return render_template('after_upload.html', uploads=uploads, user=g.user)
 
@@ -791,7 +854,7 @@ def add_account_post(site_id):
             return redirect(url_for('upload_form'))
 
         try:
-            r = requests.get('https://inkbunny.net/api_login.php', params={
+            r = requests.post('https://inkbunny.net/api_login.php', params={
                 'username': request.form['username'],
                 'password': request.form['password']
             })
