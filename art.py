@@ -42,7 +42,13 @@ class User(db.Model):
             password.encode('utf-8'), bcrypt.gensalt())
 
     def verify(self, password):
-        return bcrypt.hashpw(password.encode('utf-8'), self.password.encode('utf-8')) == self.password.encode('utf-8')
+        # in Python 2, self.password can be either a `unicode` or a `buffer`
+        selfpassword = self.password
+        if type(selfpassword).__name__ == 'unicode':
+            selfpassword = selfpassword.encode('utf-8')
+        elif type(selfpassword).__name__ == 'buffer':
+            selfpassword = str(selfpassword)
+        return bcrypt.hashpw(password.encode('utf-8'), selfpassword) == selfpassword
 
 
 class Site(db.Model):
@@ -387,7 +393,7 @@ def upload_post():
         if site.id == 1:
             s = requests.session()
 
-            j = json.loads(decrypted)
+            j = json.loads(decrypted.decode('utf-8'))
 
             rating = '1'
             if request.form['rating'] == 'general':
@@ -492,7 +498,7 @@ def upload_post():
         elif site.id == 3:
             s = requests.session()
 
-            j = json.loads(decrypted)
+            j = json.loads(decrypted.decode('utf-8'))
 
             character_id = j['character_id']
 
@@ -503,7 +509,7 @@ def upload_post():
                     'refresh_token': j['refresh']
                 }, headers=headers)
 
-                j = json.loads(r.content)
+                j = json.loads(r.content.decode('utf-8'))
             except:
                 flash('Unable to upload to FurryNetwork on character %s. Make sure the site is online. If this problem continues, you may need to remove the account and add it again.' % (
                     account.username))
@@ -524,7 +530,7 @@ def upload_post():
                     'user_id': j['user_id']
                 }, headers=new_header)
 
-                j = json.loads(r.content)
+                j = json.loads(r.content.decode('utf-8'))
             except:
                 flash('It appears that FurryNetwork was down while trying to post on character %s. Please try again later.' % (
                     account.username))
@@ -559,7 +565,7 @@ def upload_post():
                 r = s.post('https://beta.furrynetwork.com/api/submission/%s/artwork/upload' %
                            (username), headers=new_header, params=params, data=image[1])
 
-                j = json.loads(r.content)
+                j = json.loads(r.content.decode('utf-8'))
             except:
                 flash('It appears that FurryNetwork was down while trying to post on character %s. Please try again later.' % (
                     account.username))
@@ -583,7 +589,7 @@ def upload_post():
                     'status': 'public'
                 }))
 
-                j = json.loads(r.content)
+                j = json.loads(r.content.decode('utf-8'))
             except:
                 flash('It appears that FurryNetwork was down while trying to post on character %s. You may need to manually set the title, description, tags, and set it to be public.' % (
                     account.username))
@@ -682,7 +688,7 @@ def add_account_post(site_id):
             'https://www.weasyl.com/api/whoami', headers=new_header)
 
         try:
-            j = json.loads(r.content)
+            j = json.loads(r.content.decode('utf-8'))
         except:
             flash('Invalid API Token')
             return redirect(url_for('add_account_form', site_id=site.id))
@@ -711,7 +717,7 @@ def add_account_post(site_id):
         }, headers=headers)
 
         try:
-            j = json.loads(r.content)
+            j = json.loads(r.content.decode('utf-8'))
         except:
             flash('Invalid username and password, or site is down.')
             return redirect(url_for('add_account_form', site_id=site.id))
@@ -730,7 +736,7 @@ def add_account_post(site_id):
         }, headers=new_header)
 
         try:
-            j = json.loads(r.content)
+            j = json.loads(r.content.decode('utf-8'))
         except:
             flash('Site is likely down, please try again later.')
             return redirect(url_for('add_account_form', site_id=site.id))
@@ -745,7 +751,7 @@ def add_account_post(site_id):
                 account_data = simplecrypt.decrypt(
                     request.form['site_password'], account.credentials)
 
-                j = json.loads(account_data)
+                j = json.loads(account_data.decode('utf-8'))
 
                 if j['character_id'] == character['id']:
                     flash('Character %s already in database.' %

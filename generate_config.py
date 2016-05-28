@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 import base64, os, sys
 sys.stdout.write("""
+# URI to the database
+SQLALCHEMY_DATABASE_URI = "sqlite3:///test.db"
+
 # A long and random string
 SECRET_KEY = "{secret_key}"
 
