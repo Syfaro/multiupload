@@ -42,12 +42,7 @@ class User(db.Model):
             password.encode('utf-8'), bcrypt.gensalt())
 
     def verify(self, password):
-        # in Python 2, self.password can be either a `unicode` or a `buffer`
-        selfpassword = self.password
-        if type(selfpassword).__name__ == 'unicode':
-            selfpassword = selfpassword.encode('utf-8')
-        elif type(selfpassword).__name__ == 'buffer':
-            selfpassword = str(selfpassword)
+        selfpassword = self.password.encode('utf-8')
         return bcrypt.hashpw(password.encode('utf-8'), selfpassword) == selfpassword
 
 
@@ -271,7 +266,8 @@ def parse_description(description, uploading_to):
                     new_text = '[url=https://beta.furrynetwork.com/{0}]{0}[/url]'.format(
                         username)
                 elif linking_to == 4:
-                    new_text = '[url=https://inkbunny.net/{0}]{0}[/url]'.format(username)
+                    new_text = '[url=https://inkbunny.net/{0}]{0}[/url]'.format(
+                        username)
             # Uploading to FN or Weasyl (same format type)
             elif uploading_to == 2 or uploading_to == 3:
                 if linking_to == 1:
@@ -284,14 +280,16 @@ def parse_description(description, uploading_to):
                     new_text = '[{0}](https://beta.furrynetwork.com/{0})'.format(
                         username)
                 elif linking_to == 4:
-                    new_text = '[{0}](https://inkbunny.net/{0})'.format(username)
+                    new_text = '[{0}](https://inkbunny.net/{0})'.format(
+                        username)
             elif uploading_to == 4:
                 if linking_to == 1:
                     new_text = '[fa]%s[/fa]' % (username)
                 elif linking_to == 2:
                     new_text = '[w]%s[/w]' % (username)
                 elif linking_to == 3:
-                    new_text = '[url=https://beta.furrynetwork.com/{0}/]{0}[/url]'.format(username)
+                    new_text = '[url=https://beta.furrynetwork.com/{0}/]{0}[/url]'.format(
+                        username)
 
         description = description[0:start] + new_text + description[end:]
 
@@ -595,8 +593,24 @@ def upload_post():
                     account.username))
                 continue
 
+            if 'errors' in j and 'tags' in j['errors']:
+                flash('There was an error using your tags on FurryNetwork with character %s. Your submission has been uploaded, but is currently unlisted.' % (
+                    account.username))
+                continue
+            elif 'id' not in j:
+                flash('An error occured updating your submission on FurryNetwork with character %s. It has been uploaded, but is currently unlisted.' % (
+                    account.username))
+                continue
+
             uploads.append({'link': 'https://beta.furrynetwork.com/artwork/%d/' %
                             (j['id']), 'name': '%s - %s' % (site.name, account.username)})
+
+        elif site.id == 4:
+            s = requests.session()
+
+            creds = json.loads(decrypted)
+
+            r = s.get('https://inkbunny.net/api_login.php', params=creds)
 
     return render_template('after_upload.html', uploads=uploads, user=g.user)
 
