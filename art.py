@@ -65,7 +65,7 @@ class Account(db.Model):
     site = db.relationship(
         'Site', backref=db.backref('account', lazy='dynamic'))
 
-    config = db.relationship('AccountConfig', lazy='dynamic')
+    config = db.relationship('AccountConfig', lazy='dynamic', cascade='delete')
 
     def __init__(self, site_id, user_id, username, credentials, password):
         self.site_id = site_id
@@ -73,10 +73,12 @@ class Account(db.Model):
         self.username = username
         self.credentials = simplecrypt.encrypt(password, credentials)
 
+
 class AccountConfig(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
-    account_id = db.Column(db.Integer, db.ForeignKey('account.id'), nullable=False)
+    account_id = db.Column(
+        db.Integer, db.ForeignKey('account.id'), nullable=False)
 
     key = db.Column(db.String(120), nullable=False)
     val = db.Column(db.String(120), nullable=False)
@@ -396,6 +398,8 @@ def upload_post():
         flash('Missing keywords.')
         return render_template('upload.html', user=g.user, sites=Site.query.all())
 
+    has_less_2 = len(request.form['keywords'].split(' ')) < 2
+
     if not request.files.get('image', None):
         flash('Missing image.')
         return render_template('upload.html', user=g.user, sites=Site.query.all())
@@ -408,10 +412,10 @@ def upload_post():
         flash('No content rating selected.')
         return render_template('upload.html', user=g.user, sites=Site.query.all())
 
-    has_less_2 = len(request.form['keywords'].split(' ')) < 2
-
     for account in Account.query.filter_by(user_id=g.user.id).all():
         account.used_last = 0
+
+    basicError = False
 
     accounts = []
     for a in request.form.getlist('account'):
@@ -425,13 +429,18 @@ def upload_post():
 
         if account.site.id == 2 and has_less_2:
             flash('Weasyl requires at least two tags.')
-            return render_template('upload.html', user=g.user, sites=Site.query.all())
+            basicError = True
 
         if account.site.id == 5 and has_less_2:
             flash('SoFurry requires at least two tags.')
-            return render_template('upload.html', user=g.user, sites=Site.query.all())
+            basicError = True
 
         accounts.append(account)
+
+    db.session.commit()
+
+    if basicError:
+        return render_template('upload.html', user=g.user, sites=Site.query.all())
 
     if not g.user.verify(request.form['site_password']):
         flash('Incorrect password.')
@@ -776,7 +785,8 @@ def upload_post():
 
             rating = '1'
 
-            should_remap = account.config.filter_by(key='remap_sofurry').first()
+            should_remap = account.config.filter_by(
+                key='remap_sofurry').first()
             if should_remap and should_remap.val == 'yes':
                 if request.form['rating'] == 'general':
                     rating = '0'
@@ -809,8 +819,6 @@ def upload_post():
                 'link': r.url,
                 'name': '%s - %s' % (site.name, account.username)
             })
-
-    db.session.commit()
 
     return render_template('after_upload.html', uploads=uploads, user=g.user)
 
@@ -1131,7 +1139,48 @@ def switchtheme():
 
     db.session.commit()
 
-    return redirect(url_for('upload_form'))
+    return redirect(url_for('settings'))
+
+
+@app.route('/settings')
+@login_required
+def settings():
+    sofurry = []
+
+    for account in g.user.accounts:
+        if account.site_id != 5:
+            continue
+
+        remap = account.config.filter_by(key='remap_sofurry').first()
+
+        sofurry.append({
+            'id': account.id,
+            'username': account.username,
+            'enabled': remap and remap.val == 'yes'
+        })
+
+    return render_template('settings.html', user=g.user, sofurry=sofurry)
+
+
+@app.route('/settings/sofurry/remap', methods=['POST'])
+@login_required
+def settings_sofurry_remap():
+    sofurry_accounts = [
+        account for account in g.user.accounts if account.site_id == 5 and account.user_id == g.user.id]
+
+    for account in sofurry_accounts:
+        remap = account.config.filter_by(key='remap_sofurry').first()
+
+        print(request.form.get('account[%d]' % (account.id)))
+
+        if request.form.get('account[%d]' % (account.id)) == 'on':
+            remap.val = 'yes'
+        else:
+            remap.val = 'no'
+
+    db.session.commit()
+
+    return redirect(url_for('settings'))
 
 if __name__ == '__main__':
     db.create_all()
