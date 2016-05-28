@@ -706,7 +706,7 @@ def add_account_form(site_id):
         captcha = s.get(
             'https://www.furaffinity.net/captcha.jpg', headers=headers)
 
-        extra_data['captcha'] = base64.b64encode(captcha.content)
+        extra_data['captcha'] = base64.b64encode(captcha.content).decode('utf-8')
 
     return render_template('add_site/%d.html' % (site_id), site=site, extra_data=extra_data, user=g.user)
 
