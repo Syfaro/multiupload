@@ -60,15 +60,33 @@ class Account(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     username = db.Column(db.String(120), nullable=False)
     credentials = db.Column(db.LargeBinary, nullable=False)
+    used_last = db.Column(db.Boolean, default=True)
 
     site = db.relationship(
         'Site', backref=db.backref('account', lazy='dynamic'))
+
+    config = db.relationship('AccountConfig', lazy='dynamic')
 
     def __init__(self, site_id, user_id, username, credentials, password):
         self.site_id = site_id
         self.user_id = user_id
         self.username = username
         self.credentials = simplecrypt.encrypt(password, credentials)
+
+class AccountConfig(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    account_id = db.Column(db.Integer, db.ForeignKey('account.id'), nullable=False)
+
+    key = db.Column(db.String(120), nullable=False)
+    val = db.Column(db.String(120), nullable=False)
+
+    account = db.relationship('Account', back_populates='config')
+
+    def __init__(self, account_id, key, val):
+        self.account_id = account_id
+        self.key = key
+        self.val = val
 
 
 def login_required(f):
@@ -392,6 +410,9 @@ def upload_post():
 
     has_less_2 = len(request.form['keywords'].split(' ')) < 2
 
+    for account in Account.query.filter_by(user_id=g.user.id).all():
+        account.used_last = 0
+
     accounts = []
     for a in request.form.getlist('account'):
         account = Account.query.get(a)
@@ -399,6 +420,8 @@ def upload_post():
         if not account or account.user_id != g.user.id:
             flash('Account does not exist or does not belong to current user.')
             return render_template('upload.html', user=g.user, sites=Site.query.all())
+
+        account.used_last = 1
 
         if account.site.id == 2 and has_less_2:
             flash('Weasyl requires at least two tags.')
@@ -752,10 +775,20 @@ def upload_post():
                 continue
 
             rating = '1'
-            if request.form['rating'] == 'general':
-                rating = '0'
-            elif request.form['rating'] == 'mature' or request.form['rating'] == 'explicit':
-                rating = '1'
+
+            should_remap = account.config.filter_by(key='remap_sofurry').first()
+            if should_remap and should_remap.val == 'yes':
+                if request.form['rating'] == 'general':
+                    rating = '0'
+                elif request.form['rating'] == 'mature':
+                    rating = '1'
+                elif request.form['rating'] == 'explicit':
+                    rating = '2'
+            else:
+                if request.form['rating'] == 'general':
+                    rating = '0'
+                elif request.form['rating'] == 'mature' or request.form['rating'] == 'explicit':
+                    rating = '1'
 
             try:
                 r = s.post('https://www.sofurry.com/upload/details?contentType=1', data={
@@ -776,6 +809,8 @@ def upload_post():
                 'link': r.url,
                 'name': '%s - %s' % (site.name, account.username)
             })
+
+    db.session.commit()
 
     return render_template('after_upload.html', uploads=uploads, user=g.user)
 

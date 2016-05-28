@@ -79,7 +79,7 @@
 					{% for account in user.accounts %}
 						<div class="checkbox">
 							<label>
-								<input type="checkbox" name="account" value="{{ account.id }}" checked>
+								<input type="checkbox" name="account" value="{{ account.id }}" {% if account.used_last == 1 %}checked{% endif %}>
 								{{ account.site.name }} - {{ account.username }}
 								<a href="/remove/{{ account.id }}" class="btn btn-xs btn-danger">Remove</a>
 							</label>
