@@ -148,6 +148,15 @@ def english_series(items):
     return ", ".join(x for x in items[:-1]) + ' and ' + items[-1]
 
 
+@app.errorhandler(Exception)
+@app.errorhandler(500)
+def internal_server_error(error):
+    return render_template('500.html',
+        event_id=g.sentry_event_id,
+        public_dsn=sentry.client.get_public_dsn('https')
+    )
+
+
 @app.route('/')
 def home():
     if 'id' in session:

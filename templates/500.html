@@ -1,0 +1,31 @@
+{% extends '_main.html' %}
+
+{% block body %}
+	<div class="container">
+		<div class="row text-center">
+			<div class="col-sm-12 col-md-4 col-md-offset-4">
+				<h1>Internal server error</h1>
+
+				<p>
+					Please try again.
+				</p>
+
+				<p>
+					<a href="/" class="btn btn-lg btn-primary">Home</a>
+				</p>
+			</div>
+		</div>
+	</div>
+
+	{% if event_id %}
+		<!-- Sentry JS SDK 2.1.+ required -->
+		<script src="https://cdn.ravenjs.com/2.3.0/raven.min.js"></script>
+
+		<script>
+		Raven.showReportDialog({
+			eventId: '{{ event_id }}',
+			dsn: '{{ public_dsn }}'
+		});
+	  </script>
+	{% endif %}
+{% endblock %}
