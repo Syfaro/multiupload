@@ -257,6 +257,16 @@ def parse_description(description, uploading_to):
                     new_text = '[icon]%s[/icon]' % (username)
                 elif link_type == 2:
                     new_text = '[iconname]%s[/iconname]' % (username)
+            elif uploading_to == 5:
+                if link_type == 0:
+                    clean = username.lower().replace(
+                        ' ', '-').replace('_', '-')
+                    new_text = '[url=http://{clean}.sofurry.com/]{username}[/url]'.format(
+                        username=username, clean=clean)
+                elif link_type == 1:
+                    new_text = ':%sicon:' % (username)
+                elif link_type == 2:
+                    new_text = ':icon%s:' % (username)
         else:  # Uploading to other site
             if uploading_to == 1:  # Uploading to FurAffinity
                 if linking_to == 2:
@@ -268,6 +278,11 @@ def parse_description(description, uploading_to):
                 elif linking_to == 4:
                     new_text = '[url=https://inkbunny.net/{0}]{0}[/url]'.format(
                         username)
+                elif linking_to == 5:
+                    clean = username.lower().replace(
+                        ' ', '-').replace('_', '-')
+                    new_text = '[url=http://{clean}.sofurry.com/]{username}[/url]'.format(
+                        username=username, clean=clean)
             # Uploading to FN or Weasyl (same format type)
             elif uploading_to == 2 or uploading_to == 3:
                 if linking_to == 1:
@@ -282,6 +297,11 @@ def parse_description(description, uploading_to):
                 elif linking_to == 4:
                     new_text = '[{0}](https://inkbunny.net/{0})'.format(
                         username)
+                elif linking_to == 5:
+                    clean = username.lower().replace(
+                        ' ', '-').replace('_', '-')
+                    new_text = '[{username}](https://{clean}.sofurry.com)'.format(
+                        username=username, clean=clean)
             elif uploading_to == 4:
                 if linking_to == 1:
                     new_text = '[fa]%s[/fa]' % (username)
@@ -290,13 +310,27 @@ def parse_description(description, uploading_to):
                 elif linking_to == 3:
                     new_text = '[url=https://beta.furrynetwork.com/{0}/]{0}[/url]'.format(
                         username)
+                elif linking_to == 5:
+                    new_text = '[sf]%s[/sf]' % (username)
+            elif uploading_to == 5:
+                if linking_to == 1:
+                    new_text = 'fa!%s' % (username)
+                elif linking_to == 2:
+                    new_text = '[url=https://www.weasyl.com/~{0}]{0}[/url]'.format(
+                        username)
+                elif linking_to == 3:
+                    new_text = '[url=https://beta.furrynetwork.com/{0}]{0}[/url]'.format(
+                        username)
+                elif linking_to == 4:
+                    new_text = 'ib!%s' % (username)
 
         description = description[0:start] + new_text + description[end:]
 
         match = re.search(exp, description)
 
-    # FA and Inkbunny don't support Markdown, try and convert some stuff
-    if uploading_to == 1 or uploading_to == 4:
+    # FA, Inkbunny, and SoFurry don't support Markdown, try and convert some
+    # stuff
+    if uploading_to in (1, 4, 5):
         url = re.compile('\[([^\]]+)\]\(([^)"]+)(?: \"([^\"]+)\")?\)')
         match = url.search(description)
 
@@ -368,6 +402,10 @@ def upload_post():
 
         if account.site.id == 2 and has_less_2:
             flash('Weasyl requires at least two tags.')
+            return render_template('upload.html', user=g.user, sites=Site.query.all())
+
+        if account.site.id == 5 and has_less_2:
+            flash('SoFurry requires at least two tags.')
             return render_template('upload.html', user=g.user, sites=Site.query.all())
 
         accounts.append(account)
@@ -615,7 +653,8 @@ def upload_post():
             creds = json.loads(decrypted.decode('utf-8'))
 
             try:
-                r = s.post('https://inkbunny.net/api_login.php', data=creds)
+                r = s.post(
+                    'https://inkbunny.net/api_login.php', data=creds, headers=headers)
                 j = json.loads(r.content.decode('utf-8'))
                 if 'error_message' in j:
                     flash('Inkbunny returned error for account %s: %s' %
@@ -660,7 +699,7 @@ def upload_post():
                     data['tag[4]'] = 'yes'
 
                 r = s.post(
-                    'https://inkbunny.net/api_editsubmission.php', data=data)
+                    'https://inkbunny.net/api_editsubmission.php', data=data, headers=headers)
                 j = json.loads(r.content.decode('utf-8'))
 
                 if 'error_message' in j:
@@ -673,6 +712,68 @@ def upload_post():
 
             uploads.append({
                 'link': 'https://inkbunny.net/submissionview.php?id=%s' % (j['submission_id']),
+                'name': '%s - %s' % (site.name, account.username)
+            })
+
+        elif site.id == 5:
+            s = requests.session()
+
+            creds = json.loads(decrypted.decode('utf-8'))
+
+            try:
+                r = s.post('https://www.sofurry.com/user/login', data={
+                    'LoginForm[sfLoginUsername]': creds['username'],
+                    'LoginForm[sfLoginPassword]': creds['password']
+                }, headers=headers)
+            except:
+                flash('SoFurry appears to be down while uploading to account %s. Please try again later.' % (
+                    account.username))
+                continue
+
+            if r.url.endswith('/user/login'):
+                flash('Invalid username or password.')
+                continue
+
+            if not 'sfuser' in s.cookies:
+                flash('Unable to find SoFurry login cookie.')
+                continue
+
+            try:
+                r = s.get(
+                    'https://www.sofurry.com/upload/details?contentType=1', headers=headers)
+
+                soup = BeautifulSoup(r.content, 'html.parser')
+
+                key = soup.select('input[name="YII_CSRF_TOKEN"]')[0]['value']
+                key2 = soup.select('#UploadForm_P_id')[0]['value']
+            except:
+                flash('Unable to get submission form for SoFurry on account %s.' % (
+                    account.username))
+                continue
+
+            rating = '1'
+            if request.form['rating'] == 'general':
+                rating = '0'
+            elif request.form['rating'] == 'mature' or request.form['rating'] == 'explicit':
+                rating = '1'
+
+            try:
+                r = s.post('https://www.sofurry.com/upload/details?contentType=1', data={
+                    'UploadForm[P_title]': request.form['title'],
+                    'UploadForm[contentLevel]': rating,
+                    'UploadForm[description]': description,
+                    'UploadForm[formtags]': ', '.join(request.form['keywords'].split(' ')),
+                    'YII_CSRF_TOKEN': key,
+                    'UploadForm[P_id]': key2
+                }, files={
+                    'UploadForm[binarycontent]': image
+                }, headers=headers)
+            except:
+                flash(
+                    'Unable to upload submission to SoFurry on account %s.' % (account.username))
+
+            uploads.append({
+                'link': r.url,
                 'name': '%s - %s' % (site.name, account.username)
             })
 
@@ -706,7 +807,8 @@ def add_account_form(site_id):
         captcha = s.get(
             'https://www.furaffinity.net/captcha.jpg', headers=headers)
 
-        extra_data['captcha'] = base64.b64encode(captcha.content).decode('utf-8')
+        extra_data['captcha'] = base64.b64encode(
+            captcha.content).decode('utf-8')
 
     return render_template('add_site/%d.html' % (site_id), site=site, extra_data=extra_data, user=g.user)
 
@@ -858,14 +960,38 @@ def add_account_post(site_id):
             r = requests.post('https://inkbunny.net/api_login.php', params={
                 'username': request.form['username'],
                 'password': request.form['password']
-            })
+            }, headers=headers)
 
             j = json.loads(r.content.decode('utf-8'))
 
             if not 'sid' in j or j['sid'] == '':
                 raise Exception('Invalid username or password.')
         except:
-            flash('Invalid username and password.')
+            flash('Invalid username or password.')
+            return redirect(url_for('add_account_form', site_id=site.id))
+
+        account = Account(site.id, session['id'], request.form['username'], json.dumps({
+            'username': request.form['username'],
+            'password': request.form['password']
+        }), request.form['site_password'])
+
+        db.session.add(account)
+        db.session.commit()
+
+    elif site.id == 5:
+        s = requests.session()
+
+        r = s.post('https://www.sofurry.com/user/login', data={
+            'LoginForm[sfLoginUsername]': request.form['username'],
+            'LoginForm[sfLoginPassword]': request.form['password']
+        }, headers=headers)
+
+        if r.url.endswith('/user/login'):
+            flash('Invalid username or password.')
+            return redirect(url_for('add_account_form', site_id=site.id))
+
+        if not 'sfuser' in s.cookies:
+            flash('Unable to find SoFurry login cookie.')
             return redirect(url_for('add_account_form', site_id=site.id))
 
         account = Account(site.id, session['id'], request.form['username'], json.dumps({
