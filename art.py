@@ -4,6 +4,8 @@ from sqlalchemy import func
 from bs4 import BeautifulSoup
 from functools import wraps
 from raven.contrib.flask import Sentry
+from PIL import Image
+import io
 import bcrypt
 import simplecrypt
 import requests
@@ -483,6 +485,21 @@ def upload_post():
             elif request.form['rating'] == 'explicit':
                 rating = '1'
 
+            original_image = io.BytesIO(image[1])
+            img = Image.open(original_image)
+            h, w = img.size
+
+            has_resized = False
+
+            if h > 1280 or w > 1280:
+                img.thumbnail((1280, 1280), Image.ANTIALIAS)
+                if img.mode != 'RGB':
+                    img = img.convert('RGB')
+                resized_image = io.BytesIO()
+                img.save(resized_image, 'JPEG')
+                image = (image[0], resized_image.getvalue())
+                has_resized = True
+
             try:
                 r = s.get(
                     'https://www.furaffinity.net/submit/', cookies=j, headers=headers)
@@ -529,8 +546,28 @@ def upload_post():
                     account.username))
                 continue
 
-            uploads.append(
-                {'link': r.url, 'name': '%s - %s' % (site.name, account.username)})
+            if has_resized:
+                match = re.search('view\/(\d+)', r.url).group(1)
+
+                print(match)
+
+                try:
+                    r = s.post('https://www.furaffinity.net/controls/submissions/changesubmission/%s/' % (match), data={
+                        'update': 'yes',
+                        'rebuild-thumbnail': '1'
+                    }, files={
+                        'newsubmission': (image[0], original_image.getvalue())
+                    }, cookies=j, headers=headers)
+
+                    flash('Image was automatically resized and reuploaded to FA for full resolution')
+                except:
+                    flash('Image was unable to be automatically resized for FA requirements, it has been uploaded at a lower resolution')
+                    pass
+
+            uploads.append({
+                'link': r.url,
+                'name': '%s - %s' % (site.name, account.username)
+            })
 
         elif site.id == 2:
             s = requests.session()
