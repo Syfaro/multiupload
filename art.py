@@ -497,7 +497,6 @@ def upload_post():
                     img = img.convert('RGB')
                 resized_image = io.BytesIO()
                 img.save(resized_image, 'JPEG')
-                image = (image[0], resized_image.getvalue())
                 has_resized = True
 
             try:
@@ -521,7 +520,7 @@ def upload_post():
                     'submission_type': 'submission',
                     'key': key
                 }, files={
-                    'submission': image
+                    'submission': image if not has_resized else (image[0], resized_image.getvalue())
                 }, cookies=j, headers=headers)
 
                 soup = BeautifulSoup(r.content, 'html.parser')
