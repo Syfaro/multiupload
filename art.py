@@ -545,10 +545,11 @@ def upload_post():
                     account.username))
                 continue
 
-            if has_resized:
-                match = re.search('view\/(\d+)', r.url).group(1)
+            resolution = account['resolution_furaffinity']
+            resolution = not resolution or resolution.val == 'yes'
 
-                print(match)
+            if has_resized and resolution:
+                match = re.search('view\/(\d+)', r.url).group(1)
 
                 try:
                     r = s.post('https://www.furaffinity.net/controls/submissions/changesubmission/%s/' % (match), data={
@@ -1194,20 +1195,27 @@ def switchtheme():
 @login_required
 def settings():
     sofurry = []
+    furaffinity = []
 
     for account in g.user.accounts:
-        if account.site_id != 5:
-            continue
+        if account.site_id == 5:
+            remap = account['remap_sofurry']
 
-        remap = account['remap_sofurry']
+            sofurry.append({
+                'id': account.id,
+                'username': account.username,
+                'enabled': remap and remap.val == 'yes'
+            })
+        elif account.site_id == 1:
+            resolution = account['resolution_furaffinity']
 
-        sofurry.append({
-            'id': account.id,
-            'username': account.username,
-            'enabled': remap and remap.val == 'yes'
-        })
+            furaffinity.append({
+                'id': account.id,
+                'username': account.username,
+                'enabled': not resolution or resolution.val == 'yes'
+            })
 
-    return render_template('settings.html', user=g.user, sofurry=sofurry)
+    return render_template('settings.html', user=g.user, sofurry=sofurry, furaffinity=furaffinity)
 
 
 @app.route('/settings/sofurry/remap', methods=['POST'])
@@ -1227,6 +1235,28 @@ def settings_sofurry_remap():
             remap.val = 'yes'
         else:
             remap.val = 'no'
+
+    db.session.commit()
+
+    return redirect(url_for('settings'))
+
+@app.route('/settings/furaffinity/resolution', methods=['POST'])
+@login_required
+def settings_furaffinity_resolution():
+    furaffinity_accounts = [
+        account for account in g.user.accounts if account.site_id == 1 and account.user_id == g.user.id]
+
+    for account in furaffinity_accounts:
+        resolution = account['resolution_furaffinity']
+
+        if not resolution:
+            resolution = AccountConfig(account.id, 'resolution_furaffinity', 'yes')
+            db.session.add(resolution)
+
+        if request.form.get('account[%d]' % (account.id)) == 'on':
+            resolution.val = 'yes'
+        else:
+            resolution.val = 'no'
 
     db.session.commit()
 

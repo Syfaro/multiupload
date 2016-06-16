@@ -52,5 +52,34 @@
 				</div>
 			</div>
 		</div>
+
+		<div class="row">
+			<div class="col-sm-12 col-md-4 col-md-offset-4">
+				<h2>FurAffinity settings</h2>
+
+				<div>
+					<p class="help-block">Enable uploading higher resolution images to FurAffinity.</p>
+
+					{% if furaffinity | length > 0 %}
+						<form method="POST" action="/settings/furaffinity/resolution">
+							<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
+							{% for account in furaffinity %}
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" name="account[{{ account.id }}]" {% if account.enabled %}checked{% endif %}>
+										{{ account.username }}
+									</label>
+								</div>
+							{% endfor %}
+
+							<button type="submit" class="btn btn-primary btn-sm">Update</button>
+						</form>
+					{% else %}
+						<p>No SoFurry accounts configured.</p>
+					{% endif %}
+				</div>
+			</div>
+		</div>
 	</div>
 {% endblock %}
