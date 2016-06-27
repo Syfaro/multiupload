@@ -893,14 +893,18 @@ def add_account_form(site_id):
     if site.id == 1:  # FurAffinity
         s = requests.session()
 
-        r = s.get('https://www.furaffinity.net/login/', headers=headers)
+        r = s.get('https://www.furaffinity.net/login/?mode=imagecaptcha', headers=headers)
         session['fa_cookie_b'] = r.cookies['b']
 
-        captcha = s.get(
-            'https://www.furaffinity.net/captcha.jpg', headers=headers)
+        try:
+            src = BeautifulSoup(r.content, 'html.parser').select('#captcha_img')[0]['src']
+            captcha = s.get('https://www.furaffinity.net' + src, headers=headers)
 
-        extra_data['captcha'] = base64.b64encode(
-            captcha.content).decode('utf-8')
+            extra_data['captcha'] = base64.b64encode(
+                captcha.content).decode('utf-8')
+
+        except:
+            flash('Please reload the page, FurAffinty had an error.')
 
     return render_template('add_site/%d.html' % (site_id), site=site, extra_data=extra_data, user=g.user)
 
@@ -925,11 +929,15 @@ def add_account_post(site_id):
             flash('This account has already been added.')
             return redirect(url_for('upload_form'))
 
+        s.get('https://www.furaffinity.net/login/?mode=imagecaptcha',
+            cookies={'b': session['fa_cookie_b']}, headers=headers)
+
         r = s.post('https://www.furaffinity.net/login/', cookies={'b': session['fa_cookie_b']}, data={
             'action': 'login',
             'name': request.form['username'],
             'pass': request.form['password'],
-            'captcha': request.form['captcha']
+            'captcha': request.form['captcha'],
+            'use_old_captcha': '1'
         }, allow_redirects=False, headers=headers)
 
         if 'a' not in r.cookies:
@@ -1261,6 +1269,7 @@ def settings_furaffinity_resolution():
     db.session.commit()
 
     return redirect(url_for('settings'))
+
 
 if __name__ == '__main__':
     db.create_all()
