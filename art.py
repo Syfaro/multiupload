@@ -375,7 +375,7 @@ def parse_description(description, uploading_to):
                 text=match.group(1), url=match.group(2))
             description = description[0:start] + new_link + description[end:]
 
-            match = url.match(description)
+            match = url.search(description)
 
     return description
 
