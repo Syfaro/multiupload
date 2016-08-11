@@ -1,6 +1,6 @@
 import unittest
 
-from art import parse_description
+from description import parse_description
 
 
 class TestDescriptionLinks(unittest.TestCase):

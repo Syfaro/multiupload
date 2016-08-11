@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from functools import wraps
 from raven.contrib.flask import Sentry
 from PIL import Image
+from description import parse_description
 import io
 import bcrypt
 import simplecrypt
@@ -248,136 +249,6 @@ def register():
 @login_required
 def upload_form():
     return render_template('upload.html', user=g.user, sites=Site.query.all())
-
-
-def parse_description(description, uploading_to):
-    exp = '<\|(\S+),(\d),(\d)\|>'
-    match = re.search(exp, description)
-
-    while match:
-        start, end = match.span(0)
-
-        try:
-            username = match.group(1)
-            linking_to = int(match.group(2))
-            link_type = int(match.group(3))
-        except:
-            return False
-
-        new_text = ''
-
-        if uploading_to == linking_to:  # Uploading to same site
-            if uploading_to == 1:  # FurAffinity
-                if link_type == 0:  # Just link
-                    new_text = ':link%s:' % (username)
-                elif link_type == 1:  # Just icon
-                    new_text = ':%sicon:' % (username)
-                elif link_type == 2:  # Both
-                    new_text = ':icon%s:' % (username)
-            elif uploading_to == 2:  # Weasyl
-                if link_type == 0:
-                    new_text = '<~%s>' % (username)
-                elif link_type == 1:
-                    new_text = '<!%s>' % (username)
-                elif link_type == 2:
-                    new_text = '<!~%s>' % (username)
-            elif uploading_to == 3:  # FurryNetwork
-                new_text = '[{0}](https://beta.furrynetwork.com/{0}/)'.format(
-                    username)
-            elif uploading_to == 4:
-                if link_type == 0:
-                    new_text = '[name]%s[/name]' % (username)
-                elif link_type == 1:
-                    new_text = '[icon]%s[/icon]' % (username)
-                elif link_type == 2:
-                    new_text = '[iconname]%s[/iconname]' % (username)
-            elif uploading_to == 5:
-                if link_type == 0:
-                    clean = username.lower().replace(
-                        ' ', '-').replace('_', '-')
-                    new_text = '[url=https://{clean}.sofurry.com/]{username}[/url]'.format(
-                        username=username, clean=clean)
-                elif link_type == 1:
-                    new_text = ':%sicon:' % (username)
-                elif link_type == 2:
-                    new_text = ':icon%s:' % (username)
-        else:  # Uploading to other site
-            if uploading_to == 1:  # Uploading to FurAffinity
-                if linking_to == 2:
-                    new_text = '[url=https://www.weasyl.com/~{0}]{0}[/url]'.format(
-                        username)
-                elif linking_to == 3:
-                    new_text = '[url=https://beta.furrynetwork.com/{0}]{0}[/url]'.format(
-                        username)
-                elif linking_to == 4:
-                    new_text = '[url=https://inkbunny.net/{0}]{0}[/url]'.format(
-                        username)
-                elif linking_to == 5:
-                    clean = username.lower().replace(
-                        ' ', '-').replace('_', '-')
-                    new_text = '[url=https://{clean}.sofurry.com/]{username}[/url]'.format(
-                        username=username, clean=clean)
-            # Uploading to FN or Weasyl (same format type)
-            elif uploading_to == 2 or uploading_to == 3:
-                if linking_to == 1:
-                    new_text = '[{0}](https://www.furaffinity.net/user/{0}/)'.format(
-                        username)
-                elif linking_to == 2:  # Weasyl
-                    new_text = '[{0}](https://www.weasyl.com/~{0})'.format(
-                        username)
-                elif linking_to == 3:  # FurryNetwork
-                    new_text = '[{0}](https://beta.furrynetwork.com/{0})'.format(
-                        username)
-                elif linking_to == 4:
-                    new_text = '[{0}](https://inkbunny.net/{0})'.format(
-                        username)
-                elif linking_to == 5:
-                    clean = username.lower().replace(
-                        ' ', '-').replace('_', '-')
-                    new_text = '[{username}](https://{clean}.sofurry.com/)'.format(
-                        username=username, clean=clean)
-            elif uploading_to == 4:
-                if linking_to == 1:
-                    new_text = '[fa]%s[/fa]' % (username)
-                elif linking_to == 2:
-                    new_text = '[w]%s[/w]' % (username)
-                elif linking_to == 3:
-                    new_text = '[url=https://beta.furrynetwork.com/{0}/]{0}[/url]'.format(
-                        username)
-                elif linking_to == 5:
-                    new_text = '[sf]%s[/sf]' % (username)
-            elif uploading_to == 5:
-                if linking_to == 1:
-                    new_text = 'fa!%s' % (username)
-                elif linking_to == 2:
-                    new_text = '[url=https://www.weasyl.com/~{0}]{0}[/url]'.format(
-                        username)
-                elif linking_to == 3:
-                    new_text = '[url=https://beta.furrynetwork.com/{0}]{0}[/url]'.format(
-                        username)
-                elif linking_to == 4:
-                    new_text = 'ib!%s' % (username)
-
-        description = description[0:start] + new_text + description[end:]
-
-        match = re.search(exp, description)
-
-    # FA, Inkbunny, and SoFurry don't support Markdown, try and convert some
-    # stuff
-    if uploading_to in (1, 4, 5):
-        url = re.compile('\[([^\]]+)\]\(([^)"]+)(?: \"([^\"]+)\")?\)')
-        match = url.search(description)
-
-        while match:
-            start, end = match.span(0)
-
-            new_link = '[url={url}]{text}[/url]'.format(
-                text=match.group(1), url=match.group(2))
-            description = description[0:start] + new_link + description[end:]
-
-            match = url.search(description)
-
-    return description
 
 
 @app.route('/preview/description')
