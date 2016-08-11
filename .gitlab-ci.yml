@@ -1,0 +1,7 @@
+before_script:
+  - pip install --upgrade pip
+  - pip install -r requirements.txt
+
+test:
+  script:
+    - python art_test.py -v

@@ -295,7 +295,7 @@ def parse_description(description, uploading_to):
                 if link_type == 0:
                     clean = username.lower().replace(
                         ' ', '-').replace('_', '-')
-                    new_text = '[url=http://{clean}.sofurry.com/]{username}[/url]'.format(
+                    new_text = '[url=https://{clean}.sofurry.com/]{username}[/url]'.format(
                         username=username, clean=clean)
                 elif link_type == 1:
                     new_text = ':%sicon:' % (username)
@@ -315,7 +315,7 @@ def parse_description(description, uploading_to):
                 elif linking_to == 5:
                     clean = username.lower().replace(
                         ' ', '-').replace('_', '-')
-                    new_text = '[url=http://{clean}.sofurry.com/]{username}[/url]'.format(
+                    new_text = '[url=https://{clean}.sofurry.com/]{username}[/url]'.format(
                         username=username, clean=clean)
             # Uploading to FN or Weasyl (same format type)
             elif uploading_to == 2 or uploading_to == 3:
@@ -334,7 +334,7 @@ def parse_description(description, uploading_to):
                 elif linking_to == 5:
                     clean = username.lower().replace(
                         ' ', '-').replace('_', '-')
-                    new_text = '[{username}](https://{clean}.sofurry.com)'.format(
+                    new_text = '[{username}](https://{clean}.sofurry.com/)'.format(
                         username=username, clean=clean)
             elif uploading_to == 4:
                 if linking_to == 1:
