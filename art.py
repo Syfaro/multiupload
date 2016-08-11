@@ -140,7 +140,7 @@ def git_version():
     (stdout, _) = gitproc.communicate()
     return stdout.strip().decode('utf-8')
 
-app.jinja_env.globals['git_version'] = git_version()[-7:]
+app.jinja_env.globals['git_version'] = git_version()[:7]
 
 
 def english_series(items):
