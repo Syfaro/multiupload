@@ -6,6 +6,7 @@ from functools import wraps
 from raven.contrib.flask import Sentry
 from PIL import Image
 from description import parse_description
+from flask_influxdb import InfluxDB
 import io
 import bcrypt
 import simplecrypt
@@ -16,6 +17,7 @@ import re
 import string
 import random
 import passwordmeter
+import time
 
 app = Flask(__name__)
 
@@ -23,12 +25,21 @@ app.config.from_object('config')
 
 db = SQLAlchemy(app)
 sentry = Sentry(app)
+influx = InfluxDB(app)
 
 rng = random.SystemRandom()
 
 headers = {
     'User-Agent': 'Furry Multiupload 0.1 / Syfaro <syfaro@foxpaw.in>'
 }
+
+
+def current_time():
+    return float(time.time())
+
+
+def current_timestamp():
+    return int(time.time())
 
 
 class User(db.Model):
@@ -151,13 +162,14 @@ def english_series(items):
     return ", ".join(x for x in items[:-1]) + ' and ' + items[-1]
 
 
-@app.errorhandler(Exception)
-@app.errorhandler(500)
-def internal_server_error(error):
-    return render_template('500.html',
-        event_id=g.sentry_event_id,
-        public_dsn=sentry.client.get_public_dsn('https')
-    )
+if not app.debug:
+    @app.errorhandler(Exception)
+    @app.errorhandler(500)
+    def internal_server_error(error):
+        return render_template('500.html',
+                               event_id=g.sentry_event_id,
+                               public_dsn=sentry.client.get_public_dsn('https')
+                               )
 
 
 @app.route('/')
@@ -220,6 +232,14 @@ def register():
         return redirect(url_for('home'))
 
     strength, improvements = passwordmeter.test(request.form['password'])
+    influx.connection.write_points([{
+        "measurement": "password_strength",
+        "fields": {
+            "strength": strength,
+        },
+        "time": current_timestamp(),
+    }])
+
     if strength < 0.3:
         flash('Weak password. You may wish to try the following suggestions.<br><ul><li>%s</ul></ul>' %
               ('</li><li>'.join(improvements.values())))
@@ -266,6 +286,21 @@ def preview_description():
         sites_done.append(site.id)
 
     return jsonify({'descriptions': descriptions})
+
+
+def write_upload_time(starttime, site):
+    time = current_time()
+    duration = time - starttime
+    influx.connection.write_points([{
+        "measurement": "upload_time",
+        "fields": {
+            "length": duration,
+        },
+        "tags": {
+            "site": site,
+        },
+        "time": current_timestamp(),
+    }])
 
 
 @app.route('/upload', methods=['POST'])
@@ -337,6 +372,8 @@ def upload_post():
 
     uploads = []
     for account in accounts:
+        starttime = current_time()
+
         decrypted = simplecrypt.decrypt(
             request.form['site_password'], account.credentials)
 
@@ -430,9 +467,11 @@ def upload_post():
                         'newsubmission': (image[0], original_image.getvalue())
                     }, cookies=j, headers=headers)
 
-                    flash('Image was automatically resized and reuploaded to FA for full resolution')
+                    flash(
+                        'Image was automatically resized and reuploaded to FA for full resolution')
                 except:
-                    flash('Image was unable to be automatically resized for FA requirements, it has been uploaded at a lower resolution')
+                    flash(
+                        'Image was unable to be automatically resized for FA requirements, it has been uploaded at a lower resolution')
                     pass
 
             uploads.append({
@@ -740,6 +779,8 @@ def upload_post():
                 'name': '%s - %s' % (site.name, account.username)
             })
 
+        write_upload_time(starttime, site.id)
+
     return render_template('after_upload.html', uploads=uploads, user=g.user)
 
 
@@ -764,12 +805,15 @@ def add_account_form(site_id):
     if site.id == 1:  # FurAffinity
         s = requests.session()
 
-        r = s.get('https://www.furaffinity.net/login/?mode=imagecaptcha', headers=headers)
+        r = s.get(
+            'https://www.furaffinity.net/login/?mode=imagecaptcha', headers=headers)
         session['fa_cookie_b'] = r.cookies['b']
 
         try:
-            src = BeautifulSoup(r.content, 'html.parser').select('#captcha_img')[0]['src']
-            captcha = s.get('https://www.furaffinity.net' + src, headers=headers)
+            src = BeautifulSoup(r.content, 'html.parser').select(
+                '#captcha_img')[0]['src']
+            captcha = s.get(
+                'https://www.furaffinity.net' + src, headers=headers)
 
             extra_data['captcha'] = base64.b64encode(
                 captcha.content).decode('utf-8')
@@ -783,6 +827,8 @@ def add_account_form(site_id):
 @app.route('/add/<int:site_id>', methods=['POST'])
 @login_required
 def add_account_post(site_id):
+    starttime = current_time()
+
     site = Site.query.get(site_id)
 
     if not site:
@@ -801,7 +847,7 @@ def add_account_post(site_id):
             return redirect(url_for('upload_form'))
 
         s.get('https://www.furaffinity.net/login/?mode=imagecaptcha',
-            cookies={'b': session['fa_cookie_b']}, headers=headers)
+              cookies={'b': session['fa_cookie_b']}, headers=headers)
 
         r = s.post('https://www.furaffinity.net/login/', cookies={'b': session['fa_cookie_b']}, data={
             'action': 'login',
@@ -973,6 +1019,19 @@ def add_account_post(site_id):
         db.session.add(account)
         db.session.commit()
 
+    time = current_time()
+    duration = time - starttime
+    influx.connection.write_points([{
+        "measurement": "add_account_time",
+        "fields": {
+            "length": duration,
+        },
+        "tags": {
+            "site": site.id,
+        },
+        "time": current_timestamp(),
+    }])
+
     return redirect(url_for('upload_form'))
 
 
@@ -1119,6 +1178,7 @@ def settings_sofurry_remap():
 
     return redirect(url_for('settings'))
 
+
 @app.route('/settings/furaffinity/resolution', methods=['POST'])
 @login_required
 def settings_furaffinity_resolution():
@@ -1129,7 +1189,8 @@ def settings_furaffinity_resolution():
         resolution = account['resolution_furaffinity']
 
         if not resolution:
-            resolution = AccountConfig(account.id, 'resolution_furaffinity', 'yes')
+            resolution = AccountConfig(
+                account.id, 'resolution_furaffinity', 'yes')
             db.session.add(resolution)
 
         if request.form.get('account[%d]' % (account.id)) == 'on':
