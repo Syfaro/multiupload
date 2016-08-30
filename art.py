@@ -38,10 +38,6 @@ def current_time():
     return float(time.time())
 
 
-def current_timestamp():
-    return int(time.time())
-
-
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(16), unique=True, nullable=False)
@@ -237,7 +233,6 @@ def register():
         "fields": {
             "strength": strength,
         },
-        "time": current_timestamp(),
     }])
 
     if strength < 0.3:
@@ -299,7 +294,6 @@ def write_upload_time(starttime, site):
         "tags": {
             "site": site,
         },
-        "time": current_timestamp(),
     }])
 
 
@@ -1029,7 +1023,6 @@ def add_account_post(site_id):
         "tags": {
             "site": site.id,
         },
-        "time": current_timestamp(),
     }])
 
     return redirect(url_for('upload_form'))
