@@ -2,13 +2,13 @@
 import base64, os, sys
 sys.stdout.write("""
 # URI to the database
-SQLALCHEMY_DATABASE_URI = "sqlite3:///test.db"
+SQLALCHEMY_DATABASE_URI = "sqlite:///test.db"
 
 # A long and random string
 SECRET_KEY = "{secret_key}"
 
 # Enable debugging mode to help troubleshoot problems.
-DEBUG = False
+DEBUG = True
 
 # Disable a feature in Flask-SQLAlchemy we don't use
 SQLALCHEMY_TRACK_MODIFICATIONS = False
