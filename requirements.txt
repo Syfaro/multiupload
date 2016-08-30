@@ -9,10 +9,12 @@ contextlib2==0.5.3
 dominate==2.2.0
 Flask==0.10.1
 Flask-Bootstrap==3.3.6.0
+Flask-InfluxDB==0.1
 Flask-Login==0.3.2
 Flask-SQLAlchemy==2.1
 Flask-WTF==0.12
 globre==0.1.4
+influxdb==3.0.0
 itsdangerous==0.24
 Jinja2==2.8
 MarkupSafe==0.23
@@ -21,6 +23,8 @@ Pillow==3.2.0
 pycparser==2.14
 pycrypto==2.6.1
 PyMySQL==0.7.3
+python-dateutil==2.5.3
+pytz==2016.6.1
 raven==5.19.0
 requests==2.10.0
 simple-crypt==4.1.7
