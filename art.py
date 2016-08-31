@@ -283,23 +283,28 @@ def preview_description():
     return jsonify({'descriptions': descriptions})
 
 
-def write_upload_time(starttime, site):
+def write_upload_time(starttime, site=None, measurement="upload_time"):
     time = current_time()
     duration = time - starttime
-    influx.connection.write_points([{
-        "measurement": "upload_time",
+
+    point = {
+        "measurement": measurement,
         "fields": {
             "length": duration,
         },
-        "tags": {
-            "site": site,
-        },
-    }])
+    }
+
+    if site:
+        point['tags'] = {'site': site}
+
+    influx.connection.write_points([point])
 
 
 @app.route('/upload', methods=['POST'])
 @login_required
 def upload_post():
+    totaltime = current_time()
+
     if request.form['title'] == '':
         flash('Missing title.')
         return render_template('upload.html', user=g.user, sites=Site.query.all())
@@ -366,10 +371,10 @@ def upload_post():
 
     uploads = []
     for account in accounts:
-        starttime = current_time()
-
         decrypted = simplecrypt.decrypt(
             request.form['site_password'], account.credentials)
+
+        starttime = current_time()
 
         site = account.site
         description = parse_description(request.form['description'], site.id)
@@ -774,6 +779,8 @@ def upload_post():
             })
 
         write_upload_time(starttime, site.id)
+
+    write_upload_time(totaltime, measurement="total_upload_time")
 
     return render_template('after_upload.html', uploads=uploads, user=g.user)
 
