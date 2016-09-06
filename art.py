@@ -105,6 +105,29 @@ class AccountConfig(db.Model):
         self.val = val
 
 
+class Notice(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.String(500), nullable=False)
+    active = db.Column(db.Boolean, default=1, nullable=False)
+
+    def __init__(self, text):
+        self.text = text
+
+    def wasViewedBy(self, user):
+        return NoticeViewed.query.filter_by(notice_id=self.id, user_id=user).first()
+
+
+class NoticeViewed(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    notice_id = db.Column(db.Integer, db.ForeignKey('notice.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    def __init__(self, notice, user):
+        self.notice_id = notice
+        self.user_id = user
+
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -169,6 +192,15 @@ if not app.debug:
                                )
 
 
+def get_active_notices(for_user=None):
+    notices = Notice.query.filter_by(active=True).order_by(Notice.id.desc()).all()
+
+    if for_user:
+        notices = filter(lambda x: not x.wasViewedBy(for_user), notices)
+
+    return notices
+
+
 @app.route('/')
 def home():
     if 'id' in session:
@@ -179,7 +211,7 @@ def home():
 
     text = english_series(site.name for site in Site.query.all())
 
-    return render_template('home.html', text=text)
+    return render_template('home.html', text=text, notices=get_active_notices())
 
 
 @app.route('/logout')
@@ -264,7 +296,18 @@ def register():
 @app.route('/upload', methods=['GET'])
 @login_required
 def upload_form():
-    return render_template('upload.html', user=g.user, sites=Site.query.all())
+    return render_template('upload.html', user=g.user, sites=Site.query.all(), notices=get_active_notices(for_user=g.user.id))
+
+
+@app.route('/dismiss/<int:alert>', methods=['POST'])
+@login_required
+def dismiss_notice(alert):
+    viewed = NoticeViewed(alert, g.user.id)
+
+    db.session.add(viewed)
+    db.session.commit()
+
+    return 'Saved'
 
 
 @app.route('/preview/description')

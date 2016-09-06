@@ -14,6 +14,23 @@
 	{% endwith %}
 {%- endmacro %}
 
+{% macro showNotices() -%}
+	{% if notices %}
+		<div class="container">
+			<div class="row">
+				<div class="col-sm-12 col-md-6 col-md-offset-3">
+					{% for notice in notices %}
+						<div class="alert alert-info alert-dismissible">
+							{% if user is defined %}<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true" data-id="{{ notice.id }}">&times;</span></button>{% endif %}
+							{{ notice.text }}
+						</div>
+					{% endfor %}
+				</div>
+			</div>
+		</div>
+	{% endif %}
+{%- endmacro %}
+
 <!--
         ,-.      .-,
         |-.\ __ /.-|
@@ -89,5 +106,8 @@
 			</div>
 		</footer>
 	</div>
+
+	<script>var csrf = '{{ csrf_token() }}';</script>
+	<script src="/static/js/notices.js"></script>
 </body>
 </html>
