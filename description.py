@@ -68,6 +68,8 @@ def parse_description(description, uploading_to):
                         ' ', '-').replace('_', '-')
                     new_text = '[url=https://{clean}.sofurry.com/]{username}[/url]'.format(
                         username=username, clean=clean)
+                elif linking_to == 6:
+                    new_text = '[url=https://twitter.com/{0}]{0}[/url]'.format(username)
             # Uploading to FN or Weasyl (same format type)
             elif uploading_to == 2 or uploading_to == 3:
                 if linking_to == 1:
@@ -87,6 +89,8 @@ def parse_description(description, uploading_to):
                         ' ', '-').replace('_', '-')
                     new_text = '[{username}](https://{clean}.sofurry.com/)'.format(
                         username=username, clean=clean)
+                elif linking_to == 6:
+                    new_text = '[{0}](https://twitter.com/{0})'.format(username)
             elif uploading_to == 4:
                 if linking_to == 1:
                     new_text = '[fa]%s[/fa]' % (username)
@@ -97,6 +101,8 @@ def parse_description(description, uploading_to):
                         username)
                 elif linking_to == 5:
                     new_text = '[sf]%s[/sf]' % (username)
+                elif linking_to == 6:
+                    new_text = '[url=https://twitter.com/{0}]{0}[/url]'.format(username)
             elif uploading_to == 5:
                 if linking_to == 1:
                     new_text = 'fa!%s' % (username)
@@ -108,6 +114,8 @@ def parse_description(description, uploading_to):
                         username)
                 elif linking_to == 4:
                     new_text = 'ib!%s' % (username)
+                elif linking_to == 6:
+                    new_text = '[url=https://twitter.com/{0}]{0}[/url]'.format(username)
 
         description = description[0:start] + new_text + description[end:]
 
