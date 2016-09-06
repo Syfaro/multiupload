@@ -361,7 +361,15 @@ def upload_post():
         flash('Missing keywords.')
         return render_template('upload.html', user=g.user, sites=Site.query.all())
 
-    has_less_2 = len(request.form['keywords'].split(' ')) < 2
+    hashtags = []
+    for keyword in request.form['keywords'].split(' '):
+        if keyword.startswith('#'):
+            hashtags.append(keyword)
+    hashtags = ' '.join(hashtags)
+
+    keywords = ' '.join(filter(lambda x: not x.startswith('#'), request.form['keywords'].split(' ')))
+
+    has_less_2 = len(keywords.split(' ')) < 2
 
     if not request.files.get('image', None):
         flash('Missing image.')
@@ -413,6 +421,16 @@ def upload_post():
 
     image = (upload.filename, upload.read())
 
+    accounts = sorted(accounts, key=lambda account: account.site_id)
+
+    try:
+        twitter_link_id = int(request.form.get('twitterlink', None))
+    except:
+        print('Bad twitterlink ID')
+    twitter_link = None
+
+    print(accounts)
+
     uploads = []
     for account in accounts:
         decrypted = simplecrypt.decrypt(
@@ -422,6 +440,8 @@ def upload_post():
 
         site = account.site
         description = parse_description(request.form['description'], site.id)
+
+        link = None
 
         if site.id == 1:
             s = requests.session()
@@ -488,7 +508,7 @@ def upload_post():
                     'key': key,
                     'title': request.form['title'],
                     'message': description,
-                    'keywords': request.form['keywords'],
+                    'keywords': keywords,
                     'rating': rating
                 }, cookies=j, headers=headers)
             except:
@@ -516,6 +536,8 @@ def upload_post():
                     flash(
                         'Image was unable to be automatically resized for FA requirements, it has been uploaded at a lower resolution')
                     pass
+
+            link = r.url
 
             uploads.append({
                 'link': r.url,
@@ -552,7 +574,7 @@ def upload_post():
                     'token': token,
                     'title': request.form['title'],
                     'content': description,
-                    'tags': request.form['keywords'],
+                    'tags': keywords,
                     'rating': rating
                 }, headers=new_header, files={
                     'submitfile': image
@@ -561,6 +583,8 @@ def upload_post():
                 flash('An error occured while uploading to Weasyl on account %s. Make sure the site is online.' % (
                     account.username))
                 continue
+
+            link = r.url
 
             uploads.append({
                 'link': r.url,
@@ -656,7 +680,7 @@ def upload_post():
                     'rating': rating,
                     'description': description,
                     'title': request.form['title'],
-                    'tags': request.form['keywords'].split(' '),
+                    'tags': keywords.split(' '),
                     'collections': [],
                     'status': 'public'
                 }))
@@ -676,8 +700,10 @@ def upload_post():
                     account.username))
                 continue
 
+            link = 'https://beta.furrynetwork.com/artwork/%d/' % (j['id'])
+
             uploads.append({
-                'link': 'https://beta.furrynetwork.com/artwork/%d/' % (j['id']),
+                'link': link,
                 'name': '%s - %s' % (site.name, account.username)
             })
 
@@ -723,7 +749,7 @@ def upload_post():
                     'submission_id': j['submission_id'],
                     'title': request.form['title'],
                     'desc': description,
-                    'keywords': request.form['keywords'],
+                    'keywords': keywords,
                     'visibility': 'yes'
                 }
 
@@ -744,8 +770,10 @@ def upload_post():
                       (account.username))
                 continue
 
+            link = 'https://inkbunny.net/submissionview.php?id=%s' % (j['submission_id'])
+
             uploads.append({
-                'link': 'https://inkbunny.net/submissionview.php?id=%s' % (j['submission_id']),
+                'link': link,
                 'name': '%s - %s' % (site.name, account.username)
             })
 
@@ -807,7 +835,7 @@ def upload_post():
                     'UploadForm[P_title]': request.form['title'],
                     'UploadForm[contentLevel]': rating,
                     'UploadForm[description]': description,
-                    'UploadForm[formtags]': ', '.join(request.form['keywords'].split(' ')),
+                    'UploadForm[formtags]': ', '.join(keywords.split(' ')),
                     'YII_CSRF_TOKEN': key,
                     'UploadForm[P_id]': key2
                 }, files={
@@ -817,6 +845,8 @@ def upload_post():
                 flash(
                     'Unable to upload submission to SoFurry on account %s.' % (account.username))
                 continue
+
+            link = r.url
 
             uploads.append({
                 'link': r.url,
@@ -833,8 +863,13 @@ def upload_post():
 
             i = io.BytesIO(image[1])
 
+            status = '%s %s' % (request.form['title'], hashtags)
+
+            if twitter_link is not None:
+                status += ' ' + twitter_link
+
             try:
-                s = api.update_with_media(filename=image[0], file=i, status=request.form['title'])
+                s = api.update_with_media(filename=image[0], file=i, status=status)
             except:
                 flash('Unable to upload to Twitter on account %s.' % (account.username))
                 continue
@@ -843,6 +878,9 @@ def upload_post():
                 'link': 'https://twitter.com/%s/status/%s' % (s.user.screen_name, s.id_str),
                 'name': '%s - %s' % (site.name, account.username)
             })
+
+        if account.id == twitter_link_id:
+            twitter_link = link
 
         write_upload_time(starttime, site.id)
 

@@ -43,7 +43,7 @@
 					<div class="form-group">
 						<textarea class="form-control keywords" name="keywords" placeholder="Keywords" autocomplete="off">{{ request.form.keywords }}</textarea>
 
-						<p class="help-block">Separate keywords with spaces.</p>
+						<p class="help-block">Separate keywords with spaces. <abbr title="A hashtag is any keyword that starts with a '#'">Hashtags will only be included on Twitter.</abbr></p>
 					</div>
 
 					<div class="radio">
@@ -90,11 +90,11 @@
 
 					<a href="/add" class="btn btn-xs btn-default">Add account</a>
 
-					{#<div class="hidden twitter-link">
+					<div class="hidden twitter-link">
 						<h3>Twitter links to</h3>
 
 						<div class="twitter-links"></div>
-					</div>#}
+					</div>
 				</div>
 			</div>
 
@@ -227,7 +227,6 @@
 			insertUserLink();
 		});
 
-		{#
 		var sites = document.querySelectorAll('input[name="account"]');
 		var updateTwitterLinks = function () {
 			var hasTwitterSelected = false;
@@ -258,13 +257,20 @@
 				});
 			}
 
+			if (otherSitesSelected.length === 0) {
+				document.querySelector('.twitter-link').classList.add('hidden');
+				return;
+			}
+
+			document.querySelector('.twitter-links').innerHTML = '';
+
 			var links = document.querySelector('.twitter-links');
 
 			for (var i = 0; i < otherSitesSelected.length; i++) {
 				var item = document.createElement('div');
 
 				var checkbox = document.createElement('input');
-				checkbox.type = 'checkbox';
+				checkbox.type = 'radio';
 				checkbox.value = otherSitesSelected[i].id;
 				checkbox.name = 'twitterlink';
 
@@ -282,8 +288,6 @@
 		for (var i = 0; i < sites.length; i++) {
 			sites[i].addEventListener('change', updateTwitterLinks);
 		}
-		#}
-
 
 		var insertUserLink = function () {
 			$('.add-user-modal').modal('hide');
