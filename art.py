@@ -18,6 +18,7 @@ import string
 import random
 import passwordmeter
 import time
+import tweepy
 
 app = Flask(__name__)
 
@@ -772,9 +773,31 @@ def upload_post():
             except:
                 flash(
                     'Unable to upload submission to SoFurry on account %s.' % (account.username))
+                continue
 
             uploads.append({
                 'link': r.url,
+                'name': '%s - %s' % (site.name, account.username)
+            })
+
+        elif site.id == 6:
+            creds = json.loads(decrypted.decode('utf-8'))
+
+            auth = tweepy.OAuthHandler(app.config['TWITTER_KEY'], app.config['TWITTER_SECRET'])
+            auth.set_access_token(creds['token'], creds['secret'])
+
+            api = tweepy.API(auth)
+
+            i = io.BytesIO(image[1])
+
+            try:
+                s = api.update_with_media(filename=image[0], file=i, status=request.form['title'])
+            except:
+                flash('Unable to upload to Twitter on account %s.' % (account.username))
+                continue
+
+            uploads.append({
+                'link': 'https://twitter.com/%s/status/%s' % (s.user.screen_name, s.id_str),
                 'name': '%s - %s' % (site.name, account.username)
             })
 
@@ -821,6 +844,52 @@ def add_account_form(site_id):
 
         except:
             flash('Please reload the page, FurAffinty had an error.')
+
+    elif site.id == 6:
+        auth = tweepy.OAuthHandler(
+            app.config['TWITTER_KEY'], app.config['TWITTER_SECRET'], app.config['TWITTER_CALLBACK'])
+
+        try:
+            auth_url = auth.get_authorization_url()
+        except e:
+            return 'Unable to get URL for Twitter, please try again later.'
+
+        session['request_token'] = auth.request_token
+
+        return redirect(auth_url)
+
+    return render_template('add_site/%d.html' % (site_id), site=site, extra_data=extra_data, user=g.user)
+
+
+@app.route('/add/<int:site_id>/callback', methods=['GET'])
+@login_required
+def add_account_callback(site_id):
+    site = Site.query.get(site_id)
+
+    if not site:
+        return 'Unknown site ID!'
+
+    extra_data = {}
+
+    if site.id == 6:
+        verifier = request.args.get('oauth_verifier')
+        token = session.pop('request_token', None)
+        auth = tweepy.OAuthHandler(
+            app.config['TWITTER_KEY'], app.config['TWITTER_SECRET'], app.config['TWITTER_CALLBACK'])
+        auth.request_token = token
+
+        try:
+            auth.get_access_token(verifier)
+        except:
+            return 'Some kind of error with Twitter, please try again later.'
+
+        session['taccess'] = auth.access_token
+        session['tsecret'] = auth.access_token_secret
+
+        api = tweepy.API(auth)
+        me = api.me()
+
+        extra_data['me'] = me
 
     return render_template('add_site/%d.html' % (site_id), site=site, extra_data=extra_data, user=g.user)
 
@@ -1015,6 +1084,22 @@ def add_account_post(site_id):
         account = Account(site.id, session['id'], request.form['username'], json.dumps({
             'username': request.form['username'],
             'password': request.form['password']
+        }), request.form['site_password'])
+
+        db.session.add(account)
+        db.session.commit()
+
+    elif site.id == 6:
+        auth = tweepy.OAuthHandler(
+            app.config['TWITTER_KEY'], app.config['TWITTER_SECRET'])
+        auth.set_access_token(session['taccess'], session['tsecret'])
+
+        api = tweepy.API(auth)
+        me = api.me()
+
+        account = Account(site.id, session['id'], me.screen_name, json.dumps({
+            'token': session.pop('taccess'),
+            'secret': session.pop('tsecret'),
         }), request.form['site_password'])
 
         db.session.add(account)

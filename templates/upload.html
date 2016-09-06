@@ -79,7 +79,7 @@
 					{% for account in user.accounts %}
 						<div class="checkbox">
 							<label>
-								<input type="checkbox" name="account" value="{{ account.id }}" {% if account.used_last == 1 %}checked{% endif %}>
+								<input type="checkbox" name="account" value="{{ account.id }}" {% if account.used_last == 1 %}checked{% endif %} data-site="{{ account.site_id }}" data-site-name="{{ account.site.name }}" data-account="{{ account.username }}">
 								{{ account.site.name }} - {{ account.username }}
 								<a href="/remove/{{ account.id }}" class="btn btn-xs btn-danger">Remove</a>
 							</label>
@@ -87,6 +87,12 @@
 					{% endfor %}
 
 					<a href="/add" class="btn btn-xs btn-default">Add account</a>
+
+					{#<div class="hidden twitter-link">
+						<h3>Twitter links to</h3>
+
+						<div class="twitter-links"></div>
+					</div>#}
 				</div>
 			</div>
 
@@ -218,6 +224,64 @@
 
 			insertUserLink();
 		});
+
+		{#
+		var sites = document.querySelectorAll('input[name="account"]');
+		var updateTwitterLinks = function () {
+			var hasTwitterSelected = false;
+
+			for (var i = 0; i < sites.length; i++) {
+				if (sites[i].dataset.site == '6' && sites[i].checked) {
+					hasTwitterSelected = true;
+					break;
+				}
+			}
+
+			if (!hasTwitterSelected) {
+				return;
+			}
+
+			var otherSitesSelected = [];
+			for (var i = 0; i < sites.length; i++) {
+				if (!sites[i].checked || sites[i].dataset.site == '6') {
+					continue;
+				}
+
+				var data = sites[i].dataset;
+				otherSitesSelected.push({
+					site: data.site,
+					siteName: data.siteName,
+					userName: data.account,
+					id: sites[i].value
+				});
+			}
+
+			var links = document.querySelector('.twitter-links');
+
+			for (var i = 0; i < otherSitesSelected.length; i++) {
+				var item = document.createElement('div');
+
+				var checkbox = document.createElement('input');
+				checkbox.type = 'checkbox';
+				checkbox.value = otherSitesSelected[i].id;
+				checkbox.name = 'twitterlink';
+
+				var label = document.createElement('label');
+				label.appendChild(checkbox);
+				label.innerHTML += ' ' + otherSitesSelected[i].siteName + ' - ' + otherSitesSelected[i].userName;
+
+				item.appendChild(label);
+				links.appendChild(item);
+			}
+
+			document.querySelector('.twitter-link').classList.remove('hidden');
+		};
+		updateTwitterLinks();
+		for (var i = 0; i < sites.length; i++) {
+			sites[i].addEventListener('change', updateTwitterLinks);
+		}
+		#}
+
 
 		var insertUserLink = function () {
 			$('.add-user-modal').modal('hide');
