@@ -424,12 +424,12 @@ def upload_post():
     accounts = sorted(accounts, key=lambda account: account.site_id)
 
     try:
-        twitter_link_id = int(request.form.get('twitterlink', None))
+        twitter_link_id = request.form.get('twitterlink', None)
+        if twitter_link_id is not None:
+            twitter_link_id = int(twitter_link_id)
     except:
         print('Bad twitterlink ID')
     twitter_link = None
-
-    print(accounts)
 
     uploads = []
     for account in accounts:
