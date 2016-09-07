@@ -120,7 +120,8 @@ class Notice(db.Model):
 class NoticeViewed(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
-    notice_id = db.Column(db.Integer, db.ForeignKey('notice.id'), nullable=False)
+    notice_id = db.Column(
+        db.Integer, db.ForeignKey('notice.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     def __init__(self, notice, user):
@@ -182,18 +183,17 @@ def english_series(items):
     return ", ".join(x for x in items[:-1]) + ' and ' + items[-1]
 
 
-if not app.debug:
-    @app.errorhandler(Exception)
-    @app.errorhandler(500)
-    def internal_server_error(error):
-        return render_template('500.html',
-                               event_id=g.sentry_event_id,
-                               public_dsn=sentry.client.get_public_dsn('https')
-                               )
+@app.errorhandler(500)
+def internal_server_error(error):
+    return render_template('500.html',
+                           event_id=g.sentry_event_id,
+                           public_dsn=sentry.client.get_public_dsn('https')
+                           ), 500
 
 
 def get_active_notices(for_user=None):
-    notices = Notice.query.filter_by(active=True).order_by(Notice.id.desc()).all()
+    notices = Notice.query.filter_by(
+        active=True).order_by(Notice.id.desc()).all()
 
     if for_user:
         notices = filter(lambda x: not x.wasViewedBy(for_user), notices)
@@ -367,7 +367,8 @@ def upload_post():
             hashtags.append(keyword)
     hashtags = ' '.join(hashtags)
 
-    keywords = ' '.join(filter(lambda x: not x.startswith('#'), request.form['keywords'].split(' ')))
+    keywords = ' '.join(
+        filter(lambda x: not x.startswith('#'), request.form['keywords'].split(' ')))
 
     has_less_2 = len(keywords.split(' ')) < 2
 
@@ -770,7 +771,8 @@ def upload_post():
                       (account.username))
                 continue
 
-            link = 'https://inkbunny.net/submissionview.php?id=%s' % (j['submission_id'])
+            link = 'https://inkbunny.net/submissionview.php?id=%s' % (
+                j['submission_id'])
 
             uploads.append({
                 'link': link,
@@ -856,7 +858,8 @@ def upload_post():
         elif site.id == 6:
             creds = json.loads(decrypted.decode('utf-8'))
 
-            auth = tweepy.OAuthHandler(app.config['TWITTER_KEY'], app.config['TWITTER_SECRET'])
+            auth = tweepy.OAuthHandler(
+                app.config['TWITTER_KEY'], app.config['TWITTER_SECRET'])
             auth.set_access_token(creds['token'], creds['secret'])
 
             api = tweepy.API(auth)
@@ -869,9 +872,11 @@ def upload_post():
                 status += ' ' + twitter_link
 
             try:
-                s = api.update_with_media(filename=image[0], file=i, status=status)
+                s = api.update_with_media(
+                    filename=image[0], file=i, status=status)
             except:
-                flash('Unable to upload to Twitter on account %s.' % (account.username))
+                flash('Unable to upload to Twitter on account %s.' %
+                      (account.username))
                 continue
 
             uploads.append({
