@@ -4,6 +4,7 @@ from sqlalchemy import func
 from bs4 import BeautifulSoup
 from functools import wraps
 from raven.contrib.flask import Sentry
+from raven import fetch_git_sha
 from PIL import Image
 from description import parse_description
 from flask_influxdb import InfluxDB
@@ -19,10 +20,12 @@ import random
 import passwordmeter
 import time
 import tweepy
+import os
 
 app = Flask(__name__)
 
 app.config.from_object('config')
+app.config['SENTRY_RELEASE'] = fetch_git_sha(os.path.dirname(__file__))
 
 db = SQLAlchemy(app)
 sentry = Sentry(app)
