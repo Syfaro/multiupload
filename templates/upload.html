@@ -44,6 +44,10 @@
 						<textarea class="form-control keywords" name="keywords" placeholder="Keywords" autocomplete="off">{{ request.form.keywords }}</textarea>
 
 						<p class="help-block">Separate keywords with spaces. <abbr title="A hashtag is any keyword that starts with a '#'">Hashtags will only be included on Twitter.</abbr></p>
+
+						<div class="hidden inkbunny-message">
+							<p>Please note that Inkbunny <a href="https://wiki.inkbunny.net/wiki/Keyword_Policy#Minimum_Required_Keywords">requires keywords for sex, species, and essential themes</a>.</p>
+						</div>
 					</div>
 
 					<div class="radio">
@@ -226,6 +230,27 @@
 
 			insertUserLink();
 		});
+
+		var inkbunny = document.querySelectorAll('input[name="account"][data-site="4"]');
+		var inkbunnyMessage = document.querySelector('.inkbunny-message');
+
+		var updateInkbunnyMessage = function () {
+			var hasChecked = document.querySelectorAll('input[name="account"][data-site="4"]:checked');
+
+			if (hasChecked.length > 0) {
+				inkbunnyMessage.classList.remove('hidden');
+			} else {
+				inkbunnyMessage.classList.add('hidden');
+			}
+		};
+
+		for (var i = 0; i < inkbunny.length; i++) {
+			inkbunny[i].addEventListener('change', function (e) {
+				updateInkbunnyMessage();
+			});
+		}
+
+		updateInkbunnyMessage();
 
 		var sites = document.querySelectorAll('input[name="account"]');
 		var updateTwitterLinks = function () {
