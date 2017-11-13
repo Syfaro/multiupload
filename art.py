@@ -9,6 +9,7 @@ from raven import fetch_git_sha
 from PIL import Image
 from description import parse_description
 from flask_influxdb import InfluxDB
+from tumblpy import Tumblpy
 import io
 import bcrypt
 import simplecrypt
@@ -39,6 +40,14 @@ rng = random.SystemRandom()
 headers = {
     'User-Agent': 'Furry Multiupload 0.1 / Syfaro <syfaro@foxpaw.in>'
 }
+
+FURAFFINITY_ID = 1
+WEASYL_ID = 2
+FURRYNETWORK_ID = 3
+INKBUNNY_ID = 4
+SOFURRY_ID = 5
+TUMBLR_ID = 7
+TWITTER_ID = 100
 
 
 def current_time():
@@ -138,7 +147,7 @@ class NoticeViewed(db.Model):
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not 'id' in session:
+        if 'id' not in session:
             return redirect(url_for('home'))
 
         user = User.query.get(session['id'])
@@ -170,6 +179,7 @@ def generate_csrf_token():
         session['_csrf_token'] = random_string(16)
     return session['_csrf_token']
 
+
 app.jinja_env.globals['csrf_token'] = generate_csrf_token
 
 
@@ -178,6 +188,7 @@ def git_version():
     gitproc = Popen(['git', 'rev-parse', 'HEAD'], stdout=PIPE)
     (stdout, _) = gitproc.communicate()
     return stdout.strip().decode('utf-8')
+
 
 app.jinja_env.globals['git_version'] = git_version()[:7]
 
@@ -188,13 +199,12 @@ def english_series(items):
         return "".join(items)
     return ", ".join(x for x in items[:-1]) + ' and ' + items[-1]
 
+def tumblr_blog_name(url):
+    return url.split("//")[-1].split("/")[0]
 
 @app.errorhandler(500)
 def internal_server_error(error):
-    return render_template('500.html',
-                           event_id=g.sentry_event_id,
-                           public_dsn=sentry.client.get_public_dsn('https')
-                           ), 500
+    return render_template('500.html', event_id=g.sentry_event_id, public_dsn=sentry.client.get_public_dsn('https')), 500
 
 
 def get_active_notices(for_user=None):
@@ -324,7 +334,7 @@ def preview_description():
         account = Account.query.filter_by(
             user_id=session['id']).filter_by(id=int(site)).first()
         site = account.site
-        if site.id in sites_done:
+        if site.id in sites_done or site.id == TWITTER_ID:
             continue
         descriptions.append({'site': site.name, 'description': parse_description(
             request.args['description'], site.id)})
@@ -405,11 +415,11 @@ def upload_post():
 
         account.used_last = 1
 
-        if account.site.id == 2 and has_less_2:
+        if account.site.id == WEASYL_ID and has_less_2:
             flash('Weasyl requires at least two tags.')
             basicError = True
 
-        if account.site.id == 5 and has_less_2:
+        if account.site.id == SOFURRY_ID and has_less_2:
             flash('SoFurry requires at least two tags.')
             basicError = True
 
@@ -450,7 +460,7 @@ def upload_post():
 
         link = None
 
-        if site.id == 1:
+        if site.id == FURAFFINITY_ID:
             s = requests.session()
 
             j = json.loads(decrypted.decode('utf-8'))
@@ -553,7 +563,7 @@ def upload_post():
                 'name': '%s - %s' % (site.name, account.username)
             })
 
-        elif site.id == 2:
+        elif site.id == WEASYL_ID:
             s = requests.session()
 
             rating = '40'
@@ -600,7 +610,7 @@ def upload_post():
                 'name': '%s - %s' % (site.name, account.username)
             })
 
-        elif site.id == 3:
+        elif site.id == FURRYNETWORK_ID:
             s = requests.session()
 
             j = json.loads(decrypted.decode('utf-8'))
@@ -716,7 +726,7 @@ def upload_post():
                 'name': '%s - %s' % (site.name, account.username)
             })
 
-        elif site.id == 4:
+        elif site.id == INKBUNNY_ID:
             s = requests.session()
 
             creds = json.loads(decrypted.decode('utf-8'))
@@ -787,7 +797,7 @@ def upload_post():
                 'name': '%s - %s' % (site.name, account.username)
             })
 
-        elif site.id == 5:
+        elif site.id == SOFURRY_ID:
             s = requests.session()
 
             creds = json.loads(decrypted.decode('utf-8'))
@@ -863,7 +873,7 @@ def upload_post():
                 'name': '%s - %s' % (site.name, account.username)
             })
 
-        elif site.id == 6:
+        elif site.id == TWITTER_ID:
             creds = json.loads(decrypted.decode('utf-8'))
 
             auth = tweepy.OAuthHandler(
@@ -890,6 +900,29 @@ def upload_post():
             uploads.append({
                 'link': 'https://twitter.com/%s/status/%s' % (s.user.screen_name, s.id_str),
                 'name': '%s - %s' % (site.name, account.username)
+            })
+
+        elif site.id == TUMBLR_ID:
+            creds = json.loads(decrypted.decode('utf-8'))
+
+            t = Tumblpy(app.config['TUMBLR_KEY'], app.config['TUMBLR_SECRET'], creds['token'], creds['secret'])
+
+            res = t.post('post', blog_url=account.username, params={
+                'type': 'photo',
+                'caption': description,
+                'data': io.BytesIO(image[1]),
+                'state': 'published',
+                'format': 'markdown',
+                'tags': ', '.join(keywords.split(' ')),
+            })
+
+            if 'id' not in res:
+                flash('Unable to upload to Tumblr on account %s' % (account.username))
+                continue
+
+            uploads.append({
+                'link': 'https://%s/post/%d' % (account.username, res['id']),
+                'name': '%s - %s' % (site.name, account.username),
             })
 
         if account.id == twitter_link_id:
@@ -920,7 +953,7 @@ def add_account_form(site_id):
 
     extra_data = {}
 
-    if site.id == 1:  # FurAffinity
+    if site.id == FURAFFINITY_ID:
         s = requests.session()
 
         r = s.get(
@@ -939,7 +972,7 @@ def add_account_form(site_id):
         except:
             flash('Please reload the page, FurAffinty had an error.')
 
-    elif site.id == 6:
+    elif site.id == TWITTER_ID:
         auth = tweepy.OAuthHandler(
             app.config['TWITTER_KEY'], app.config['TWITTER_SECRET'], app.config['TWITTER_CALLBACK'])
 
@@ -951,6 +984,14 @@ def add_account_form(site_id):
         session['request_token'] = auth.request_token
 
         return redirect(auth_url)
+
+    elif site.id == TUMBLR_ID:
+        auth = Tumblpy(app.config['TUMBLR_KEY'], app.config['TUMBLR_SECRET'])
+        auth_props = auth.get_authentication_tokens(app.config['TUMBLR_CALLBACK'])
+
+        session['tumblr_token'] = auth_props['oauth_token_secret']
+
+        return redirect(auth_props['auth_url'])
 
     return render_template('add_site/%d.html' % (site_id), site=site, extra_data=extra_data, user=g.user)
 
@@ -965,7 +1006,7 @@ def add_account_callback(site_id):
 
     extra_data = {}
 
-    if site.id == 6:
+    if site.id == TWITTER_ID:
         verifier = request.args.get('oauth_verifier')
         token = session.pop('request_token', None)
         auth = tweepy.OAuthHandler(
@@ -985,6 +1026,20 @@ def add_account_callback(site_id):
 
         extra_data['me'] = me
 
+    elif site.id == TUMBLR_ID:
+        verifier = request.args.get('oauth_verifier')
+        token = request.args.get('oauth_token')
+
+        auth = Tumblpy(app.config['TUMBLR_KEY'], app.config['TUMBLR_SECRET'], token, session['tumblr_token'])
+        authorized_tokens = auth.get_authorized_tokens(verifier)
+
+        session['tumblr_token'] = authorized_tokens['oauth_token']
+        session['tumblr_secret'] = authorized_tokens['oauth_token_secret']
+
+        t = Tumblpy(app.config['TUMBLR_KEY'], app.config['TUMBLR_SECRET'], session['tumblr_token'], session['tumblr_secret'])
+
+        extra_data['user'] = t.post('user/info')
+
     return render_template('add_site/%d.html' % (site_id), site=site, extra_data=extra_data, user=g.user)
 
 
@@ -1003,7 +1058,7 @@ def add_account_post(site_id):
         flash('You need to correctly enter the password for this website.')
         return redirect(url_for('add_account_form', site_id=site.id))
 
-    if site.id == 1:  # FurAffinity
+    if site.id == FURAFFINITY_ID:
         s = requests.session()
 
         if Account.query.filter_by(site_id=site.id).filter_by(user_id=g.user.id).filter(func.lower(Account.username) == func.lower(request.form['username'])).first():
@@ -1041,7 +1096,7 @@ def add_account_post(site_id):
 
         session.pop('fa_cookie_b', None)
 
-    elif site.id == 2:
+    elif site.id == WEASYL_ID:
         new_header = headers.copy()
         new_header['X-Weasyl-API-Key'] = request.form['api_token']
 
@@ -1068,7 +1123,7 @@ def add_account_post(site_id):
         db.session.add(account)
         db.session.commit()
 
-    elif site.id == 3:
+    elif site.id == FURRYNETWORK_ID:
         r = requests.post('https://beta.furrynetwork.com/api/oauth/token', data={
             'username': request.form['email'],
             'password': request.form['password'],
@@ -1132,7 +1187,7 @@ def add_account_post(site_id):
 
         db.session.commit()
 
-    elif site.id == 4:
+    elif site.id == INKBUNNY_ID:
         if Account.query.filter_by(site_id=site.id).filter_by(user_id=g.user.id).filter(func.lower(Account.username) == func.lower(request.form['username'])).first():
             flash('This account has already been added.')
             return redirect(url_for('upload_form'))
@@ -1159,7 +1214,7 @@ def add_account_post(site_id):
         db.session.add(account)
         db.session.commit()
 
-    elif site.id == 5:
+    elif site.id == SOFURRY_ID:
         s = requests.session()
 
         r = s.post('https://www.sofurry.com/user/login', data={
@@ -1183,7 +1238,7 @@ def add_account_post(site_id):
         db.session.add(account)
         db.session.commit()
 
-    elif site.id == 6:
+    elif site.id == TWITTER_ID:
         auth = tweepy.OAuthHandler(
             app.config['TWITTER_KEY'], app.config['TWITTER_SECRET'])
         auth.set_access_token(session['taccess'], session['tsecret'])
@@ -1197,6 +1252,30 @@ def add_account_post(site_id):
         }), request.form['site_password'])
 
         db.session.add(account)
+        db.session.commit()
+
+    elif site.id == TUMBLR_ID:
+        t = Tumblpy(app.config['TUMBLR_KEY'], app.config['TUMBLR_SECRET'], session['tumblr_token'], session['tumblr_secret'])
+
+        user = t.post('user/info')
+
+        for blog in user['user']['blogs']:
+            exists = Account.query.filter_by(username=blog['url']).first()
+
+            if exists:
+                flash('Account %s already added, skipping' % (blog['url']))
+                continue
+
+            account = Account(site.id, session['id'], tumblr_blog_name(blog['url']), json.dumps({
+                'token': session['tumblr_token'],
+                'secret': session['tumblr_secret'],
+            }), request.form['site_password'])
+
+            db.session.add(account)
+
+        del session['tumblr_token']
+        del session['tumblr_secret']
+
         db.session.commit()
 
     time = current_time()
@@ -1315,7 +1394,7 @@ def settings():
     furaffinity = []
 
     for account in g.user.accounts:
-        if account.site_id == 5:
+        if account.site_id == SOFURRY_ID:
             remap = account['remap_sofurry']
 
             sofurry.append({
@@ -1323,7 +1402,7 @@ def settings():
                 'username': account.username,
                 'enabled': remap and remap.val == 'yes'
             })
-        elif account.site_id == 1:
+        elif account.site_id == FURAFFINITY_ID:
             resolution = account['resolution_furaffinity']
 
             furaffinity.append({
@@ -1339,7 +1418,7 @@ def settings():
 @login_required
 def settings_sofurry_remap():
     sofurry_accounts = [
-        account for account in g.user.accounts if account.site_id == 5 and account.user_id == g.user.id]
+        account for account in g.user.accounts if account.site_id == SOFURRY_ID and account.user_id == g.user.id]
 
     for account in sofurry_accounts:
         remap = account['remap_sofurry']
@@ -1362,7 +1441,7 @@ def settings_sofurry_remap():
 @login_required
 def settings_furaffinity_resolution():
     furaffinity_accounts = [
-        account for account in g.user.accounts if account.site_id == 1 and account.user_id == g.user.id]
+        account for account in g.user.accounts if account.site_id == FURAFFINITY_ID and account.user_id == g.user.id]
 
     for account in furaffinity_accounts:
         resolution = account['resolution_furaffinity']

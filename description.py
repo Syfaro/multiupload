@@ -2,7 +2,7 @@ import re
 
 
 def parse_description(description, uploading_to):
-    exp = '<\|(\S+),(\d),(\d)\|>'
+    exp = '<\|(\S+?),(\d+?),(\d)\|>'
     match = re.search(exp, description)
 
     while match:
@@ -52,6 +52,8 @@ def parse_description(description, uploading_to):
                     new_text = ':%sicon:' % (username)
                 elif link_type == 2:
                     new_text = ':icon%s:' % (username)
+            elif uploading_to == 7:
+                new_text = '[{0}](https://{0}.tumblr.com/)'.format(username)
         else:  # Uploading to other site
             if uploading_to == 1:  # Uploading to FurAffinity
                 if linking_to == 2:
@@ -68,10 +70,12 @@ def parse_description(description, uploading_to):
                         ' ', '-').replace('_', '-')
                     new_text = '[url=https://{clean}.sofurry.com/]{username}[/url]'.format(
                         username=username, clean=clean)
-                elif linking_to == 6:
+                elif linking_to == 100:
                     new_text = '[url=https://twitter.com/{0}]{0}[/url]'.format(username)
+                elif linking_to == 7:
+                    new_text = '[url=https://{0}.tumblr.com/]{0}[/url]'.format(username)
             # Uploading to FN or Weasyl (same format type)
-            elif uploading_to == 2 or uploading_to == 3:
+            elif uploading_to in (2, 3, 7):
                 if linking_to == 1:
                     new_text = '[{0}](https://www.furaffinity.net/user/{0}/)'.format(
                         username)
@@ -89,8 +93,10 @@ def parse_description(description, uploading_to):
                         ' ', '-').replace('_', '-')
                     new_text = '[{username}](https://{clean}.sofurry.com/)'.format(
                         username=username, clean=clean)
-                elif linking_to == 6:
+                elif linking_to == 100:
                     new_text = '[{0}](https://twitter.com/{0})'.format(username)
+                elif linking_to == 7:
+                    new_text = '[{0}](https://{0}.tumblr.com/)'.format(username)
             elif uploading_to == 4:
                 if linking_to == 1:
                     new_text = '[fa]%s[/fa]' % (username)
@@ -101,8 +107,10 @@ def parse_description(description, uploading_to):
                         username)
                 elif linking_to == 5:
                     new_text = '[sf]%s[/sf]' % (username)
-                elif linking_to == 6:
+                elif linking_to == 100:
                     new_text = '[url=https://twitter.com/{0}]{0}[/url]'.format(username)
+                elif linking_to == 7:
+                    new_text = '[url=https://{0}.tumblr.com/]{0}[/url]'.format(username)
             elif uploading_to == 5:
                 if linking_to == 1:
                     new_text = 'fa!%s' % (username)
@@ -114,8 +122,10 @@ def parse_description(description, uploading_to):
                         username)
                 elif linking_to == 4:
                     new_text = 'ib!%s' % (username)
-                elif linking_to == 6:
+                elif linking_to == 100:
                     new_text = '[url=https://twitter.com/{0}]{0}[/url]'.format(username)
+                elif linking_to == 7:
+                    new_text = '[url=https://{0}.tumblr.com/]{0}[/url]'.format(username)
 
         description = description[0:start] + new_text + description[end:]
 
