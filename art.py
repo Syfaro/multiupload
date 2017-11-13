@@ -4,6 +4,7 @@ from sqlalchemy import func
 from bs4 import BeautifulSoup
 from functools import wraps
 from raven.contrib.flask import Sentry
+from raven import breadcrumbs
 from raven import fetch_git_sha
 from PIL import Image
 from description import parse_description
@@ -26,6 +27,8 @@ app = Flask(__name__)
 
 app.config.from_object('config')
 app.config['SENTRY_RELEASE'] = fetch_git_sha(os.path.dirname(__file__))
+
+app.logger.propagate = True
 
 db = SQLAlchemy(app)
 sentry = Sentry(app)
@@ -473,6 +476,8 @@ def upload_post():
                 resized_image = io.BytesIO()
                 img.save(resized_image, 'JPEG')
                 has_resized = True
+
+                breadcrumbs.record(message='Resized image', category='furryapp', level='info')
 
             try:
                 r = s.get(
@@ -1375,6 +1380,13 @@ def settings_furaffinity_resolution():
     db.session.commit()
 
     return redirect(url_for('settings'))
+
+
+@app.route('/raise_exception')
+@login_required
+def make_bad_happen():
+    raise Exception('A test exception')
+
 
 
 if __name__ == '__main__':

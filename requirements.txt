@@ -26,7 +26,7 @@ pycrypto==2.6.1
 PyMySQL==0.7.3
 python-dateutil==2.5.3
 pytz==2016.6.1
-raven==5.19.0
+raven==6.2.1
 requests==2.10.0
 requests-oauthlib==0.6.2
 simple-crypt==4.1.7
