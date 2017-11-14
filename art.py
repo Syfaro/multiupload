@@ -199,8 +199,10 @@ def english_series(items):
         return "".join(items)
     return ", ".join(x for x in items[:-1]) + ' and ' + items[-1]
 
+
 def tumblr_blog_name(url):
     return url.split("//")[-1].split("/")[0]
+
 
 @app.errorhandler(500)
 def internal_server_error(error):
@@ -444,7 +446,7 @@ def upload_post():
         twitter_link_id = request.form.get('twitterlink', None)
         if twitter_link_id is not None:
             twitter_link_id = int(twitter_link_id)
-    except:
+    except Exception:
         print('Bad twitterlink ID')
     twitter_link = None
 
@@ -499,7 +501,7 @@ def upload_post():
 
                 soup = BeautifulSoup(r.content, 'html.parser')
                 key = soup.select('input[name="key"]')[0]['value']
-            except:
+            except Exception:
                 flash('Unable to upload to FurAffinity on account %s. Make sure the site is online. If this problem continues, you may need to remove the account and add it again.' % (
                     account.username))
                 continue
@@ -515,7 +517,7 @@ def upload_post():
 
                 soup = BeautifulSoup(r.content, 'html.parser')
                 key = soup.select('input[name="key"]')[0]['value']
-            except:
+            except Exception:
                 flash('Unable to upload to FurAffinity on account %s. Make sure the site is online. If this problem continues, you may need to remove the account and add it again.' % (
                     account.username))
                 continue
@@ -530,7 +532,7 @@ def upload_post():
                     'keywords': keywords,
                     'rating': rating
                 }, cookies=j, headers=headers)
-            except:
+            except Exception:
                 flash('An error occured while uploading to FurAffinity on account %s. Make sure the site is online.' % (
                     account.username))
                 continue
@@ -551,7 +553,7 @@ def upload_post():
 
                     flash(
                         'Image was automatically resized and reuploaded to FA for full resolution')
-                except:
+                except Exception:
                     flash(
                         'Image was unable to be automatically resized for FA requirements, it has been uploaded at a lower resolution')
                     pass
@@ -583,7 +585,7 @@ def upload_post():
 
                 soup = BeautifulSoup(r.content, 'html.parser')
                 token = soup.select('input[name="token"]')[0]['value']
-            except:
+            except Exception:
                 flash('Unable to upload to Weasyl on account %s. Make sure the site is online. If this problem continues, you may need to remove the account and add it again.' % (
                     account.username))
                 continue
@@ -598,7 +600,7 @@ def upload_post():
                 }, headers=new_header, files={
                     'submitfile': image
                 })
-            except:
+            except Exception:
                 flash('An error occured while uploading to Weasyl on account %s. Make sure the site is online.' % (
                     account.username))
                 continue
@@ -625,12 +627,12 @@ def upload_post():
                 }, headers=headers)
 
                 j = json.loads(r.content.decode('utf-8'))
-            except:
+            except Exception:
                 flash('Unable to upload to FurryNetwork on character %s. Make sure the site is online. If this problem continues, you may need to remove the account and add it again.' % (
                     account.username))
                 continue
 
-            if not 'access_token' in j:
+            if 'access_token' not in j:
                 flash('It appears your access token to FurryNetwork on character %s has expired. Please remove the account and add it again.' % (
                     account.username))
                 continue
@@ -646,7 +648,7 @@ def upload_post():
                 }, headers=new_header)
 
                 j = json.loads(r.content.decode('utf-8'))
-            except:
+            except Exception:
                 flash('It appears that FurryNetwork was down while trying to post on character %s. Please try again later.' % (
                     account.username))
                 continue
@@ -658,7 +660,7 @@ def upload_post():
 
             if username == '':
                 flash('It appears the character %s was removed from FurryNetwork. Please remove this character.' % (
-                    user.username))
+                    account.username))
                 continue
 
             params = {
@@ -681,7 +683,7 @@ def upload_post():
                            (username), headers=new_header, params=params, data=image[1])
 
                 j = json.loads(r.content.decode('utf-8'))
-            except:
+            except Exception:
                 flash('It appears that FurryNetwork was down while trying to post on character %s. Please try again later.' % (
                     account.username))
                 continue
@@ -705,7 +707,7 @@ def upload_post():
                 }))
 
                 j = json.loads(r.content.decode('utf-8'))
-            except:
+            except Exception:
                 flash('It appears that FurryNetwork was down while trying to post on character %s. You may need to manually set the title, description, tags, and set it to be public.' % (
                     account.username))
                 continue
@@ -740,7 +742,7 @@ def upload_post():
                           (account.username, j['error_message']))
                 if 'sid' not in j:
                     raise Exception('Invalid username and password.')
-            except:
+            except Exception:
                 flash('Unable to login to Inkbunny on account %s. Make sure the site is online. If this problem continues, you may need to remove the account and add it again.' % (
                     account.username))
                 continue
@@ -757,7 +759,7 @@ def upload_post():
                           (account.username, j['error_message']))
                 if 'submission_id' not in j:
                     raise Exception('Unable to upload.')
-            except:
+            except Exception:
                 flash('Unable to upload to Inkbunny on account %s.' %
                       (account.username))
                 continue
@@ -784,7 +786,7 @@ def upload_post():
                 if 'error_message' in j:
                     flash('Inkbunny returned error for account %s: %s' %
                           (account.username, j['error_message']))
-            except:
+            except Exception:
                 flash('Unable to update Inkbunny submission on account %s.' %
                       (account.username))
                 continue
@@ -807,7 +809,7 @@ def upload_post():
                     'LoginForm[sfLoginUsername]': creds['username'],
                     'LoginForm[sfLoginPassword]': creds['password']
                 }, headers=headers)
-            except:
+            except Exception:
                 flash('SoFurry appears to be down while uploading to account %s. Please try again later.' % (
                     account.username))
                 continue
@@ -816,7 +818,7 @@ def upload_post():
                 flash('Invalid username or password.')
                 continue
 
-            if not 'sfuser' in s.cookies:
+            if 'sfuser' not in s.cookies:
                 flash('Unable to find SoFurry login cookie.')
                 continue
 
@@ -828,7 +830,7 @@ def upload_post():
 
                 key = soup.select('input[name="YII_CSRF_TOKEN"]')[0]['value']
                 key2 = soup.select('#UploadForm_P_id')[0]['value']
-            except:
+            except Exception:
                 flash('Unable to get submission form for SoFurry on account %s.' % (
                     account.username))
                 continue
@@ -861,7 +863,7 @@ def upload_post():
                 }, files={
                     'UploadForm[binarycontent]': image
                 }, headers=headers)
-            except:
+            except Exception:
                 flash(
                     'Unable to upload submission to SoFurry on account %s.' % (account.username))
                 continue
@@ -892,7 +894,7 @@ def upload_post():
             try:
                 s = api.update_with_media(
                     filename=image[0], file=i, status=status)
-            except:
+            except Exception:
                 flash('Unable to upload to Twitter on account %s.' %
                       (account.username))
                 continue
@@ -969,7 +971,7 @@ def add_account_form(site_id):
             extra_data['captcha'] = base64.b64encode(
                 captcha.content).decode('utf-8')
 
-        except:
+        except Exception:
             flash('Please reload the page, FurAffinty had an error.')
 
     elif site.id == TWITTER_ID:
@@ -978,7 +980,7 @@ def add_account_form(site_id):
 
         try:
             auth_url = auth.get_authorization_url()
-        except e:
+        except Exception:
             return 'Unable to get URL for Twitter, please try again later.'
 
         session['request_token'] = auth.request_token
@@ -1015,7 +1017,7 @@ def add_account_callback(site_id):
 
         try:
             auth.get_access_token(verifier)
-        except:
+        except Exception:
             return 'Some kind of error with Twitter, please try again later.'
 
         session['taccess'] = auth.access_token
@@ -1105,7 +1107,7 @@ def add_account_post(site_id):
 
         try:
             j = json.loads(r.content.decode('utf-8'))
-        except:
+        except Exception:
             flash('Invalid API Token')
             return redirect(url_for('add_account_form', site_id=site.id))
 
@@ -1134,7 +1136,7 @@ def add_account_post(site_id):
 
         try:
             j = json.loads(r.content.decode('utf-8'))
-        except:
+        except Exception:
             flash('Invalid username and password, or site is down.')
             return redirect(url_for('add_account_form', site_id=site.id))
 
@@ -1153,7 +1155,7 @@ def add_account_post(site_id):
 
         try:
             j = json.loads(r.content.decode('utf-8'))
-        except:
+        except Exception:
             flash('Site is likely down, please try again later.')
             return redirect(url_for('add_account_form', site_id=site.id))
 
@@ -1200,9 +1202,9 @@ def add_account_post(site_id):
 
             j = json.loads(r.content.decode('utf-8'))
 
-            if not 'sid' in j or j['sid'] == '':
+            if 'sid' not in j or j['sid'] == '':
                 raise Exception('Invalid username or password.')
-        except:
+        except Exception:
             flash('Invalid username or password.')
             return redirect(url_for('add_account_form', site_id=site.id))
 
@@ -1226,7 +1228,7 @@ def add_account_post(site_id):
             flash('Invalid username or password.')
             return redirect(url_for('add_account_form', site_id=site.id))
 
-        if not 'sfuser' in s.cookies:
+        if 'sfuser' not in s.cookies:
             flash('Unable to find SoFurry login cookie.')
             return redirect(url_for('add_account_form', site_id=site.id))
 
@@ -1459,13 +1461,6 @@ def settings_furaffinity_resolution():
     db.session.commit()
 
     return redirect(url_for('settings'))
-
-
-@app.route('/raise_exception')
-@login_required
-def make_bad_happen():
-    raise Exception('A test exception')
-
 
 
 if __name__ == '__main__':
