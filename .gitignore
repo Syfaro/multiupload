@@ -4,3 +4,5 @@ config.py
 *.db
 *.pyc
 *.sublime*
+*.ini
+*.sql
