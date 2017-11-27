@@ -1,26 +1,27 @@
 (function () {
 	'use strict';
 
-	var items = document.querySelectorAll('button.close');
+	const items = document.querySelectorAll('button.close');
 
 	if (!items) {
 		return;
 	}
 
-	for (var i = 0; i < items.length; i++) {
-		var item = items[i];
+	const csrf = document.head.querySelector('meta[name="csrf"]').content;
 
-		item.addEventListener('click', function(e) {
-			var alert = e.target.parentNode.parentNode;
-			var id = e.target.dataset.id;
+	items.forEach(item => {
+		item.addEventListener('click', ev => {
+			const alert = ev.target.parentNode.parentNode;
+			const id = alert.querySelector('span[data-id]').dataset.id;
 
-			var xhr = new XMLHttpRequest();
-			xhr.open('POST', '/dismiss/' + id);
-			xhr.onload = function () {
+			fetch(`/dismiss/${id}`, {
+				method: 'POST',
+				body: `_csrf_token=${csrf}`,
+				credentials: 'include',
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+			}).then(res => {
 				alert.classList.add('hidden');
-			};
-			xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-			xhr.send('_csrf_token=' + csrf);
+			});
 		});
-	}
-}())
+	});
+}());

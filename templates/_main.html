@@ -67,6 +67,8 @@
 		<link rel="stylesheet" href="{{ url_for('static', filename='css/darkly.min.css') }}">
 	{% endif %}
 
+	<meta name="csrf" content="{{ csrf_token() }}">
+
 	<style>
 		/* CSS classes just to make my name purple, what of it? :3 */
 
@@ -81,6 +83,9 @@
 	</style>
 </head>
 <body>
+	<script src="https://cdn.ravenjs.com/3.18.1/raven.min.js" crossorigin="anonymous"></script>
+	<script src="{{ url_for('static', filename='js/raven.js') }}"></script>
+
 	{% block body %}{% endblock %}
 
 	<div class="container" style="margin-top: 1em; margin-bottom: 1em">
@@ -107,7 +112,6 @@
 		</footer>
 	</div>
 
-	<script>var csrf = '{{ csrf_token() }}';</script>
-	<script src="/static/js/notices.js"></script>
+	<script src="{{ url_for('static', filename='js/notices.js') }}"></script>
 </body>
 </html>

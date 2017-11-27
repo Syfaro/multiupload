@@ -11,6 +11,10 @@
 				</p>
 
 				<p>
+					If you have been experiencing issues for any length of time, please <a href="mailto:syfaro@huefox.com">email me</a> or <a href="https://t.me/Syfaro">Telegram me</a>. I'd much rather get a few people reporting issues than not being aware of an issue at all.
+				</p>
+
+				<p>
 					<a href="/" class="btn btn-lg btn-primary">Home</a>
 				</p>
 			</div>
@@ -18,14 +22,9 @@
 	</div>
 
 	{% if event_id %}
-		<!-- Sentry JS SDK 2.1.+ required -->
-		<script src="https://cdn.ravenjs.com/2.3.0/raven.min.js"></script>
+		<input type="hidden" name="event_id" value="{{ event_id }}">
+		<input type="hidden" name="public_dsn" value="{{ public_dsn }}">
 
-		<script>
-		Raven.showReportDialog({
-			eventId: '{{ event_id }}',
-			dsn: '{{ public_dsn }}'
-		});
-	  </script>
+		<script src="{{ url_for('static', filename='js/error.js') }}">
 	{% endif %}
 {% endblock %}
