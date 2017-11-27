@@ -40,24 +40,6 @@ inkbunny.forEach(item => {
 
 updateInkbunnyMessage();
 
-const daMessage = document.querySelector('.da-mature');
-
-const updateDABoxes = function () {
-	const hasChecked = document.querySelectorAll('input[name="account"][data-site="8"]:checked');
-
-	if (hasChecked.length > 0) {
-		daMessage.classList.remove('hidden');
-	} else {
-		daMessage.classList.add('hidden');
-	}
-}
-
-Array.from(document.querySelectorAll('input[name="account"][data-site="8"]')).forEach(item => {
-	item.addEventListener('change', e => updateDABoxes());
-});
-
-updateDABoxes();
-
 const sites = document.querySelectorAll('input[name="account"]');
 const updateTwitterLinks = function () {
 	let hasTwitterSelected = false;
