@@ -1463,6 +1463,15 @@ def settings_furaffinity_resolution():
     return redirect(url_for('settings'))
 
 
+@app.route('/raise_exception')
+@login_required
+def test_exception():
+    class TestException(Exception):
+        pass
+
+    raise TestException('A test exception message to verify Sentry works')
+
+
 if __name__ == '__main__':
     db.create_all()
     app.run()
