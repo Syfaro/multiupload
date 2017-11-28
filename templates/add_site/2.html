@@ -19,8 +19,6 @@
 				</p>
 
 				<form method="POST" action="/add/{{ site.id }}">
-					<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-
 					<div class="form-group">
 						<input type="text" class="form-control" name="api_token" placeholder="API Token" autocomplete="off">
 					</div>

@@ -33,8 +33,6 @@
 
 					{% if sofurry | length > 0 %}
 						<form method="POST" action="/settings/sofurry/remap">
-							<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-
 							{% for account in sofurry %}
 								<div class="checkbox">
 									<label>
@@ -62,8 +60,6 @@
 
 					{% if furaffinity | length > 0 %}
 						<form method="POST" action="/settings/furaffinity/resolution">
-							<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-
 							{% for account in furaffinity %}
 								<div class="checkbox">
 									<label>
