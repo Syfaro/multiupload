@@ -698,6 +698,7 @@ def upload_post():
             if 'errors' in j and 'tags' in j['errors']:
                 flash('There was an error using your tags on FurryNetwork with character %s. Your submission has been uploaded, but is currently unlisted.' % (
                     account.username))
+                print('Error with FurryNetwork tags: %s' % (j))
                 continue
             elif 'id' not in j:
                 flash('An error occured updating your submission on FurryNetwork with character %s. It has been uploaded, but is currently unlisted.' % (
