@@ -1083,7 +1083,7 @@ def add_account_post(site_id):
 
     elif site.id == WEASYL_ID:
         new_header = headers.copy()
-        new_header['X-Weasyl-API-Key'] = request.form['api_token']
+        new_header['X-Weasyl-API-Key'] = request.form['api_token'].strip()
 
         r = requests.get(
             'https://www.weasyl.com/api/whoami', headers=new_header)
