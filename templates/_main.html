@@ -84,6 +84,9 @@
 	<script src="https://cdn.ravenjs.com/3.18.1/raven.min.js" crossorigin="anonymous"></script>
 	<script src="{{ url_for('static', filename='js/raven.js') }}"></script>
 
+	<script src="{{ url_for('static', filename='js/jquery-2.2.4.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+
 	{% block body %}{% endblock %}
 
 	<div class="container" style="margin-top: 1em; margin-bottom: 1em">
@@ -94,8 +97,13 @@
 				</div>
 
 				<div class="col-xs-4 text-center text-muted">
-					 <span title="Current revision" style="color: #{{ git_version[1:7] }}">{{ git_version }}</span>
-					 <a title="Donate" href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=syfaro@huefox.com&lc=US&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted" target="_blank" class="syfaro">&hearts;</a>
+					 <div>
+						 <a title="Donate" href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=syfaro@huefox.com&lc=US&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted" target="_blank" class="syfaro donate">Donate &hearts;</a>
+					 </div>
+
+					<div>
+						<span title="Current revision" style="color: #{{ git_version[1:7] }}; font-family: monospace">{{ git_version }}</span>
+					</div>
 				</div>
 
 				{% if user is defined %}
@@ -109,6 +117,44 @@
 			</div>
 		</footer>
 	</div>
+
+	<div class="modal donate-modal fade">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+					<h4>Donate</h4>
+				</div>
+	
+				<div class="modal-body">
+					<div>
+						You know what's really cool? Artwork. That's why I made this tool!
+						Instead of a monetary donation, artistic ones are just as good, if not better.
+					</div>
+
+					<div style="margin-top: 10px">
+						If you feel generous, you can find my character reference at <a href="https://syfaro.net/char" class="syfaro">syfaro.net/char</a>.
+					</div>
+
+					<div style="margin-top: 10px">
+						Prefer PayPal still? You can do that <a title="Donate" href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=syfaro@huefox.com&lc=US&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted"
+						 target="_blank" class="syfaro donate">here</a>.
+					</div>
+				</div>
+	
+				<div class="modal-footer">
+					<button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		document.querySelector('.donate').addEventListener('click', ev => {
+			ev.preventDefault();
+			$('.donate-modal').modal('show');
+		});
+	</script>
 
 	<script src="{{ url_for('static', filename='js/notices.js') }}"></script>
 </body>
