@@ -23,6 +23,7 @@ import passwordmeter
 import time
 import tweepy
 import os
+import cfscrape
 
 app = Flask(__name__)
 
@@ -446,7 +447,7 @@ def upload_post():
         link = None
 
         if site.id == FURAFFINITY_ID:
-            s = requests.session()
+            s = cfscrape.create_scraper()
 
             j = json.loads(decrypted.decode('utf-8'))
 
@@ -549,7 +550,7 @@ def upload_post():
             })
 
         elif site.id == WEASYL_ID:
-            s = requests.session()
+            s = cfscrape.create_scraper()
 
             rating = '40'
             if request.form['rating'] == 'general':
@@ -596,7 +597,7 @@ def upload_post():
             })
 
         elif site.id == FURRYNETWORK_ID:
-            s = requests.session()
+            s = cfscrape.create_scraper()
 
             j = json.loads(decrypted.decode('utf-8'))
 
@@ -713,7 +714,7 @@ def upload_post():
             })
 
         elif site.id == INKBUNNY_ID:
-            s = requests.session()
+            s = cfscrape.create_scraper()
 
             creds = json.loads(decrypted.decode('utf-8'))
 
@@ -784,7 +785,7 @@ def upload_post():
             })
 
         elif site.id == SOFURRY_ID:
-            s = requests.session()
+            s = cfscrape.create_scraper()
 
             creds = json.loads(decrypted.decode('utf-8'))
 
@@ -940,7 +941,7 @@ def add_account_form(site_id):
     extra_data = {}
 
     if site.id == FURAFFINITY_ID:
-        s = requests.session()
+        s = cfscrape.create_scraper()
 
         r = s.get(
             'https://www.furaffinity.net/login/?mode=imagecaptcha', headers=headers)
@@ -1045,7 +1046,7 @@ def add_account_post(site_id):
         return redirect(url_for('add_account_form', site_id=site.id))
 
     if site.id == FURAFFINITY_ID:
-        s = requests.session()
+        s = cfscrape.create_scraper()
 
         if Account.query.filter_by(site_id=site.id).filter_by(user_id=g.user.id).filter(func.lower(Account.username) == func.lower(request.form['username'])).first():
             flash('This account has already been added.')
@@ -1201,7 +1202,7 @@ def add_account_post(site_id):
         db.session.commit()
 
     elif site.id == SOFURRY_ID:
-        s = requests.session()
+        s = cfscrape.create_scraper()
 
         r = s.post('https://www.sofurry.com/user/login', data={
             'LoginForm[sfLoginUsername]': request.form['username'],
