@@ -10,7 +10,13 @@
 	Array.from(items).forEach(function (item) {
 		item.addEventListener('click', function (ev) {
 			var alert = ev.target.parentNode.parentNode;
-			var id = alert.querySelector('span[data-id]').dataset.id;
+			var span = alert.querySelector('span[data-id]');
+
+			if (!span) {
+				return;
+			}
+
+			var id = span.dataset.id;
 
 			fetch('/dismiss/' + id, {
 				method: 'POST',
