@@ -8,7 +8,6 @@ from raven import breadcrumbs
 from raven import fetch_git_sha
 from PIL import Image
 from description import parse_description
-from flask_influxdb import InfluxDB
 from tumblpy import Tumblpy
 import io
 import bcrypt
@@ -19,7 +18,6 @@ import re
 import string
 import random
 import passwordmeter
-import time
 import tweepy
 import os
 import cfscrape
@@ -33,7 +31,6 @@ app.logger.propagate = True
 
 db = SQLAlchemy(app)
 sentry = Sentry(app)
-influx = InfluxDB(app)
 
 rng = random.SystemRandom()
 
@@ -48,10 +45,6 @@ INKBUNNY_ID = 4
 SOFURRY_ID = 5
 TUMBLR_ID = 7
 TWITTER_ID = 100
-
-
-def current_time():
-    return float(time.time())
 
 
 class User(db.Model):
@@ -262,12 +255,6 @@ def register():
         return redirect(url_for('home'))
 
     strength, improvements = passwordmeter.test(request.form['password'])
-    influx.connection.write_points([{
-        "measurement": "password_strength",
-        "fields": {
-            "strength": strength,
-        },
-    }])
 
     if strength < 0.3:
         flash('Weak password. You may wish to try the following suggestions.<br><ul><li>%s</ul></ul>' %
@@ -328,28 +315,9 @@ def preview_description():
     return jsonify({'descriptions': descriptions})
 
 
-def write_upload_time(starttime, site=None, measurement="upload_time"):
-    time = current_time()
-    duration = time - starttime
-
-    point = {
-        "measurement": measurement,
-        "fields": {
-            "length": duration,
-        },
-    }
-
-    if site:
-        point['tags'] = {'site': site}
-
-    influx.connection.write_points([point])
-
-
 @app.route('/upload', methods=['POST'])
 @login_required
 def upload_post():
-    totaltime = current_time()
-
     if request.form['title'] == '':
         flash('Missing title.')
         return render_template('upload.html', user=g.user, sites=Site.query.all())
@@ -437,8 +405,6 @@ def upload_post():
     for account in accounts:
         decrypted = simplecrypt.decrypt(
             request.form['site_password'], account.credentials)
-
-        starttime = current_time()
 
         site = account.site
         description = parse_description(request.form['description'], site.id)
@@ -914,10 +880,6 @@ def upload_post():
         if account.id == twitter_link_id:
             twitter_link = link
 
-        write_upload_time(starttime, site.id)
-
-    write_upload_time(totaltime, measurement="total_upload_time")
-
     return render_template('after_upload.html', uploads=uploads, user=g.user)
 
 
@@ -1032,8 +994,6 @@ def add_account_callback(site_id):
 @app.route('/add/<int:site_id>', methods=['POST'])
 @login_required
 def add_account_post(site_id):
-    starttime = current_time()
-
     site = Site.query.get(site_id)
 
     if not site:
@@ -1269,18 +1229,6 @@ def add_account_post(site_id):
         del session['tumblr_secret']
 
         db.session.commit()
-
-    time = current_time()
-    duration = time - starttime
-    influx.connection.write_points([{
-        "measurement": "add_account_time",
-        "fields": {
-            "length": duration,
-        },
-        "tags": {
-            "site": site.id,
-        },
-    }])
 
     return redirect(url_for('upload_form'))
 
