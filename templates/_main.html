@@ -125,7 +125,7 @@
 					<button type="button" class="close" data-dismiss="modal">&times;</button>
 					<h4>Donate</h4>
 				</div>
-	
+
 				<div class="modal-body">
 					<div>
 						You know what's really cool? Artwork. That's why I made this tool!
@@ -141,7 +141,7 @@
 						 target="_blank" class="syfaro donate">here</a>.
 					</div>
 				</div>
-	
+
 				<div class="modal-footer">
 					<button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
 				</div>
@@ -150,12 +150,13 @@
 	</div>
 
 	<script>
-		document.querySelector('.donate').addEventListener('click', ev => {
+		document.querySelector('.donate').addEventListener('click', function (ev) {
 			ev.preventDefault();
 			$('.donate-modal').modal('show');
 		});
 	</script>
 
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/fetch/2.0.3/fetch.min.js"></script>
 	<script src="{{ url_for('static', filename='js/notices.js') }}"></script>
 </body>
 </html>
