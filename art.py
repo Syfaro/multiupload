@@ -211,17 +211,33 @@ def record_stats(resp):
     if not influx or not starttime:
         return resp
 
+    if request.path.startswith('/static'):
+        return resp
+
     influx.write_points([{
-        "measurement": "request",
-        "tags": {
-            "status_code": resp.status_code,
+        'measurement': 'request',
+        'tags': {
+            'status_code': resp.status_code,
+            'path': request.path,
         },
-        "fields": {
-            "duration": time.time() - starttime,
+        'fields': {
+            'duration': time.time() - starttime,
         },
     }])
 
     return resp
+
+
+def send_to_influx(point):
+    influx = g.get('influx', None)
+
+    if not influx:
+        return
+
+    try:
+        influx.write_points([point])
+    except:
+        sentry.captureException()
 
 
 @app.route('/')
@@ -285,6 +301,13 @@ def register():
 
     strength, improvements = passwordmeter.test(request.form['password'])
 
+    send_to_influx({
+        "measurement": "password_strength",
+        "fields": {
+            "strength": strength,
+        },
+    })
+
     if strength < 0.3:
         flash('Weak password. You may wish to try the following suggestions.<br><ul><li>%s</ul></ul>' %
               ('</li><li>'.join(improvements.values())))
@@ -344,9 +367,27 @@ def preview_description():
     return jsonify({'descriptions': descriptions})
 
 
+def write_upload_time(starttime, site=None, measurement='upload_time'):
+    duration = time.time() - starttime
+
+    point = {
+        'measurement': measurement,
+        'fields': {
+            'duration': duration,
+        },
+    }
+
+    if site:
+        point['tags'] = {'site': site}
+
+    send_to_influx(point)
+
+
 @app.route('/upload', methods=['POST'])
 @login_required
 def upload_post():
+    totaltime = time.time()
+
     if request.form['title'] == '':
         flash('Missing title.')
         return render_template('upload.html', user=g.user, sites=Site.query.all())
@@ -432,6 +473,8 @@ def upload_post():
 
     uploads = []
     for account in accounts:
+        starttime = time.time()
+
         decrypted = simplecrypt.decrypt(
             request.form['site_password'], account.credentials)
 
@@ -909,6 +952,10 @@ def upload_post():
         if account.id == twitter_link_id:
             twitter_link = link
 
+        write_upload_time(starttime, site.id)
+
+    write_upload_time(starttime, measurement='upload_time_total')
+
     return render_template('after_upload.html', uploads=uploads, user=g.user)
 
 
@@ -1023,6 +1070,8 @@ def add_account_callback(site_id):
 @app.route('/add/<int:site_id>', methods=['POST'])
 @login_required
 def add_account_post(site_id):
+    starttime = time.time()
+
     site = Site.query.get(site_id)
 
     if not site:
@@ -1258,6 +1307,16 @@ def add_account_post(site_id):
         del session['tumblr_secret']
 
         db.session.commit()
+
+    send_to_influx({
+        'measurement': 'account_time_add',
+        'fields': {
+            'duration': time.time() - starttime,
+        },
+        'tags': {
+            'site': site.id,
+        },
+    })
 
     return redirect(url_for('upload_form'))
 
