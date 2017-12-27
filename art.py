@@ -21,6 +21,8 @@ import passwordmeter
 import tweepy
 import os
 import cfscrape
+import time
+from influxdb import InfluxDBClient
 
 app = Flask(__name__)
 
@@ -193,6 +195,33 @@ def get_active_notices(for_user=None):
         notices = filter(lambda x: not x.wasViewedBy(for_user), notices)
 
     return notices
+
+
+@app.before_request
+def start_influx():
+    g.influx = InfluxDBClient(**app.config['INFLUXDB'])
+    g.start = time.time()
+
+
+@app.after_request
+def record_stats(resp):
+    influx = g.get('influx', None)
+    starttime = g.get('start', None)
+
+    if not influx or not starttime:
+        return resp
+
+    influx.write_points([{
+        "measurement": "request",
+        "tags": {
+            "status_code": resp.status_code,
+        },
+        "fields": {
+            "duration": time.time() - starttime,
+        },
+    }])
+
+    return resp
 
 
 @app.route('/')
