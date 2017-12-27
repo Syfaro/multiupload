@@ -954,7 +954,7 @@ def upload_post():
 
         write_upload_time(starttime, site.id)
 
-    write_upload_time(starttime, measurement='upload_time_total')
+    write_upload_time(totaltime, measurement='upload_time_total')
 
     return render_template('after_upload.html', uploads=uploads, user=g.user)
 
