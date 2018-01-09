@@ -539,10 +539,6 @@ def upload_post():
                 soup = BeautifulSoup(r.content, 'html.parser')
                 key = soup.select('input[name="key"]')[0]['value']
 
-                if soup.select('#g-recaptcha'):
-                    flash('Unable to upload to FurAffinity on account %s. It appears you have not uploaded enough submissions to disable the CAPTCHA for submissions, please try again after uploading more directly on the site.' % (account.username))
-                    continue
-
             except Exception:
                 flash('Unable to upload to FurAffinity on account %s. Make sure the site is online. If this problem continues, you may need to remove the account and add it again.' % (
                     account.username))
@@ -561,6 +557,10 @@ def upload_post():
             except Exception:
                 flash('An error occured while uploading to FurAffinity on account %s. Make sure the site is online.' % (
                     account.username))
+                continue
+
+            if r.url == 'https://www.furaffinity.net/submit/submission/4/?msg=1':
+                flash('It appears you have few submissions on FurAffinity account %s. While you have few, you must use FA directly as they have a CAPTCHA to submit.' % (account.username))
                 continue
 
             resolution = account['resolution_furaffinity']
