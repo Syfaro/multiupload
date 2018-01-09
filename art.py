@@ -351,6 +351,7 @@ def dismiss_notice(alert):
 
 
 @app.route('/preview/description')
+@login_required
 def preview_description():
     descriptions = []
     sites_done = []
