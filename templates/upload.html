@@ -207,7 +207,30 @@
     	var imagePreview = document.querySelector('.preview-image');
 
     	document.querySelector('.upload-image').addEventListener('change', function () {
-    		imagePreview.src = URL.createObjectURL(this.files[0]);
+			Raven.captureBreadcrumb({
+				message: 'Selected file to upload',
+				category: 'multiupload.web',
+				level: 'info',
+				data: {
+					len: this.files.length,
+					type: typeof this.files[0]
+				}
+			});
+
+			if (!this.files) {
+				return alert('Missing file.');
+			}
+
+			if (this.files.length > 1 || this.files.length === 0) {
+				return alert('Invalid number of files selected.');
+			}
+
+    		try {
+				imagePreview.src = URL.createObjectURL(this.files[0]);
+			} catch (err) {
+				Raven.captureException(err);
+				return alert('Some error with selected file.');
+			}
     	});
 
     	[document.querySelector('.description'), document.querySelector('.keywords')].forEach(function (item) {
@@ -359,4 +382,3 @@
     	});
     </script>
 {% endblock %}
-
