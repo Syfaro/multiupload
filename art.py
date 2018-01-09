@@ -24,6 +24,8 @@ import cfscrape
 import time
 from influxdb import InfluxDBClient
 
+VERSION = '0.9.0'
+
 app = Flask(__name__)
 
 app.config.from_object('config')
@@ -37,7 +39,7 @@ sentry = Sentry(app)
 rng = random.SystemRandom()
 
 headers = {
-    'User-Agent': 'Furry Multiupload 0.1 / Syfaro <syfaro@foxpaw.in>'
+    'User-Agent': 'Furry Multiupload %s / Syfaro <syfaro@huefox.com>' % VERSION
 }
 
 FURAFFINITY_ID = 1
