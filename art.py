@@ -539,6 +539,7 @@ def upload_post():
 
                 soup = BeautifulSoup(r.content, 'html.parser')
                 key = soup.select('input[name="key"]')[0]['value']
+
             except Exception:
                 flash('Unable to upload to FurAffinity on account %s. Make sure the site is online. If this problem continues, you may need to remove the account and add it again.' % (
                     account.username))
@@ -562,6 +563,10 @@ def upload_post():
                 continue
 
             link = r.url
+
+            if link == 'https://www.furaffinity.net/submit/submission/4/?msg=1':
+                flash('It appears you have few submissions on FurAffinity account %s. While you have few, you must use FA directly as they have a CAPTCHA to submit.' % (account.username))
+                continue
 
             resolution = account['resolution_furaffinity']
             resolution = not resolution or resolution.val == 'yes'
