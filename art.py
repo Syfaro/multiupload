@@ -8,7 +8,7 @@ from raven import breadcrumbs
 from raven import fetch_git_sha
 from PIL import Image
 from description import parse_description
-from tumblpy import Tumblpy
+from tumblpy import Tumblpy, TumblpyError
 import io
 import bcrypt
 import simplecrypt
@@ -1056,7 +1056,10 @@ def add_account_callback(site_id):
         token = request.args.get('oauth_token')
 
         auth = Tumblpy(app.config['TUMBLR_KEY'], app.config['TUMBLR_SECRET'], token, session['tumblr_token'])
-        authorized_tokens = auth.get_authorized_tokens(verifier)
+        try:
+            authorized_tokens = auth.get_authorized_tokens(verifier)
+        except TumblpyError:
+            return 'Unable to get credentials. Please try again.'
 
         session['tumblr_token'] = authorized_tokens['oauth_token']
         session['tumblr_secret'] = authorized_tokens['oauth_token_secret']
