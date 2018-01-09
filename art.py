@@ -554,19 +554,23 @@ def upload_post():
                     'keywords': keywords,
                     'rating': rating
                 }, cookies=j, headers=headers)
+
+                r.raise_for_status()
             except Exception:
                 flash('An error occured while uploading to FurAffinity on account %s. Make sure the site is online.' % (
                     account.username))
                 continue
 
+            link = r.url
+
             resolution = account['resolution_furaffinity']
             resolution = not resolution or resolution.val == 'yes'
 
             if has_resized and resolution:
-                match = re.search('view\/(\d+)', r.url).group(1)
-
                 try:
-                    r = s.post('https://www.furaffinity.net/controls/submissions/changesubmission/%s/' % (match), data={
+                    match = re.search('view\/(\d+)', r.url).group(1)
+
+                    s.post('https://www.furaffinity.net/controls/submissions/changesubmission/%s/' % (match), data={
                         'update': 'yes',
                         'rebuild-thumbnail': '1'
                     }, files={
@@ -578,9 +582,6 @@ def upload_post():
                 except Exception:
                     flash(
                         'Image was unable to be automatically resized for FA requirements, it has been uploaded at a lower resolution')
-                    pass
-
-            link = r.url
 
             uploads.append({
                 'link': r.url,
