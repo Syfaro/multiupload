@@ -1,3 +1,5 @@
+from typing import List
+
 from flask import Flask, render_template, request, session, redirect, jsonify, flash, url_for, g, abort
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
@@ -23,6 +25,10 @@ import os
 import cfscrape
 import time
 from influxdb import InfluxDBClient
+import requests
+
+from submission import Submission
+from submission import Rating
 
 VERSION = '0.9.0'
 
@@ -75,6 +81,10 @@ class Site(db.Model):
 
     def __init__(self, name):
         self.name = name
+
+    @classmethod
+    def names(cls) -> List[str]:
+        return [site.name for site in cls.query.all()]
 
 
 class Account(db.Model):
@@ -216,16 +226,19 @@ def record_stats(resp):
     if request.path.startswith('/static'):
         return resp
 
-    influx.write_points([{
-        'measurement': 'request',
-        'tags': {
-            'status_code': resp.status_code,
-            'path': request.path,
-        },
-        'fields': {
-            'duration': time.time() - starttime,
-        },
-    }])
+    try:
+        influx.write_points([{
+            'measurement': 'request',
+            'tags': {
+                'status_code': resp.status_code,
+                'path': request.path,
+            },
+            'fields': {
+                'duration': time.time() - starttime,
+            },
+        }])
+    except requests.exceptions.ConnectionError:
+        pass
 
     return resp
 
@@ -250,7 +263,7 @@ def home():
         if user:
             return redirect(url_for('upload_form'))
 
-    text = english_series(site.name for site in Site.query.all())
+    text = english_series(Site.names())
 
     return render_template('home.html', text=text, notices=get_active_notices())
 
@@ -264,17 +277,20 @@ def logout():
 
 @app.route('/login', methods=['POST'])
 def login():
-    if 'username' not in request.form or request.form['username'] == '':
+    username = request.form.get('username', None)
+    password = request.form.get('password', None)
+
+    if not username:
         flash('Missing username.')
         return redirect(url_for('home'))
 
-    if 'password' not in request.form or request.form['password'] == '':
+    if not password:
         flash('Missing password.')
         return redirect(url_for('home'))
 
-    user = User.query.filter_by(username=request.form['username']).first()
+    user = User.query.filter_by(username=username).first()
 
-    if not user or not user.verify(request.form['password']):
+    if not user or not user.verify(password):
         flash('Invalid username or password.')
         return redirect(url_for('home'))
 
@@ -285,23 +301,27 @@ def login():
 
 @app.route('/register', methods=['POST'])
 def register():
-    if 'username' not in request.form or request.form['username'] == '':
+    username = request.form.get('username', None)
+    password = request.form.get('password', None)
+    confirm_password = request.form.get('confirm_password', None)
+
+    if not username:
         flash('Missing username.')
         return redirect(url_for('home'))
 
-    if 'password' not in request.form or request.form['password'] == '':
+    if not password:
         flash('Missing password.')
         return redirect(url_for('home'))
 
-    if 'confirm_password' not in request.form or request.form['confirm_password'] == '':
+    if not confirm_password:
         flash('Missing password confirmation.')
         return redirect(url_for('home'))
 
-    if len(request.form['username']) > 16:
+    if len(username) > 16:
         flash('Username is too long.')
         return redirect(url_for('home'))
 
-    strength, improvements = passwordmeter.test(request.form['password'])
+    strength, improvements = passwordmeter.test(password)
 
     send_to_influx({
         "measurement": "password_strength",
@@ -315,17 +335,16 @@ def register():
               ('</li><li>'.join(improvements.values())))
         return redirect(url_for('home'))
 
-    by_username = User.query.filter_by(
-        username=request.form['username'].lower()).first()
+    by_username = User.query.filter_by(username=username.lower()).first()
     if by_username is not None:
         flash('Username is already in use.')
         return redirect(url_for('home'))
 
-    if request.form['password'] != request.form['confirm_password']:
+    if password != confirm_password:
         flash('Password does not match confirmation.')
         return redirect(url_for('home'))
 
-    user = User(request.form['username'], request.form['password'])
+    user = User(username, password)
 
     db.session.add(user)
     db.session.commit()
@@ -355,19 +374,30 @@ def dismiss_notice(alert):
 @app.route('/preview/description')
 @login_required
 def preview_description():
+    accounts = request.args.getlist('account')
+    description = request.args.get('description', '')
+
     descriptions = []
     sites_done = []
-    for site in request.args.getlist('account'):
+
+    for site in accounts:
         account = Account.query.filter_by(
             user_id=session['id']).filter_by(id=int(site)).first()
         site = account.site
+
         if site.id in sites_done or site.id == TWITTER_ID:
             continue
-        descriptions.append({'site': site.name, 'description': parse_description(
-            request.args['description'], site.id)})
+
+        descriptions.append({
+            'site': site.name,
+            'description': parse_description(description, site.id),
+        })
+
         sites_done.append(site.id)
 
-    return jsonify({'descriptions': descriptions})
+    return jsonify({
+        'descriptions': descriptions,
+    })
 
 
 def write_upload_time(starttime, site=None, measurement='upload_time'):
@@ -391,45 +421,47 @@ def write_upload_time(starttime, site=None, measurement='upload_time'):
 def upload_post():
     totaltime = time.time()
 
-    if request.form['title'] == '':
+    title = request.form.get('title', None)
+    description = request.form.get('description', None)
+    keywords = request.form.get('keywords', None)
+    rating = request.form.get('rating', None)
+
+    upload = request.files.get('image', None)
+
+    password = request.form.get('site_password', None)
+
+    if not title:
         flash('Missing title.')
-        return render_template('upload.html', user=g.user, sites=Site.query.all())
+        return redirect(url_for('upload_form'))
 
-    if request.form['description'] == '':
+    if not description:
         flash('Missing description.')
-        return render_template('upload.html', user=g.user, sites=Site.query.all())
+        return redirect(url_for('upload_form'))
 
-    if request.form['keywords'] == '':
+    if not keywords:
         flash('Missing keywords.')
-        return render_template('upload.html', user=g.user, sites=Site.query.all())
+        return redirect(url_for('upload_form'))
 
-    hashtags = []
-    for keyword in request.form['keywords'].split(' '):
-        if keyword.startswith('#'):
-            hashtags.append(keyword)
-    hashtags = ' '.join(hashtags)
-
-    keywords = ' '.join(
-        filter(lambda x: not x.startswith('#'), request.form['keywords'].split(' ')))
-
-    has_less_2 = len(keywords.split(' ')) < 2
-
-    if not request.files.get('image', None):
+    if not upload:
         flash('Missing image.')
-        return render_template('upload.html', user=g.user, sites=Site.query.all())
+        return redirect(url_for('upload_form'))
 
     if len(request.form.getlist('account')) == 0:
         flash('No site selected.')
-        return render_template('upload.html', user=g.user, sites=Site.query.all())
+        return redirect(url_for('upload_form'))
 
-    if not request.form.get('rating'):
+    if not rating:
         flash('No content rating selected.')
-        return render_template('upload.html', user=g.user, sites=Site.query.all())
+        return redirect(url_for('upload_form'))
+
+    submission = Submission(title, description, keywords, rating, upload)
+
+    has_less_2 = len(submission.tags) < 2
+
+    basicError = False
 
     for account in Account.query.filter_by(user_id=g.user.id).all():
         account.used_last = 0
-
-    basicError = False
 
     accounts = []
     for a in request.form.getlist('account'):
@@ -437,7 +469,7 @@ def upload_post():
 
         if not account or account.user_id != g.user.id:
             flash('Account does not exist or does not belong to current user.')
-            return render_template('upload.html', user=g.user, sites=Site.query.all())
+            return redirect(url_for('upload_form'))
 
         account.used_last = 1
 
@@ -451,18 +483,14 @@ def upload_post():
 
         accounts.append(account)
 
+    if basicError:
+        return redirect(url_for('upload_form'))
+
     db.session.commit()
 
-    if basicError:
-        return render_template('upload.html', user=g.user, sites=Site.query.all())
-
-    if not g.user.verify(request.form['site_password']):
+    if not g.user.verify(password):
         flash('Incorrect password.')
-        return render_template('upload.html', user=g.user, sites=Site.query.all())
-
-    upload = request.files.get('image', None)
-
-    image = (upload.filename, upload.read())
+        return redirect(url_for('upload_form'))
 
     accounts = sorted(accounts, key=lambda account: account.site_id)
 
@@ -470,7 +498,7 @@ def upload_post():
         twitter_link_id = request.form.get('twitterlink', None)
         if twitter_link_id is not None:
             twitter_link_id = int(twitter_link_id)
-    except Exception:
+    except ValueError:
         print('Bad twitterlink ID')
     twitter_link = None
 
@@ -478,11 +506,10 @@ def upload_post():
     for account in accounts:
         starttime = time.time()
 
-        decrypted = simplecrypt.decrypt(
-            request.form['site_password'], account.credentials)
+        decrypted = simplecrypt.decrypt(password, account.credentials)
 
         site = account.site
-        description = parse_description(request.form['description'], site.id)
+        description = parse_description(submission.description, site.id)
 
         link = None
 
@@ -492,35 +519,24 @@ def upload_post():
             j = json.loads(decrypted.decode('utf-8'))
 
             rating = '1'
-            if request.form['rating'] == 'general':
+            if submission.rating == Rating.general:
                 rating = '0'
-            elif request.form['rating'] == 'mature':
+            elif submission.rating == Rating.mature:
                 rating = '2'
-            elif request.form['rating'] == 'explicit':
+            elif submission.rating == Rating.explicit:
                 rating = '1'
 
-            original_image = io.BytesIO(image[1])
-            img = Image.open(original_image)
+            img = Image.open(submission.image_bytes)
             h, w = img.size
 
-            has_resized = False
-
-            if h > 1280 or w > 1280:
-                img.thumbnail((1280, 1280), Image.ANTIALIAS)
-                if img.mode != 'RGB':
-                    img = img.convert('RGB')
-                resized_image = io.BytesIO()
-                img.save(resized_image, 'JPEG')
-                has_resized = True
-
-                breadcrumbs.record(message='Resized image', category='furryapp', level='info')
+            needs_resize = h > 1280 or w > 1280
 
             try:
                 r = s.get(
                     'https://www.furaffinity.net/submit/', cookies=j, headers=headers)
                 r = s.post('https://www.furaffinity.net/submit/', data={
                     'part': '2',
-                    'submission_type': 'submission'
+                    'submission_type': 'submission',
                 }, cookies=j, headers=headers)
 
                 soup = BeautifulSoup(r.content, 'html.parser')
@@ -531,12 +547,17 @@ def upload_post():
                 continue
 
             try:
+                if needs_resize:
+                    image = submission.resize_image(1280, 1280)
+                else:
+                    image = submission.get_image()
+
                 r = s.post('https://www.furaffinity.net/submit/', data={
                     'part': '3',
                     'submission_type': 'submission',
-                    'key': key
+                    'key': key,
                 }, files={
-                    'submission': image if not has_resized else (image[0], resized_image.getvalue())
+                    'submission': image,
                 }, cookies=j, headers=headers)
 
                 soup = BeautifulSoup(r.content, 'html.parser')
@@ -552,10 +573,10 @@ def upload_post():
                     'part': '5',
                     'submission_type': 'submission',
                     'key': key,
-                    'title': request.form['title'],
+                    'title': submission.title,
                     'message': description,
-                    'keywords': keywords,
-                    'rating': rating
+                    'keywords': ' '.join(submission.tags),
+                    'rating': rating,
                 }, cookies=j, headers=headers)
 
                 r.raise_for_status()
@@ -579,9 +600,9 @@ def upload_post():
 
                     s.post('https://www.furaffinity.net/controls/submissions/changesubmission/%s/' % (match), data={
                         'update': 'yes',
-                        'rebuild-thumbnail': '1'
+                        'rebuild-thumbnail': '1',
                     }, files={
-                        'newsubmission': (image[0], original_image.getvalue())
+                        'newsubmission': submission.get_image(),
                     }, cookies=j, headers=headers)
 
                     flash(
@@ -599,11 +620,11 @@ def upload_post():
             s = cfscrape.create_scraper()
 
             rating = '40'
-            if request.form['rating'] == 'general':
+            if submission.rating == Rating.general:
                 rating = '10'
-            elif request.form['rating'] == 'mature':
+            elif submission.rating == Rating.mature:
                 rating = '30'
-            elif request.form['rating'] == 'explicit':
+            elif submission.rating == Rating.explicit:
                 rating = '40'
 
             new_header = headers.copy()
@@ -623,12 +644,12 @@ def upload_post():
             try:
                 r = s.post('https://www.weasyl.com/submit/visual', data={
                     'token': token,
-                    'title': request.form['title'],
+                    'title': submission.title,
                     'content': description,
-                    'tags': keywords,
-                    'rating': rating
+                    'tags': ' '.join(submission.tags),
+                    'rating': rating,
                 }, headers=new_header, files={
-                    'submitfile': image
+                    'submitfile': submission.get_image(),
                 })
             except Exception:
                 flash('An error occured while uploading to Weasyl on account %s. Make sure the site is online.' % (
@@ -653,7 +674,7 @@ def upload_post():
                 r = s.post('https://beta.furrynetwork.com/api/oauth/token', {
                     'grant_type': 'refresh_token',
                     'client_id': '123',
-                    'refresh_token': j['refresh']
+                    'refresh_token': j['refresh'],
                 }, headers=headers)
 
                 j = json.loads(r.content.decode('utf-8'))
@@ -674,7 +695,7 @@ def upload_post():
 
             try:
                 r = s.get('https://beta.furrynetwork.com/api/user', data={
-                    'user_id': j['user_id']
+                    'user_id': j['user_id'],
                 }, headers=new_header)
 
                 j = json.loads(r.content.decode('utf-8'))
@@ -698,11 +719,11 @@ def upload_post():
                 'resumableChunkSize': len(image[1]),
                 'resumableCurrentChunkSize': len(image[1]),
                 'resumableTotalSize': len(image[1]),
-                'resumableType': upload.mimetype,
-                'resumableIdentifier': '%d-%s' % (len(image[1]), re.sub('\W+', '', upload.filename)),
-                'resumableFilename': upload.filename,
-                'resumableRelativePath': upload.filename,
-                'resumableTotalChunks': '1'
+                'resumableType': submission.image_mimetype,
+                'resumableIdentifier': '%d-%s' % (len(image[1]), re.sub(r'\W+', '', submission.image_filename)),
+                'resumableFilename': submission.image_filename,
+                'resumableRelativePath': submission.image_filename,
+                'resumableTotalChunks': '1',
             }
 
             try:
@@ -710,7 +731,7 @@ def upload_post():
                           (username), headers=new_header, params=params)
 
                 r = s.post('https://beta.furrynetwork.com/api/submission/%s/artwork/upload' %
-                           (username), headers=new_header, params=params, data=image[1])
+                           (username), headers=new_header, params=params, data=submission.image_bytes)
 
                 j = json.loads(r.content.decode('utf-8'))
             except Exception:
@@ -719,21 +740,21 @@ def upload_post():
                 continue
 
             rating = 2
-            if request.form['rating'] == 'general':
+            if submission.rating == Rating.general:
                 rating = 0
-            elif request.form['rating'] == 'mature':
+            elif submission.rating == Rating.mature:
                 rating = 1
-            elif request.form['rating'] == 'explicit':
+            elif submission.rating == Rating.explicit:
                 rating = 2
 
             try:
                 r = s.patch('https://beta.furrynetwork.com/api/artwork/%d' % (j['id']), headers=new_header, data=json.dumps({
                     'rating': rating,
                     'description': description,
-                    'title': request.form['title'],
-                    'tags': keywords.split(' '),
+                    'title': submission.title,
+                    'tags': submission.tags,
                     'collections': [],
-                    'status': 'public'
+                    'status': 'public',
                 }))
 
                 j = json.loads(r.content.decode('utf-8'))
@@ -780,9 +801,9 @@ def upload_post():
 
             try:
                 r = s.post('https://inkbunny.net/api_upload.php', data={
-                    'sid': j['sid']
+                    'sid': j['sid'],
                 }, files={
-                    'uploadedfile[]': image
+                    'uploadedfile[]': submission.get_image(),
                 }, headers=headers)
                 j = json.loads(r.content.decode('utf-8'))
                 if 'error_message' in j:
@@ -799,15 +820,15 @@ def upload_post():
                 data = {
                     'sid': j['sid'],
                     'submission_id': j['submission_id'],
-                    'title': request.form['title'],
+                    'title': submission.title,
                     'desc': description,
-                    'keywords': keywords,
-                    'visibility': 'yes'
+                    'keywords': ' '.join(submission.tags),
+                    'visibility': 'yes',
                 }
 
-                if request.form['rating'] == 'mature':
+                if submission.rating == Rating.mature:
                     data['tag[2]'] = 'yes'
-                elif request.form['rating'] == 'explicit':
+                elif submission.rating == Rating.explicit:
                     data['tag[4]'] = 'yes'
 
                 r = s.post(
@@ -838,7 +859,7 @@ def upload_post():
             try:
                 r = s.post('https://www.sofurry.com/user/login', data={
                     'LoginForm[sfLoginUsername]': creds['username'],
-                    'LoginForm[sfLoginPassword]': creds['password']
+                    'LoginForm[sfLoginPassword]': creds['password'],
                 }, headers=headers)
             except Exception:
                 flash('SoFurry appears to be down while uploading to account %s. Please try again later.' % (
@@ -871,28 +892,28 @@ def upload_post():
             should_remap = account.config.filter_by(
                 key='remap_sofurry').first()
             if should_remap and should_remap.val == 'yes':
-                if request.form['rating'] == 'general':
+                if submission.rating == Rating.general:
                     rating = '0'
-                elif request.form['rating'] == 'mature':
+                elif submission.rating == Rating.mature:
                     rating = '1'
-                elif request.form['rating'] == 'explicit':
+                elif submission.rating == Rating.explicit:
                     rating = '2'
             else:
-                if request.form['rating'] == 'general':
+                if submission.rating == Rating.general:
                     rating = '0'
-                elif request.form['rating'] == 'mature' or request.form['rating'] == 'explicit':
+                elif submission.rating == Rating.mature or submission.rating == Rating.explicit:
                     rating = '1'
 
             try:
                 r = s.post('https://www.sofurry.com/upload/details?contentType=1', data={
-                    'UploadForm[P_title]': request.form['title'],
+                    'UploadForm[P_title]': submission.title,
                     'UploadForm[contentLevel]': rating,
                     'UploadForm[description]': description,
-                    'UploadForm[formtags]': ', '.join(keywords.split(' ')),
+                    'UploadForm[formtags]': ', '.join(submission.tags),
                     'YII_CSRF_TOKEN': key,
-                    'UploadForm[P_id]': key2
+                    'UploadForm[P_id]': key2,
                 }, files={
-                    'UploadForm[binarycontent]': image
+                    'UploadForm[binarycontent]': submission.get_image(),
                 }, headers=headers)
             except Exception:
                 flash(
@@ -915,16 +936,14 @@ def upload_post():
 
             api = tweepy.API(auth)
 
-            i = io.BytesIO(image[1])
-
-            status = '%s %s' % (request.form['title'], hashtags)
+            status = '%s %s' % (submission.title, ' '.join(submission.hashtags))
 
             if twitter_link is not None:
                 status += ' ' + twitter_link
 
             try:
                 s = api.update_with_media(
-                    filename=image[0], file=i, status=status)
+                    filename=submission.image_filename, file=submission.image_bytes, status=status)
             except Exception:
                 flash('Unable to upload to Twitter on account %s.' %
                       (account.username))
@@ -943,10 +962,10 @@ def upload_post():
             res = t.post('post', blog_url=account.username, params={
                 'type': 'photo',
                 'caption': description,
-                'data': io.BytesIO(image[1]),
+                'data': submission.image_bytes,
                 'state': 'published',
                 'format': 'markdown',
-                'tags': ', '.join(keywords.split(' ')),
+                'tags': ', '.join(submission.tags),
             })
 
             if 'id' not in res:
@@ -1352,7 +1371,12 @@ def remove_form(account_id):
 @app.route('/remove', methods=['POST'])
 @login_required
 def remove():
-    account = Account.query.get(request.form['id'])
+    account_id = request.form.get('id')
+    if not account_id:
+        flash('Missing account ID.')
+        return redirect(url_for('upload_form'))
+
+    account = Account.query.get(account_id)
 
     if not account:
         flash('Account does not exist.')
@@ -1379,16 +1403,17 @@ def change_password_form():
 @login_required
 def change_password():
     current_password = request.form.get('current_password', None)
+    new_password = request.form.get('new_password', None)
+    new_password_confirm = request.form.get('new_password_confirm', None)
+
     if not current_password:
         flash('Missing current password.')
         return redirect(url_for('change_password_form'))
 
-    new_password = request.form.get('new_password', None)
     if not new_password:
         flash('Missing new password.')
         return redirect(url_for('change_password_form'))
 
-    new_password_confirm = request.form.get('new_password_confirm', None)
     if not new_password_confirm or new_password != new_password_confirm:
         flash('Password confirmation does not match.')
         return redirect(url_for('change_password_form'))
@@ -1403,8 +1428,7 @@ def change_password():
         flash('Current password is incorrect.')
         return redirect(url_for('change_password_form'))
 
-    g.user.password = bcrypt.hashpw(
-        new_password.encode('utf-8'), bcrypt.gensalt())
+    g.user.password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
 
     for account in Account.query.filter_by(user_id=g.user.id).all():
         decrypted = simplecrypt.decrypt(current_password, account.credentials)

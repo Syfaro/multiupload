@@ -2,17 +2,23 @@ import re
 
 
 def parse_description(description, uploading_to):
-    exp = '<\|(\S+?),(\d+?),(\d)\|>'
+    """Attempt to parse a description into a format valid for each site."""
+    exp = r'<\|(\S+?),(\d+?),(\d)\|>'
     match = re.search(exp, description)
 
+    runs = 0
+
     while match:
+        if runs > 500:
+            break
+
         start, end = match.span(0)
 
         try:
             username = match.group(1)
             linking_to = int(match.group(2))
             link_type = int(match.group(3))
-        except:
+        except ValueError:
             return False
 
         new_text = ''
