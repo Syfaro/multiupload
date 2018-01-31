@@ -18,14 +18,9 @@
 					Please visit <a href="https://www.weasyl.com/control/apikeys" target="_blank">this page</a> to get your Weasyl authentication token. It should be a long string. You may need to click "New API Key" to generate one. We suggest generating a new one and setting a description so if you need to revoke one in the future, you can remember which one is which.
 				</p>
 
-				<form method="POST" action="/add/{{ site.id }}">
+				<form method="POST" action="/add/{{ site.value }}">
 					<div class="form-group">
 						<input type="text" class="form-control" name="api_token" placeholder="API Token" autocomplete="off">
-					</div>
-
-					<div class="form-group">
-						<label for="site_password">Note that this is the password for the multiuploader, not for {{ site.name }}.</label>
-						<input type="password" class="form-control" name="site_password" placeholder="Multiuploader password">
 					</div>
 
 					<div class="form-group">

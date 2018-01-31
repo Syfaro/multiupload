@@ -26,28 +26,28 @@ def parse_description(description, uploading_to):
         if uploading_to == linking_to:  # Uploading to same site
             if uploading_to == 1:  # FurAffinity
                 if link_type == 0:  # Just link
-                    new_text = ':link%s:' % (username)
+                    new_text = ':link%s:' % username
                 elif link_type == 1:  # Just icon
-                    new_text = ':%sicon:' % (username)
+                    new_text = ':%sicon:' % username
                 elif link_type == 2:  # Both
-                    new_text = ':icon%s:' % (username)
+                    new_text = ':icon%s:' % username
             elif uploading_to == 2:  # Weasyl
                 if link_type == 0:
-                    new_text = '<~%s>' % (username)
+                    new_text = '<~%s>' % username
                 elif link_type == 1:
-                    new_text = '<!%s>' % (username)
+                    new_text = '<!%s>' % username
                 elif link_type == 2:
-                    new_text = '<!~%s>' % (username)
+                    new_text = '<!~%s>' % username
             elif uploading_to == 3:  # FurryNetwork
                 new_text = '[{0}](https://beta.furrynetwork.com/{0}/)'.format(
                     username)
             elif uploading_to == 4:
                 if link_type == 0:
-                    new_text = '[name]%s[/name]' % (username)
+                    new_text = '[name]%s[/name]' % username
                 elif link_type == 1:
-                    new_text = '[icon]%s[/icon]' % (username)
+                    new_text = '[icon]%s[/icon]' % username
                 elif link_type == 2:
-                    new_text = '[iconname]%s[/iconname]' % (username)
+                    new_text = '[iconname]%s[/iconname]' % username
             elif uploading_to == 5:
                 if link_type == 0:
                     clean = username.lower().replace(
@@ -55,9 +55,9 @@ def parse_description(description, uploading_to):
                     new_text = '[url=https://{clean}.sofurry.com/]{username}[/url]'.format(
                         username=username, clean=clean)
                 elif link_type == 1:
-                    new_text = ':%sicon:' % (username)
+                    new_text = ':%sicon:' % username
                 elif link_type == 2:
-                    new_text = ':icon%s:' % (username)
+                    new_text = ':icon%s:' % username
             elif uploading_to == 7:
                 new_text = '[{0}](https://{0}.tumblr.com/)'.format(username)
         else:  # Uploading to other site
@@ -105,21 +105,21 @@ def parse_description(description, uploading_to):
                     new_text = '[{0}](https://{0}.tumblr.com/)'.format(username)
             elif uploading_to == 4:
                 if linking_to == 1:
-                    new_text = '[fa]%s[/fa]' % (username)
+                    new_text = '[fa]%s[/fa]' % username
                 elif linking_to == 2:
-                    new_text = '[w]%s[/w]' % (username)
+                    new_text = '[w]%s[/w]' % username
                 elif linking_to == 3:
                     new_text = '[url=https://beta.furrynetwork.com/{0}/]{0}[/url]'.format(
                         username)
                 elif linking_to == 5:
-                    new_text = '[sf]%s[/sf]' % (username)
+                    new_text = '[sf]%s[/sf]' % username
                 elif linking_to == 100:
                     new_text = '[url=https://twitter.com/{0}]{0}[/url]'.format(username)
                 elif linking_to == 7:
                     new_text = '[url=https://{0}.tumblr.com/]{0}[/url]'.format(username)
             elif uploading_to == 5:
                 if linking_to == 1:
-                    new_text = 'fa!%s' % (username)
+                    new_text = 'fa!%s' % username
                 elif linking_to == 2:
                     new_text = '[url=https://www.weasyl.com/~{0}]{0}[/url]'.format(
                         username)
@@ -127,7 +127,7 @@ def parse_description(description, uploading_to):
                     new_text = '[url=https://beta.furrynetwork.com/{0}]{0}[/url]'.format(
                         username)
                 elif linking_to == 4:
-                    new_text = 'ib!%s' % (username)
+                    new_text = 'ib!%s' % username
                 elif linking_to == 100:
                     new_text = '[url=https://twitter.com/{0}]{0}[/url]'.format(username)
                 elif linking_to == 7:

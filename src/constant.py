@@ -6,6 +6,7 @@ HEADERS = {
     'User-Agent': 'Furry Multiupload %s / Syfaro <syfaro@huefox.com>' % VERSION
 }
 
+
 class Sites(Enum):
     """IDs for the sites."""
     FurAffinity = 1

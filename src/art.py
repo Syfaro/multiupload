@@ -31,17 +31,19 @@ app.register_blueprint(upload_app)
 
 app.jinja_env.globals['git_version'] = app.config['SENTRY_RELEASE'][:7]
 
+
 @app.before_request
 def start_influx():
     g.influx = InfluxDBClient(**app.config['INFLUXDB'])
     g.start = time.time()
 
+
 @app.after_request
 def record_stats(resp):
     influx = g.get('influx', None)
-    starttime = g.get('start', None)
+    start_time = g.get('start', None)
 
-    if not influx or not starttime:
+    if not influx or not start_time:
         return resp
 
     if request.path.startswith('/static'):
@@ -55,7 +57,7 @@ def record_stats(resp):
                 'path': request.path,
             },
             'fields': {
-                'duration': time.time() - starttime,
+                'duration': time.time() - start_time,
             },
         }])
     except requests.exceptions.ConnectionError:
@@ -63,10 +65,12 @@ def record_stats(resp):
 
     return resp
 
+
 @app.errorhandler(500)
 def internal_server_error(error):
     event, dsn = g.sentry_event_id, sentry.client.get_public_dsn('https')
     return render_template('500.html', event_id=event, public_dsn=dsn), 500
+
 
 if __name__ == '__main__':
     with app.app_context():

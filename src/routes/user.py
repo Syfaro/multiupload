@@ -33,6 +33,7 @@ def dismiss_notice(alert):
 
     return 'Saved'
 
+
 @app.route('/changepass', methods=['GET'])
 @login_required
 def change_password_form():

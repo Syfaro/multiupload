@@ -7,11 +7,14 @@ from simplecrypt import encrypt
 
 from flask_sqlalchemy import SQLAlchemy
 
+from flask import session
+
 from sqlalchemy import func
 
 from constant import Sites
 
 db = SQLAlchemy()
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -50,22 +53,26 @@ class Account(db.Model):
     credentials = db.Column(db.LargeBinary, nullable=False)
     used_last = db.Column(db.Boolean, default=True)
 
-    site = db.relationship(
+    _site = db.relationship(
         'Site', backref=db.backref('account', lazy='dynamic'))
 
     config = db.relationship('AccountConfig', lazy='dynamic', cascade='delete')
 
-    def __init__(self, site, user_id, username, credentials, password):
+    def __init__(self, site, user_id, username, credentials):
         if isinstance(site, Sites):
             self.site_id = site.value
         else:
             self.site_id = site
         self.user_id = user_id
         self.username = username
-        self.credentials = encrypt(password, credentials)
+        self.credentials = encrypt(session['password'], credentials)
 
     def __getitem__(self, arg):
         return self.config.filter_by(key=arg).first()
+
+    @property
+    def site(self) -> Sites:
+        return Sites(self.site_id)
 
     @classmethod
     def lookup_username(cls, site: Sites, uid: int, username: str):
@@ -100,11 +107,11 @@ class Notice(db.Model):
     def __init__(self, text):
         self.text = text
 
-    def wasViewedBy(self, user):
+    def was_viewed_by(self, user):
         return NoticeViewed.query.filter_by(notice_id=self.id, user_id=user).first()
 
     @classmethod
-    def findActive(cls):
+    def find_active(cls):
         return cls.query.filter_by(active=True).order_by(cls.id.desc())
 
 

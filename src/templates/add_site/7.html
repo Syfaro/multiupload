@@ -14,17 +14,12 @@
 	<div class="container">
 		<div class="row">
 			<div class="col-sm-12 col-md-4 col-md-offset-4">
-				<form method="POST" action="/add/{{ site.id }}">
+				<form method="POST" action="/add/{{ site.value }}">
 					<ul>
 						{% for blog in extra_data.user.user.blogs %}
 							<li>{{ blog.name }} — <a href="{{ blog.url }}">{{ blog.url }}</a></li>
 						{% endfor %}
 					</ul>
-
-					<div class="form-group">
-						<label for="site_password">Note that this is the password for the multiuploader, not for {{ site.name }}.</label>
-						<input type="password" class="form-control" name="site_password" placeholder="Multiuploader password">
-					</div>
 
 					<div class="form-group">
 						<button type="submit" class="btn btn-primary form-control">Add</button>

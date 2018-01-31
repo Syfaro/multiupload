@@ -18,18 +18,13 @@
 	<div class="container">
 		<div class="row">
 			<div class="col-sm-12 col-md-4 col-md-offset-4">
-				<form method="POST" action="/add/{{ site.id }}">
+				<form method="POST" action="/add/{{ site.value }}">
 					<div class="form-group">
 						<input type="text" class="form-control" name="username" placeholder="Username" autocomplete="off">
 					</div>
 
 					<div class="form-group">
 						<input type="password" class="form-control" name="password" placeholder="Password for {{ site.name }}" autocomplete="off">
-					</div>
-
-					<div class="form-group">
-						<label for="site_password">Note that this is the password for the multiuploader, not for {{ site.name }}.</label>
-						<input type="password" class="form-control" name="site_password" placeholder="Multiuploader password">
 					</div>
 
 					<div class="form-group">

@@ -12,11 +12,15 @@ from utils import english_series
 from utils import get_active_notices
 from utils import send_to_influx
 
-from models import Site
+from models import db
+
 from models import User
+
+from sites.known import known_names
 
 
 app = Blueprint('home', __name__)
+
 
 @app.route('/')
 def home():
@@ -26,7 +30,7 @@ def home():
         if user:
             return redirect(url_for('upload.upload_form'))
 
-    text = english_series(Site.names())
+    text = english_series(known_names())
 
     return render_template('home.html', text=text, notices=get_active_notices())
 
@@ -58,6 +62,7 @@ def login():
         return redirect(url_for('home.home'))
 
     session['id'] = user.id
+    session['password'] = password
 
     return redirect(url_for('upload.upload_form'))
 

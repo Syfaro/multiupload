@@ -27,6 +27,7 @@ class TestDescriptionLinks(unittest.TestCase):
 
         self.assertEqual(text, parse_description(text, 2))
 
+
 class TestDescriptionToFurAffinity(unittest.TestCase):
     def test_from_fa_link(self):
         unparsed = "<|Syfaro,1,0|>"
@@ -78,6 +79,7 @@ class TestDescriptionToFurAffinity(unittest.TestCase):
 
             self.assertEqual(should_be, parse_description(unparsed, 1))
 
+
 class TestDescriptionToWeasyl(unittest.TestCase):
     def test_from_weasyl_link(self):
         unparsed = "<|Syfaro,2,0|>"
@@ -128,7 +130,6 @@ class TestDescriptionToWeasyl(unittest.TestCase):
             unparsed = "<|Syfaro,5,%d|>" % (t)
 
             self.assertEqual(should_be, parse_description(unparsed, 2))
-
 
 
 if __name__ == '__main__':

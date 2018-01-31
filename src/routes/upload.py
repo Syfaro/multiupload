@@ -1,5 +1,5 @@
-import simplecrypt
 import time
+import simplecrypt
 
 from flask import Blueprint
 from flask import flash
@@ -15,7 +15,8 @@ from constant import Sites
 
 from sites import BadCredentials
 from sites import AccountExists
-from sites.weasyl import Weasyl
+
+from sites.known import KNOWN_SITES
 
 from models import db
 
@@ -50,25 +51,24 @@ def preview_description():
 
     for site in accounts:
         account = Account.query.filter_by(user_id=session['id']).filter_by(id=int(site)).first()
-        site = account.site
 
-        if site.id in sites_done or Sites(site.id) == Sites.Twitter:
+        if account.site.value in sites_done or account.site == Sites.Twitter:
             continue
 
         descriptions.append({
-            'site': site.name,
-            'description': parse_description(description, site.id),
+            'site': account.site.name,
+            'description': parse_description(description, account.site.value),
         })
 
-        sites_done.append(site.id)
+        sites_done.append(account.site.value)
 
     return jsonify({
         'descriptions': descriptions,
     })
 
 
-def write_upload_time(starttime, site=None, measurement='upload_time'):
-    duration = time.time() - starttime
+def write_upload_time(start_time, site=None, measurement='upload_time'):
+    duration = time.time() - start_time
 
     point = {
         'measurement': measurement,
@@ -86,7 +86,7 @@ def write_upload_time(starttime, site=None, measurement='upload_time'):
 @app.route('/upload', methods=['POST'])
 @login_required
 def upload_post():
-    totaltime = time.time()
+    total_time = time.time()
 
     title = request.form.get('title', None)
     description = request.form.get('description', None)
@@ -95,30 +95,33 @@ def upload_post():
 
     upload = request.files.get('image', None)
 
-    password = request.form.get('site_password', None)
+    has_error = False
 
     if not title:
         flash('Missing title.')
-        return redirect(url_for('upload.upload_form'))
+        has_error = True
 
     if not description:
         flash('Missing description.')
-        return redirect(url_for('upload.upload_form'))
+        has_error = True
 
     if not keywords:
         flash('Missing keywords.')
-        return redirect(url_for('upload.upload_form'))
+        has_error = True
 
     if not upload:
         flash('Missing image.')
-        return redirect(url_for('upload.upload_form'))
+        has_error = True
 
     if not request.form.getlist('account'):
         flash('No site selected.')
-        return redirect(url_for('upload.upload_form'))
+        has_error = True
 
     if not rating:
         flash('No content rating selected.')
+        has_error = True
+
+    if has_error:
         return redirect(url_for('upload.upload_form'))
 
     submission = Submission(title, description, keywords, rating, upload)
@@ -140,11 +143,11 @@ def upload_post():
 
         account.used_last = 1
 
-        if Sites(account.site.id) == Sites.Weasyl and has_less_2:
+        if Sites(account.site) == Sites.Weasyl and has_less_2:
             flash('Weasyl requires at least two tags.')
             basic_error = True
 
-        if Sites(account.site.id) == Sites.SoFurry and has_less_2:
+        if Sites(account.site) == Sites.SoFurry and has_less_2:
             flash('SoFurry requires at least two tags.')
             basic_error = True
 
@@ -154,10 +157,6 @@ def upload_post():
         return redirect(url_for('upload.upload_form'))
 
     db.session.commit()
-
-    if not g.user.verify(password):
-        flash('Incorrect password.')
-        return redirect(url_for('upload.upload_form'))
 
     accounts = sorted(accounts, key=lambda account: account.site_id)
 
@@ -173,47 +172,23 @@ def upload_post():
     for account in accounts:
         starttime = time.time()
 
-        decrypted = simplecrypt.decrypt(password, account.credentials)
-
-        site = Sites(account.site.id)
-        description = parse_description(submission.description, site.id)
+        decrypted = simplecrypt.decrypt(session['password'], account.credentials)
 
         link = None
 
-        if site == Sites.FurAffinity:
-            fa = FurAffinity()
-            fa.submit_artwork(submission)
-
-        elif site.id == Sites.Weasyl:
-            we = Weasyl()
-            we.submit_artwork(submission)
-
-        elif site.id == Sites.FurryNetwork:
-            fn = FurryNetwork()
-            fn.submit_artwork(submission)
-
-        elif site.id == Sites.Inkbunny:
-            ib = Inkbunny()
-            ib.submit_artwork(submission)
-
-        elif site.id == Sites.SoFurry:
-            sf = SoFurry()
-            sf.submit_artwork(submission)
-
-        elif site.id == Sites.Twitter:
-            tw = Twitter()
-            tw.submit_artwork(submission)
-
-        elif site.id == Sites.Tumblr:
-            tm = Tumblr()
-            tm.submit_artwork(submission)
+        for site in KNOWN_SITES:
+            if site.SITE == account.site:
+                s = site(decrypted)
+                link = s.submit_artwork(submission, extra={
+                    'twitter_link': twitter_link,
+                })
 
         if account.id == twitter_link_id:
             twitter_link = link
 
-        write_upload_time(starttime, site.id)
+        write_upload_time(starttime, account.site.value)
 
-    write_upload_time(totaltime, measurement='upload_time_total')
+    write_upload_time(total_time, measurement='upload_time_total')
 
     return render_template('after_upload.html', uploads=uploads, user=g.user)
 
@@ -230,23 +205,21 @@ def add():
 @login_required
 def add_account_form(site_id):
     try:
-        site = Sites(Site.query.get(site_id).id)
-    except:
+        site = Sites(site_id)
+    except ValueError:
         return 'Unknown site ID!'
 
     extra_data = {}
 
-    if site == Sites.FurAffinity:
-        fa = FurAffinity()
-        fa.pre_add_account()
-
-    elif site.id == Sites.Twitter:
-        tw = Twitter()
-        tw.pre_add_account()
-
-    elif site.id == Sites.Tumblr:
-        tm = Tumblr()
-        tm.pre_add_account()
+    for known_site in KNOWN_SITES:
+        if known_site.SITE == site:
+            s = known_site()
+            pre = s.pre_add_account()
+            if pre is not None:
+                if isinstance(pre, dict):
+                    extra_data = pre
+                else:
+                    return pre
 
     return render_template('add_site/%d.html' % (site_id), site=site, extra_data=extra_data, user=g.user)
 
@@ -254,20 +227,22 @@ def add_account_form(site_id):
 @app.route('/add/<int:site_id>/callback', methods=['GET'])
 @login_required
 def add_account_callback(site_id):
-    site = Site.query.get(site_id)
+    site = Sites(site_id)
 
     if not site:
         return 'Unknown site ID!'
 
     extra_data = {}
 
-    if site.id == Sites.Twitter:
-        tw = Twitter()
-        tw.add_account_callback()
-
-    elif site.id == Sites.Tumblr:
-        tm = Tumblr()
-        tm.add_account_callback()
+    for known_site in KNOWN_SITES:
+        if known_site.SITE == site:
+            s = known_site()
+            callback = s.add_account_callback()
+            if callback is not None:
+                if isinstance(callback, dict):
+                    extra_data = callback
+                else:
+                    return callback
 
     return render_template('add_site/%d.html' % (site_id), site=site, extra_data=extra_data, user=g.user)
 
@@ -278,52 +253,21 @@ def add_account_post(site_id):
     starttime = time.time()
 
     try:
-        site = Sites(Site.query.get(site_id).id)
+        site = Sites(site_id)
     except ValueError:
         flash('Unknown site ID.')
-        return redirect(url_for('add_account_form'))
-
-    if not g.user.verify(request.form['site_password']):
-        flash('You need to correctly enter the password for this website.')
-        return redirect(url_for('add_account_form', site_id=site.id))
+        return redirect(url_for('upload.add_account_form'))
 
     try:
-        if site == Sites.FurAffinity:
-            fa = FurAffinity()
-            fa.add_account('user', 'pass', request.form.get('site_password'))
-
-        elif site == Sites.Weasyl:
-            token = request.form.get('api_token', None)
-            if not token:
-                flash('Invalid Weasyl API token.')
-                return redirect(url_for('add_account_form', site_id=site.value))
-
-            w = Weasyl()
-            w.add_account(token.strip(), request.form.get('site_password'))
-
-        elif site.id == Sites.FurryNetwork:
-            fn = FurryNetwork()
-            fn.add_account('email', 'pass', request.form.get('site_password'))
-
-        elif site.id == Sites.Inkbunny:
-            ib = Inkbunny()
-            ib.add_account('email', 'pass', request.form.get('site_password'))
-
-        elif site.id == Sites.SoFurry:
-            sf = SoFurry()
-            sf.add_account('user', 'pass', request.form.get('site_password'))
-
-        elif site.id == Sites.Twitter:
-            tw = Twitter()
-            tw.add_account('tokens', request.form.get('site_password'))
-
-        elif site.id == Sites.Tumblr:
-            tm = Tumblr()
-            tm.add_account('tokens', request.form.get('site_password'))
+        for known_site in KNOWN_SITES:
+            if known_site.SITE == site:
+                s = known_site()
+                data = s.parse_add_form(request.form)
+                s.add_account(data)
 
     except BadCredentials:
         flash('Unable to authenticate')
-        return redirect(url_for('add_account_form', site_id=site.value))
+        return redirect(url_for('upload.add_account_form', site_id=site.value))
 
     except AccountExists:
         flash('Account already exists.')

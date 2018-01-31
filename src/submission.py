@@ -9,15 +9,22 @@ from PIL import Image
 
 from raven import breadcrumbs
 
+from constant import Sites
+
+from description import parse_description
+
+
 def is_hashtag(tag: str) -> bool:
     """Returns if a tag is a hashtag."""
     return tag.startswith('#')
+
 
 class Rating(Enum):
     """Rating is the rating for a submission."""
     general = 'general'
     mature = 'mature'
     explicit = 'explicit'
+
 
 class Submission(object):
     """Submission is a normalized representation of something to post."""
@@ -47,7 +54,7 @@ class Submission(object):
 
     def get_image(self) -> Tuple[str, BytesIO]:
         """Returns a tuple suitable for uploading."""
-        return (self.image_filename, self.image_bytes)
+        return self.image_filename, self.image_bytes
 
     def resize_image(self, height: int, width: int) -> Tuple[str, BytesIO]:
         """Resize image to specified height and width with antialiasing"""
@@ -63,7 +70,11 @@ class Submission(object):
         breadcrumbs.record(message='Resized image',
                            category='furryapp', level='info')
 
-        return (self.image_filename, resized_image)
+        return self.image_filename, resized_image
+
+    def description_for_site(self, site: Sites) -> str:
+        """Returns a formatted description for a specific site."""
+        return parse_description(self.description, site.value)
 
     @staticmethod
     def tags_from_str(tags: str) -> Tuple[List[str], List[str]]:
@@ -75,6 +86,6 @@ class Submission(object):
             if keyword.startswith('#'):
                 hashtags.append(keyword)
 
-        tags_reg = filter(lambda x: not is_hashtag(x), tag_list)
+        tags_reg = list(filter(lambda x: not is_hashtag(x), tag_list))
 
-        return (tags_reg, hashtags)
+        return tags_reg, hashtags

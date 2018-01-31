@@ -20,13 +20,16 @@ from sentry import sentry
 
 rng = SystemRandom()
 
+
 def random_string(length):
     return ''.join(rng.choice(ascii_lowercase) for i in range(length))
+
 
 def git_version():
     gitproc = Popen(['git', 'rev-parse', 'HEAD'], stdout=PIPE)
     (stdout, _) = gitproc.communicate()
     return stdout.strip().decode('utf-8')
+
 
 def english_series(items):
     items = tuple(items)
@@ -34,15 +37,16 @@ def english_series(items):
         return "".join(items)
     return ", ".join(x for x in items[:-1]) + ' and ' + items[-1]
 
+
 def tumblr_blog_name(url):
     return url.split("//")[-1].split("/")[0]
 
 
 def get_active_notices(for_user=None):
-    notices = Notice.findActive().all()
+    notices = Notice.find_active().all()
 
     if for_user:
-        notices = filter(lambda notice: not notice.wasViewedBy(for_user), notices)
+        notices = filter(lambda notice: not notice.was_viewed_by(for_user), notices)
 
     return notices
 
