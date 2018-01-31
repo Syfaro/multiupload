@@ -21,7 +21,7 @@ from routes.upload import app as upload_app
 app = Flask(__name__)
 
 app.config.from_object('config')
-app.config['SENTRY_RELEASE'] = fetch_git_sha(os.path.dirname(__file__))
+app.config['SENTRY_RELEASE'] = fetch_git_sha(os.path.join(os.path.dirname(__file__), '..'))
 
 app.logger.propagate = True
 
