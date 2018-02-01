@@ -1,31 +1,31 @@
 from typing import Any
 
-from flask import session
-from flask import g
-from flask import flash
-
-import re
 import base64
 import json
+import re
 import cfscrape
 
-from bs4 import BeautifulSoup
 from PIL import Image
+from bs4 import BeautifulSoup
 from requests import HTTPError
 
-from models import db
-from models import Account
+from flask import flash
+from flask import g
+from flask import session
 
-from constant import Sites
 from constant import HEADERS
+from constant import Sites
 
-from sites import Site
-from sites import BadCredentials
+from models import Account
+from models import db
+
 from sites import AccountExists
+from sites import BadCredentials
+from sites import Site
 from sites import SiteError
 
-from submission import Submission
 from submission import Rating
+from submission import Submission
 
 
 class FurAffinity(Site):

@@ -1,25 +1,23 @@
 from typing import Any
 
+import cfscrape
+from bs4 import BeautifulSoup
+
 from flask import g
 from flask import session
 
-import cfscrape
-
-from bs4 import BeautifulSoup
-
-from models import db
+from constant import HEADERS
+from constant import Sites
 
 from models import Account
+from models import db
 
-from constant import Sites
-from constant import HEADERS
-
-from sites import Site
-from sites import BadCredentials
 from sites import AccountExists
+from sites import BadCredentials
+from sites import Site
 
-from submission import Submission
 from submission import Rating
+from submission import Submission
 
 AUTH_HEADER = 'X-Weasyl-API-Key'
 

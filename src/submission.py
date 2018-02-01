@@ -2,11 +2,9 @@ from typing import List
 from typing import Tuple
 
 from enum import Enum
-
 from io import BytesIO
 
 from PIL import Image
-
 from raven import breadcrumbs
 
 from constant import Sites
@@ -37,6 +35,7 @@ class Submission(object):
     image_filename: str = None # Filename of submission
     image_bytes: BytesIO = None # Bytes of image in submission
     image_mimetype: str = None # Mime type of image in submission
+    _image_size: int = None
 
     def __init__(self, title: str, description: str, tags: str, rating: str, image):
         """Create a new Submission automatically parsing tags into regular tags
@@ -75,6 +74,14 @@ class Submission(object):
     def description_for_site(self, site: Sites) -> str:
         """Returns a formatted description for a specific site."""
         return parse_description(self.description, site.value)
+
+    @property
+    def image_size(self) -> int:
+        if self._image_size:
+            return self._image_size
+
+        self._image_size = len(self.image_bytes.getbuffer())
+        return self._image_size
 
     @staticmethod
     def tags_from_str(tags: str) -> Tuple[List[str], List[str]]:

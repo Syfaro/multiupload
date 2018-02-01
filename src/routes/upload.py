@@ -3,8 +3,6 @@ from typing import List
 import time
 import simplecrypt
 
-from requests import HTTPError
-
 from flask import Blueprint
 from flask import flash
 from flask import g
@@ -15,29 +13,30 @@ from flask import request
 from flask import session
 from flask import url_for
 
+from requests import HTTPError
+
 from constant import Sites
 
+from description import parse_description
+
+from models import Account
+from models import Site
+from models import db
+
+from sentry import sentry
+
+from sites import AccountExists
 from sites import BadCredentials
 from sites import SiteError
-from sites import AccountExists
 
 from sites.known import KNOWN_SITES
 from sites.known import known_list
 
-from sentry import sentry
-
-from models import db
-
-from models import Account
-from models import Site
+from submission import Submission
 
 from utils import get_active_notices
 from utils import login_required
 from utils import send_to_influx
-
-from submission import Submission
-
-from description import parse_description
 
 app = Blueprint('upload', __name__)
 

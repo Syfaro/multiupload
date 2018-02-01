@@ -1,9 +1,9 @@
+from typing import Any
 from typing import List
 from typing import Union
-from typing import Any
 
-from submission import Submission
 from submission import Rating
+from submission import Submission
 
 
 class BadCredentials(Exception):

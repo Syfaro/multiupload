@@ -1,33 +1,28 @@
 from typing import Any
 from typing import List
 
-from flask import g
-from flask import session
-from flask import current_app
-from flask import redirect
-from flask import request
-from flask import Response
-from flask import flash
-
 import json
 import tumblpy
 
-from models import db
-from models import Account
-
-from sentry import sentry
+from flask import Response
+from flask import current_app
+from flask import flash
+from flask import redirect
+from flask import request
+from flask import session
 
 from constant import Sites
 
-from utils import tumblr_blog_name
+from models import Account
+from models import db
 
-from sites import Site
 from sites import BadCredentials
-from sites import AccountExists
+from sites import Site
 from sites import SiteError
 
 from submission import Submission
-from submission import Rating
+
+from utils import tumblr_blog_name
 
 
 class Tumblr(Site):

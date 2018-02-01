@@ -1,14 +1,13 @@
 from typing import List
 
-from bcrypt import hashpw
 from bcrypt import gensalt
-
-from simplecrypt import encrypt
-
-from flask_sqlalchemy import SQLAlchemy
+from bcrypt import hashpw
 
 from flask import session
 
+from flask_sqlalchemy import SQLAlchemy
+
+from simplecrypt import encrypt
 from sqlalchemy import func
 
 from constant import Sites

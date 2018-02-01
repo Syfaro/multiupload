@@ -8,16 +8,14 @@ from flask import request
 from flask import session
 from flask import url_for
 
-from utils import english_series
-from utils import get_active_notices
-from utils import send_to_influx
-
-from models import db
-
 from models import User
+from models import db
 
 from sites.known import known_names
 
+from utils import english_series
+from utils import get_active_notices
+from utils import send_to_influx
 
 app = Blueprint('home', __name__)
 

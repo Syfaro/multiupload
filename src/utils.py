@@ -1,17 +1,15 @@
-import requests
-
 from functools import wraps
-
-from flask import g
-from flask import session
-from flask import url_for
-from flask import redirect
-
-from subprocess import Popen
-from subprocess import PIPE
-
 from random import SystemRandom
 from string import ascii_lowercase
+from subprocess import PIPE
+from subprocess import Popen
+
+import requests
+
+from flask import g
+from flask import redirect
+from flask import session
+from flask import url_for
 
 from models import Notice
 from models import User

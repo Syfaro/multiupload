@@ -1,29 +1,29 @@
 from typing import Any
 
-from flask import g
-from flask import session
-from flask import current_app
-from flask import redirect
-from flask import request
-from flask import Response
-
 import json
 import tweepy
 
-from models import db
-from models import Account
-
-from sentry import sentry
+from flask import Response
+from flask import current_app
+from flask import g
+from flask import redirect
+from flask import request
+from flask import session
 
 from constant import Sites
 
-from sites import Site
-from sites import BadCredentials
+from models import Account
+from models import db
+
+from sentry import sentry
+
 from sites import AccountExists
+from sites import BadCredentials
+from sites import Site
 from sites import SiteError
 
-from submission import Submission
 from submission import Rating
+from submission import Submission
 
 
 class Twitter(Site):

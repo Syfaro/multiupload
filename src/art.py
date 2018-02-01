@@ -3,8 +3,8 @@ import time
 import requests
 
 from flask import Flask
-from flask import render_template
 from flask import g
+from flask import render_template
 from flask import request
 
 from influxdb import InfluxDBClient
@@ -12,11 +12,12 @@ from influxdb import InfluxDBClient
 from raven import fetch_git_sha
 
 from models import db
-from sentry import sentry
 
 from routes.home import app as home_app
-from routes.user import app as user_app
 from routes.upload import app as upload_app
+from routes.user import app as user_app
+
+from sentry import sentry
 
 app = Flask(__name__)
 

@@ -10,13 +10,12 @@ from flask import render_template
 from flask import request
 from flask import url_for
 
-from models import db
+from constant import Sites
 
 from models import Account
 from models import AccountConfig
 from models import NoticeViewed
-
-from constant import Sites
+from models import db
 
 from utils import login_required
 
