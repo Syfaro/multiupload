@@ -49,7 +49,6 @@ class FurryNetwork(Site):
             'client_id': '123',
             'client_secret': '',
         }, headers=HEADERS)
-        req.raise_for_status()
 
         j = req.json()
 
