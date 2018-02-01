@@ -29,11 +29,11 @@ class Site(object):
     def pre_add_account(self) -> Union[None, dict]:
         return None
 
-    def add_account_callback(self, data: Any) -> Union[None, str, dict]:
+    def add_account_callback(self) -> Union[None, str, dict]:
         return None
 
-    def parse_add_form(self, form) -> dict:
-        raise NotImplementedError()
+    def parse_add_form(self, form) -> Union[None, dict]:
+        return None
 
     def add_account(self, data: dict) -> None:
         raise NotImplementedError()
@@ -41,8 +41,8 @@ class Site(object):
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         raise NotImplementedError()
 
-    def map_rating(self, rating: Rating) -> str:
-        raise NotImplementedError()
+    def map_rating(self, rating: Rating) -> Union[None, str]:
+        return None
 
     def tag_str(self, tags: List[str]) -> str:
         return ' '.join(tags)

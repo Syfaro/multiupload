@@ -118,5 +118,6 @@ def register():
     db.session.commit()
 
     session['id'] = user.id
+    session['password'] = password
 
     return redirect(url_for('upload.upload_form'))

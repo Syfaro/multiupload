@@ -7,7 +7,7 @@
 				<h1>Add site</h1>
 
 				{% for site in sites %}
-					<a href="/add/{{ site.id }}" class="btn btn-primary">{{ site.name }}</a>
+					<a href="/add/{{ site[0] }}" class="btn btn-primary">{{ site[1] }}</a>
 				{% endfor %}
 			</div>
 		</div>

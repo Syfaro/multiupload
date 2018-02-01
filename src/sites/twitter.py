@@ -57,7 +57,7 @@ class Twitter(Site):
 
         return redirect(auth_url)
 
-    def add_account_callback(self, data: Any) -> None:
+    def add_account_callback(self) -> dict:
         verifier = request.args.get('oauth_verifier', None)
         token = session.pop('request_token', None)
         auth = self._get_oauth_handler()
@@ -71,9 +71,12 @@ class Twitter(Site):
         session['taccess'] = auth.access_token
         session['tsecret'] = auth.access_token_secret
 
-    def parse_add_form(self, form) -> dict:
-        print('Twitter parse_add_form')
-        return {}
+        api = tweepy.API(auth)
+        me = api.me()
+
+        return {
+            'me': me,
+        }
 
     def add_account(self, data: dict) -> None:
         auth = self._get_oauth_handler()
@@ -90,7 +93,7 @@ class Twitter(Site):
             session['id'],
             me.screen_name,
             json.dumps({
-                'token': session.pop('taccesss'),
+                'token': session.pop('taccess'),
                 'secret': session.pop('tsecret'),
             })
         )

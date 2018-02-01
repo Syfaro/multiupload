@@ -3,6 +3,8 @@ from typing import List
 import time
 import simplecrypt
 
+from requests import HTTPError
+
 from flask import Blueprint
 from flask import flash
 from flask import g
@@ -16,9 +18,13 @@ from flask import url_for
 from constant import Sites
 
 from sites import BadCredentials
+from sites import SiteError
 from sites import AccountExists
 
 from sites.known import KNOWN_SITES
+from sites.known import known_list
+
+from sentry import sentry
 
 from models import db
 
@@ -145,11 +151,11 @@ def upload_post():
 
         account.used_last = 1
 
-        if Sites(account.site) == Sites.Weasyl and has_less_2:
+        if account.site == Sites.Weasyl and has_less_2:
             flash('Weasyl requires at least two tags.')
             basic_error = True
 
-        if Sites(account.site) == Sites.SoFurry and has_less_2:
+        if account.site == Sites.SoFurry and has_less_2:
             flash('SoFurry requires at least two tags.')
             basic_error = True
 
@@ -182,9 +188,27 @@ def upload_post():
             if site.SITE == account.site:
                 s = site(decrypted, account)
 
-                link = s.submit_artwork(submission, extra={
-                    'twitter_link': twitter_link,
-                })
+                try:
+                    link = s.submit_artwork(submission, extra={
+                        'twitter_link': twitter_link,
+                    })
+
+                except BadCredentials:
+                    flash('Unable to upload on {site} to account {account}, you may need to log in again.'.format(
+                        site=account.site.name, account=account.username))
+                    continue
+
+                except SiteError as ex:
+                    flash('Unable to upload on {site} to account {account}: {msg}'.format(
+                        site=account.site.name, account=account.username, msg=ex.message
+                    ))
+                    continue
+
+                except HTTPError:
+                    flash('Unable to upload on {site} to account {account} due to a site issue. Please try again later.'.format(
+                        site=account.site.name, account=account.username
+                    ))
+                    continue
 
                 uploads.append({
                     'link': link,
@@ -204,9 +228,7 @@ def upload_post():
 @app.route('/add')
 @login_required
 def add():
-    sites = Site.query.all()
-
-    return render_template('add_site.html', sites=sites, user=g.user)
+    return render_template('add_site.html', sites=known_list(), user=g.user)
 
 
 @app.route('/add/<int:site_id>', methods=['GET'])
@@ -222,7 +244,13 @@ def add_account_form(site_id):
     for known_site in KNOWN_SITES:
         if known_site.SITE == site:
             s = known_site()
-            pre = s.pre_add_account()
+
+            try:
+                pre = s.pre_add_account()
+            except SiteError as ex:
+                sentry.captureException()
+                return 'There was an error with the site: {msg}'.format(msg=ex.message)
+
             if pre is not None:
                 if isinstance(pre, dict):
                     extra_data = pre
@@ -245,7 +273,13 @@ def add_account_callback(site_id):
     for known_site in KNOWN_SITES:
         if known_site.SITE == site:
             s = known_site()
-            callback = s.add_account_callback()
+
+            try:
+                callback = s.add_account_callback()
+            except SiteError as ex:
+                sentry.captureException()
+                return 'There was an error with the site: {msg}'.format(msg=ex.message)
+
             if callback is not None:
                 if isinstance(callback, dict):
                     extra_data = callback

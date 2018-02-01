@@ -34,7 +34,10 @@ app.jinja_env.globals['git_version'] = app.config['SENTRY_RELEASE'][:7]
 
 @app.before_request
 def start_influx():
-    g.influx = InfluxDBClient(**app.config['INFLUXDB'])
+    influx = app.config.get('INFLUXDB', None)
+    if not influx:
+        return
+    g.influx = InfluxDBClient(**influx)
     g.start = time.time()
 
 

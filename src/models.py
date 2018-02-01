@@ -29,8 +29,10 @@ class User(db.Model):
         self.password = hashpw(password.encode('utf-8'), gensalt())
 
     def verify(self, password):
-        selfpassword = self.password.encode('utf-8')
-        return hashpw(password.encode('utf-8'), selfpassword) == selfpassword
+        self_password = self.password
+        if hasattr(self_password, 'encode'):
+            self_password = self_password.encode('utf-8')
+        return hashpw(password.encode('utf-8'), self_password) == self_password
 
 
 class Site(db.Model):
