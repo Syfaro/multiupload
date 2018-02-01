@@ -54,8 +54,7 @@ class Account(db.Model):
     credentials = db.Column(db.LargeBinary, nullable=False)
     used_last = db.Column(db.Boolean, default=True)
 
-    _site = db.relationship(
-        'Site', backref=db.backref('account', lazy='dynamic'))
+    _site = db.relationship('Site', backref=db.backref('account', lazy='dynamic'))
 
     config = db.relationship('AccountConfig', lazy='dynamic', cascade='delete')
 
@@ -86,8 +85,7 @@ class Account(db.Model):
 class AccountConfig(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
-    account_id = db.Column(
-        db.Integer, db.ForeignKey('account.id'), nullable=False)
+    account_id = db.Column(db.Integer, db.ForeignKey('account.id'), nullable=False)
 
     key = db.Column(db.String(120), nullable=False)
     val = db.Column(db.String(120), nullable=False)
@@ -119,8 +117,7 @@ class Notice(db.Model):
 class NoticeViewed(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
-    notice_id = db.Column(
-        db.Integer, db.ForeignKey('notice.id'), nullable=False)
+    notice_id = db.Column(db.Integer, db.ForeignKey('notice.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     def __init__(self, notice, user):

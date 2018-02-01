@@ -20,7 +20,7 @@ rng = SystemRandom()
 
 
 def random_string(length):
-    return ''.join(rng.choice(ascii_lowercase) for i in range(length))
+    return ''.join(rng.choice(ascii_lowercase) for _ in range(length))
 
 
 def git_version():

@@ -124,8 +124,7 @@ def settings():
 @app.route('/settings/sofurry/remap', methods=['POST'])
 @login_required
 def settings_sofurry_remap():
-    sofurry_accounts = [
-        account for account in g.user.accounts if Sites(account.site_id) == Sites.SoFurry and account.user_id == g.user.id]
+    sofurry_accounts = [account for account in g.user.accounts if account.site == Sites.SoFurry]
 
     for account in sofurry_accounts:
         remap = account['remap_sofurry']
@@ -134,7 +133,7 @@ def settings_sofurry_remap():
             remap = AccountConfig(account.id, 'remap_sofurry', 'no')
             db.session.add(remap)
 
-        if request.form.get('account[%d]' % (account.id)) == 'on':
+        if request.form.get('account[{id}]'.format(id=account.id)) == 'on':
             remap.val = 'yes'
         else:
             remap.val = 'no'
@@ -147,8 +146,7 @@ def settings_sofurry_remap():
 @app.route('/settings/furaffinity/resolution', methods=['POST'])
 @login_required
 def settings_furaffinity_resolution():
-    furaffinity_accounts = [
-        account for account in g.user.accounts if Sites(account.site_id) == Sites.FurAffinity and account.user_id == g.user.id]
+    furaffinity_accounts = [account for account in g.user.accounts if account.site == Sites.FurAffinity]
 
     for account in furaffinity_accounts:
         resolution = account['resolution_furaffinity']
@@ -158,7 +156,7 @@ def settings_furaffinity_resolution():
                 account.id, 'resolution_furaffinity', 'yes')
             db.session.add(resolution)
 
-        if request.form.get('account[%d]' % (account.id)) == 'on':
+        if request.form.get('account[{id}]'.format(id=account.id)) == 'on':
             resolution.val = 'yes'
         else:
             resolution.val = 'no'

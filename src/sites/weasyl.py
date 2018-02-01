@@ -1,4 +1,6 @@
 from typing import Any
+from typing import List
+from typing import Union
 
 import cfscrape
 from bs4 import BeautifulSoup
@@ -15,6 +17,7 @@ from models import db
 from sites import AccountExists
 from sites import BadCredentials
 from sites import Site
+from sites import SiteError
 
 from submission import Rating
 from submission import Submission
@@ -80,7 +83,10 @@ class Weasyl(Site):
         req.raise_for_status()
 
         soup = BeautifulSoup(req.content, 'html.parser')
-        token = soup.select('input[name="token"]')[0]['value']
+        try:
+            token = soup.select('input[name="token"]')[0]['value']
+        except ValueError:
+            raise SiteError('Unable to get upload token')
 
         req = sess.post('https://www.weasyl.com/submit/visual', data={
             'token': token,
@@ -94,3 +100,9 @@ class Weasyl(Site):
         req.raise_for_status()
 
         return req.url
+
+    def validate_submission(self, submission: Submission) -> Union[None, List[str]]:
+        if len(submission.tags) < 2:
+            return ['Weasyl requires at least 2 tags']
+
+        return None

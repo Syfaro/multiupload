@@ -26,15 +26,15 @@ class Rating(Enum):
 
 class Submission(object):
     """Submission is a normalized representation of something to post."""
-    title: str = None # Title of submission
-    description: str = None # Description of submission
-    tags: List[str] = None # Tags of submission
-    hashtags: List[str] = None # Hashtags of submission (only for Twitter)
-    rating: Rating = None # Rating of submission
+    title: str = None  # Title of submission
+    description: str = None  # Description of submission
+    tags: List[str] = None  # Tags of submission
+    hashtags: List[str] = None  # Hashtags of submission (only for Twitter)
+    rating: Rating = None  # Rating of submission
 
-    image_filename: str = None # Filename of submission
-    image_bytes: BytesIO = None # Bytes of image in submission
-    image_mimetype: str = None # Mime type of image in submission
+    image_filename: str = None  # Filename of submission
+    image_bytes: BytesIO = None  # Bytes of image in submission
+    image_mimetype: str = None  # Mime type of image in submission
     _image_size: int = None
 
     def __init__(self, title: str, description: str, tags: str, rating: str, image):
@@ -48,7 +48,7 @@ class Submission(object):
         self.tags, self.hashtags = parsed_tags
 
         self.image_filename = image.filename
-        self.image_bytes = BytesIO(image.read()) # TODO: some kind of size check?
+        self.image_bytes = BytesIO(image.read())  # TODO: some kind of size check?
         self.image_mimetype = image.mimetype
 
     def get_image(self) -> Tuple[str, BytesIO]:
@@ -61,10 +61,10 @@ class Submission(object):
         image.thumbnail((height, width), Image.ANTIALIAS)
 
         if image.mode != 'RGB':
-            image = image.convert('RGB') # Everything works better as RGB
+            image = image.convert('RGB')  # Everything works better as RGB
 
         resized_image = BytesIO()
-        image.save(resized_image, 'JPEG') # TODO: should this always be JPEG?
+        image.save(resized_image, 'JPEG')  # TODO: should this always be JPEG?
 
         breadcrumbs.record(message='Resized image',
                            category='furryapp', level='info')

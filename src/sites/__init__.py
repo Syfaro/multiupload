@@ -44,5 +44,8 @@ class Site(object):
     def map_rating(self, rating: Rating) -> Union[None, str]:
         return None
 
+    def validate_submission(self, submission: Submission) -> Union[None, List[str]]:
+        return None
+
     def tag_str(self, tags: List[str]) -> str:
         return ' '.join(tags)

@@ -51,7 +51,7 @@ class TestDescriptionToFurAffinity(unittest.TestCase):
         should_be = "[url=https://beta.furrynetwork.com/Syfaro]Syfaro[/url]"
 
         for t in range(0, 2):
-            unparsed = "<|Syfaro,3,%d|>" % (t)
+            unparsed = "<|Syfaro,3,%d|>" % t
 
             self.assertEqual(should_be, parse_description(unparsed, 1))
 
@@ -59,7 +59,7 @@ class TestDescriptionToFurAffinity(unittest.TestCase):
         should_be = "[url=https://inkbunny.net/Syfaro]Syfaro[/url]"
 
         for t in range(0, 2):
-            unparsed = "<|Syfaro,4,%d|>" % (t)
+            unparsed = "<|Syfaro,4,%d|>" % t
 
             self.assertEqual(should_be, parse_description(unparsed, 1))
 
@@ -67,7 +67,7 @@ class TestDescriptionToFurAffinity(unittest.TestCase):
         should_be = "[url=https://syfaro.sofurry.com/]Syfaro[/url]"
 
         for t in range(0, 2):
-            unparsed = "<|Syfaro,5,%d|>" % (t)
+            unparsed = "<|Syfaro,5,%d|>" % t
 
             self.assertEqual(should_be, parse_description(unparsed, 1))
 
@@ -75,7 +75,7 @@ class TestDescriptionToFurAffinity(unittest.TestCase):
         should_be = "[url=https://www.weasyl.com/~Syfaro]Syfaro[/url]"
 
         for t in range(0, 2):
-            unparsed = "<|Syfaro,2,%d|>" % (t)
+            unparsed = "<|Syfaro,2,%d|>" % t
 
             self.assertEqual(should_be, parse_description(unparsed, 1))
 
@@ -103,7 +103,7 @@ class TestDescriptionToWeasyl(unittest.TestCase):
         should_be = "[Syfaro](https://www.furaffinity.net/user/Syfaro/)"
 
         for t in range(0, 2):
-            unparsed = "<|Syfaro,1,%d|>" % (t)
+            unparsed = "<|Syfaro,1,%d|>" % t
 
             self.assertEqual(should_be, parse_description(unparsed, 2))
 
@@ -111,7 +111,7 @@ class TestDescriptionToWeasyl(unittest.TestCase):
         should_be = "[Syfaro](https://beta.furrynetwork.com/Syfaro)"
 
         for t in range(0, 2):
-            unparsed = "<|Syfaro,3,%d|>" % (t)
+            unparsed = "<|Syfaro,3,%d|>" % t
 
             self.assertEqual(should_be, parse_description(unparsed, 2))
 
@@ -119,7 +119,7 @@ class TestDescriptionToWeasyl(unittest.TestCase):
         should_be = "[Syfaro](https://inkbunny.net/Syfaro)"
 
         for t in range(0, 2):
-            unparsed = "<|Syfaro,4,%d|>" % (t)
+            unparsed = "<|Syfaro,4,%d|>" % t
 
             self.assertEqual(should_be, parse_description(unparsed, 2))
 
@@ -127,7 +127,7 @@ class TestDescriptionToWeasyl(unittest.TestCase):
         should_be = "[Syfaro](https://syfaro.sofurry.com/)"
 
         for t in range(0, 2):
-            unparsed = "<|Syfaro,5,%d|>" % (t)
+            unparsed = "<|Syfaro,5,%d|>" % t
 
             self.assertEqual(should_be, parse_description(unparsed, 2))
 

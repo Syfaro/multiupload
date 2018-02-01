@@ -44,7 +44,8 @@ app = Blueprint('upload', __name__)
 @app.route('/upload', methods=['GET'])
 @login_required
 def upload_form():
-    return render_template('upload.html', user=g.user, sites=Site.query.all(), notices=get_active_notices(for_user=g.user.id))
+    return render_template('upload.html', user=g.user, sites=Site.query.all(),
+                           notices=get_active_notices(for_user=g.user.id))
 
 
 @app.route('/preview/description')
@@ -133,8 +134,6 @@ def upload_post():
 
     submission = Submission(title, description, keywords, rating, upload)
 
-    has_less_2 = len(submission.tags) < 2
-
     basic_error = False
 
     for account in Account.query.filter_by(user_id=g.user.id).all():
@@ -150,20 +149,12 @@ def upload_post():
 
         account.used_last = 1
 
-        if account.site == Sites.Weasyl and has_less_2:
-            flash('Weasyl requires at least two tags.')
-            basic_error = True
-
-        if account.site == Sites.SoFurry and has_less_2:
-            flash('SoFurry requires at least two tags.')
-            basic_error = True
-
         accounts.append(account)
+
+    db.session.commit()
 
     if basic_error:
         return redirect(url_for('upload.upload_form'))
-
-    db.session.commit()
 
     accounts = sorted(accounts, key=lambda x: x.site_id)
 
@@ -187,6 +178,12 @@ def upload_post():
             if site.SITE == account.site:
                 s = site(decrypted, account)
 
+                errors = s.validate_submission()
+                if errors:
+                    for error in errors:
+                        flash(error)
+                        continue
+
                 try:
                     link = s.submit_artwork(submission, extra={
                         'twitter_link': twitter_link,
@@ -204,7 +201,7 @@ def upload_post():
                     continue
 
                 except HTTPError:
-                    flash('Unable to upload on {site} to account {account} due to a site issue. Please try again later.'.format(
+                    flash('Unable to upload on {site} to account {account} due to a site issue.'.format(
                         site=account.site.name, account=account.username
                     ))
                     continue

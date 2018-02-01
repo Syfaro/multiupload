@@ -1,5 +1,6 @@
 from typing import Any
 from typing import List
+from typing import Union
 
 import json
 import cfscrape
@@ -114,3 +115,9 @@ class SoFurry(Site):
 
     def tag_str(self, tags: List[str]) -> str:
         return ', '.join(tags)
+
+    def validate_submission(self, submission: Submission) -> Union[None, List[str]]:
+        if len(submission.tags) < 2:
+            return ['SoFurry requires at least two tags.']
+
+        return None
