@@ -1,13 +1,17 @@
 from typing import Any
 
 from flask import session
+from flask import g
+from flask import flash
 
+import re
 import base64
 import json
 import cfscrape
 
 from bs4 import BeautifulSoup
 from PIL import Image
+from requests import HTTPError
 
 from models import db
 from models import Account
@@ -18,6 +22,7 @@ from constant import HEADERS
 from sites import Site
 from sites import BadCredentials
 from sites import AccountExists
+from sites import SiteError
 
 from submission import Submission
 from submission import Rating
@@ -28,7 +33,9 @@ class FurAffinity(Site):
     SITE = Sites.FurAffinity
 
     def __init__(self, credentials=None):
-        self.credentials = json.loads(credentials)
+        super().__init__(credentials)
+        if credentials:
+            self.credentials = json.loads(credentials)
 
     def pre_add_account(self) -> dict:
         sess = cfscrape.create_scraper()
@@ -48,6 +55,9 @@ class FurAffinity(Site):
 
     def add_account(self, data: dict) -> None:
         sess = cfscrape.create_scraper()
+
+        if Account.lookup_username(self.SITE, g.user.id, data['username']):
+            raise AccountExists()
 
         req = sess.get('https://www.furaffinity.net/login/?mode=imagecaptcha', cookies={
             'b': session['fa_cookie_b'],
@@ -141,6 +151,27 @@ class FurAffinity(Site):
         req.raise_for_status()
 
         link = req.url
+
+        if link == 'https://www.furaffinity.net/submit/submission/4/?msg=1':
+            raise SiteError('You must have a few submissions on FurAffinity before you can use this site.')
+
+        resolution = self.account['resolution_furaffinity']
+        resolution = not resolution or resolution.val == 'yes'
+
+        if needs_resize and resolution:
+            match = re.search(r'view/(\d+)', link).group(1)
+
+            req = sess.post('https://www.furaffinity.net/controls/submissions/changesubmission/%s/' % match, data={
+                'update': 'yes',
+                'rebuild-thumbnail': '1',
+            }, files={
+                'newsubmission': submission.get_image(),
+            }, cookies=self.credentials, headers=HEADERS)
+
+            try:
+                req.raise_for_status()
+            except HTTPError:
+                flash('Unable to increase resolution on FurAffinity submission.')
 
         return link
 

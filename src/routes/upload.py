@@ -1,3 +1,5 @@
+from typing import List
+
 import time
 import simplecrypt
 
@@ -133,7 +135,7 @@ def upload_post():
     for account in Account.query.filter_by(user_id=g.user.id).all():
         account.used_last = 0
 
-    accounts = []
+    accounts: List[Account] = []
     for acct in request.form.getlist('account'):
         account = Account.query.get(acct)
 
@@ -158,19 +160,19 @@ def upload_post():
 
     db.session.commit()
 
-    accounts = sorted(accounts, key=lambda account: account.site_id)
+    accounts = sorted(accounts, key=lambda x: x.site_id)
 
-    try:
-        twitter_link_id = request.form.get('twitterlink', None)
-        if twitter_link_id is not None:
+    twitter_link_id = request.form.get('twitterlink', None)
+    if twitter_link_id is not None:
+        try:
             twitter_link_id = int(twitter_link_id)
-    except ValueError:
-        print('Bad twitterlink ID')
+        except ValueError:
+            twitter_link_id = None
     twitter_link = None
 
-    uploads = []
+    uploads: List[dict] = []
     for account in accounts:
-        starttime = time.time()
+        start_time = time.time()
 
         decrypted = simplecrypt.decrypt(session['password'], account.credentials)
 
@@ -178,15 +180,21 @@ def upload_post():
 
         for site in KNOWN_SITES:
             if site.SITE == account.site:
-                s = site(decrypted)
+                s = site(decrypted, account)
+
                 link = s.submit_artwork(submission, extra={
                     'twitter_link': twitter_link,
+                })
+
+                uploads.append({
+                    'link': link,
+                    'name': '{site} - {account}'.format(site=site.SITE.name, account=account.username)
                 })
 
         if account.id == twitter_link_id:
             twitter_link = link
 
-        write_upload_time(starttime, account.site.value)
+        write_upload_time(start_time, account.site.value)
 
     write_upload_time(total_time, measurement='upload_time_total')
 
@@ -221,7 +229,7 @@ def add_account_form(site_id):
                 else:
                     return pre
 
-    return render_template('add_site/%d.html' % (site_id), site=site, extra_data=extra_data, user=g.user)
+    return render_template('add_site/%d.html' % site_id, site=site, extra_data=extra_data, user=g.user)
 
 
 @app.route('/add/<int:site_id>/callback', methods=['GET'])
@@ -241,16 +249,18 @@ def add_account_callback(site_id):
             if callback is not None:
                 if isinstance(callback, dict):
                     extra_data = callback
+                elif isinstance(callback, str):
+                    return callback
                 else:
                     return callback
 
-    return render_template('add_site/%d.html' % (site_id), site=site, extra_data=extra_data, user=g.user)
+    return render_template('add_site/%d.html' % site_id, site=site, extra_data=extra_data, user=g.user)
 
 
 @app.route('/add/<int:site_id>', methods=['POST'])
 @login_required
 def add_account_post(site_id):
-    starttime = time.time()
+    start_time = time.time()
 
     try:
         site = Sites(site_id)
@@ -276,7 +286,7 @@ def add_account_post(site_id):
     send_to_influx({
         'measurement': 'account_time_add',
         'fields': {
-            'duration': time.time() - starttime,
+            'duration': time.time() - start_time,
         },
         'tags': {
             'site': site.value,

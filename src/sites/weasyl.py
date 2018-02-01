@@ -1,11 +1,9 @@
 from typing import Any
 
-from flask import flash
 from flask import g
 from flask import session
 
 import cfscrape
-import requests
 
 from bs4 import BeautifulSoup
 

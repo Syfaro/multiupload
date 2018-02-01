@@ -5,22 +5,31 @@ from typing import Any
 from submission import Submission
 from submission import Rating
 
+
 class BadCredentials(Exception):
     pass
+
 
 class AccountExists(Exception):
     pass
 
+
+class SiteError(Exception):
+    def __init__(self, message: str):
+        self.message = message
+
+
 class Site(object):
     credentials: Union[None, str, dict] = None
 
-    def __init__(self, credentials=None):
+    def __init__(self, credentials=None, account=None):
         self.credentials = credentials
+        self.account = account
 
     def pre_add_account(self) -> Union[None, dict]:
         return None
 
-    def add_account_callback(self, data: Any) -> Union[None, dict]:
+    def add_account_callback(self, data: Any) -> Union[None, str, dict]:
         return None
 
     def parse_add_form(self, form) -> dict:

@@ -2,10 +2,12 @@ from typing import Generator
 
 from sites.weasyl import Weasyl
 from sites.furaffinity import FurAffinity
+from sites.twitter import Twitter
 
 KNOWN_SITES = [
     FurAffinity,
     Weasyl,
+    Twitter,
 ]
 
 
