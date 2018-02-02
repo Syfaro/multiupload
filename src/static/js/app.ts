@@ -117,6 +117,11 @@ class SubmissionInformation {
     currentDescription: string;
     lastDescription: string;
     descriptionPreviews: DescriptionPreview[] = [];
+    sites: any = [];
+
+    username: string;
+    linkType: number = 0;
+    site: number;
 
     updateInterval: number;
 
@@ -130,6 +135,8 @@ class SubmissionInformation {
     constructor() {
         if (selectedAccounts().length === 0)
             m.route.set('/accounts');
+
+        this.loadSites();
     }
 
     oncreate() {
@@ -154,7 +161,17 @@ class SubmissionInformation {
                     m('div', {class: 'col-sm-12 col-md-9'}, this.buildDataForm()),
                 ]), m('div', {class: 'row'},
                     m('div', {class: 'col-sm-12'}, this.nextButton.button())),
+                this.addLinkModal(),
             ]);
+    }
+
+    loadSites() {
+        m.request({
+            method: 'GET',
+            url: API_ENDPOINT + '/sites',
+        }).then(sites => {
+            this.sites = sites['sites'];
+        });
     }
 
     static inkbunnyMessage() {
@@ -288,6 +305,132 @@ class SubmissionInformation {
         ]
     }
 
+    addLinkModal() {
+        return m('.modal', {
+            class: 'add-user-modal fade',
+        }, m('.modal-dialog',
+            m('.modal-content', [
+                m('.modal-header', [
+                    m('m5', {
+                        class: 'modal-title',
+                    }, 'Link a user'),
+                    m('button', {
+                        class: 'close',
+                        'data-dismiss': 'modal',
+                    }, m('span', '×')),
+                ]),
+                m('.modal-body', [
+                    m('.form-group',
+                        m('input', {
+                            type: 'text',
+                            name: 'username',
+                            class: 'form-control',
+                            placeholder: 'Username',
+                            value: this.username,
+                            oninput: m.withAttr('value', val => {
+                                this.username = val;
+                            }),
+                        })),
+                    m('div', [
+                        m('label', 'Please select which site this user is on.'),
+                        this.sites.map(site => {
+                            return m('.radio',
+                                m('label', [
+                                    m('input', {
+                                        type: 'radio',
+                                        name: 'site',
+                                        value: site['id'],
+                                        onchange: m.withAttr('checked', checked => {
+                                            if (!checked) return;
+                                            this.site = site['id'];
+                                        })
+                                    }),
+                                    ` ${site.name}`,
+                                ]));
+                        })
+                    ]),
+                    m('div', [
+                        m('label', 'Please select what kind of link you want it to be.'),
+                        m('.radio', [
+                            m('label', [
+                                m('input', {
+                                    type: 'radio',
+                                    name: 'link',
+                                    value: '0',
+                                    checked: 'checked',
+                                    onchange: m.withAttr('checked', checked => {
+                                        if (!checked) return;
+                                        this.linkType = 0;
+                                    }),
+                                }),
+                                ' Just link',
+                            ]),
+                        ]),
+                        m('.radio', [
+                            m('label', [
+                                m('input', {
+                                    type: 'radio',
+                                    name: 'link',
+                                    value: '1',
+                                    onchange: m.withAttr('checked', checked => {
+                                        if (!checked) return;
+                                        this.linkType = 1;
+                                    }),
+                                }),
+                                ' Just profile picture',
+                            ]),
+                            m('p', {
+                                class: 'help-block',
+                            }, 'Note that this option may not be available on all sites. It may appear as a link.'),
+                        ]),
+                        m('.radio', [
+                            m('label', [
+                                m('input', {
+                                    type: 'radio',
+                                    name: 'link',
+                                    value: '2',
+                                    onchange: m.withAttr('checked', checked => {
+                                        if (!checked) return;
+                                        this.linkType = 2;
+                                    }),
+                                }),
+                                ' Link and profile picture',
+                            ]),
+                            m('p', {
+                                class: 'help-block',
+                            }, 'Note that this option may not be available on all sites. It may appear as a link.'),
+                        ])
+                    ])
+                ]),
+                m('.modal-footer', [
+                    m('button', {
+                        type: 'button',
+                        class: 'btn btn-default',
+                        'data-dismiss': 'modal',
+                    }, 'Cancel'),
+                    m('button', {
+                        type: 'button',
+                        class: 'btn btn-primary',
+                        'data-dismiss': 'modal',
+                        onclick: ev => {
+                            ev.preventDefault();
+
+                            this.addSiteLink();
+                            this.username = '';
+                        }
+                    }, 'Add user link'),
+                ])
+            ])));
+    }
+
+    addSiteLink() {
+        const output = `<|${this.username},${this.site},${this.linkType}|>`;
+        const textArea = <HTMLInputElement>document.querySelector('textarea[name="description"]');
+
+        const caretPos = textArea.selectionStart;
+        textArea.value = textArea.value.substring(0, caretPos) + output + textArea.value.substring(caretPos);
+    }
+
     updateDescriptionPreview() {
         if (this.lastDescription === this.currentDescription) return;
 
@@ -349,6 +492,8 @@ class SubmissionInformation {
             m('button', {
                 type: 'button',
                 class: 'btn btn-default btn-sm',
+                'data-toggle': 'modal',
+                'data-target': '.add-user-modal',
             }, 'Add user link'),
             this.displayDescriptionPreviews(),
         ]

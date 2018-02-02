@@ -8,10 +8,26 @@ from utils import login_required
 from models import Account
 
 from constant import Sites
+from sites.known import known_list
 
 from description import parse_description
 
 app = Blueprint('api', __name__)
+
+
+@app.route('/sites')
+def sites():
+    s = []
+
+    for site in known_list():
+        s.append({
+            'id': site[0],
+            'name': site[1],
+        })
+
+    return jsonify({
+        'sites': s,
+    })
 
 
 @app.route('/whoami')
