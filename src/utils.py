@@ -70,6 +70,7 @@ def login_required(f):
         user = User.query.get(session['id'])
 
         if not user:
+            session.pop('id')
             return redirect(url_for('home'))
 
         g.user = user

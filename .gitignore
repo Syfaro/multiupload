@@ -7,3 +7,4 @@ config.py
 *.sublime*
 *.ini
 *.sql
+app.js

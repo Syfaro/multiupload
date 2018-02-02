@@ -41,6 +41,13 @@ from utils import send_to_influx
 app = Blueprint('upload', __name__)
 
 
+@app.route('/beta', methods=['GET'])
+@app.route('/beta/<path:p>', methods=['GET'])
+@login_required
+def beta_upload(p=None):
+    return render_template('app.html', user=g.user)
+
+
 @app.route('/upload', methods=['GET'])
 @login_required
 def upload_form():

@@ -16,6 +16,7 @@ from models import db
 from routes.home import app as home_app
 from routes.upload import app as upload_app
 from routes.user import app as user_app
+from routes.api import app as api_app
 
 from sentry import sentry
 
@@ -29,6 +30,7 @@ app.logger.propagate = True
 app.register_blueprint(home_app)
 app.register_blueprint(user_app)
 app.register_blueprint(upload_app)
+app.register_blueprint(api_app, url_prefix='/api/v1')
 
 app.jinja_env.globals['git_version'] = app.config['SENTRY_RELEASE'][:7]
 
