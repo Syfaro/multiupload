@@ -33,7 +33,7 @@ def english_series(items):
     items = tuple(items)
     if len(items) <= 1:
         return "".join(items)
-    return ", ".join(x for x in items[:-1]) + ' and ' + items[-1]
+    return ", ".join(x for x in items[:-1]) + ', and ' + items[-1]
 
 
 def tumblr_blog_name(url):
