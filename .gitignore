@@ -1,5 +1,7 @@
 __pycache__/
 venv/
+node_modules/
+dist/
 .vscode/
 config.py
 *.db
@@ -7,4 +9,3 @@ config.py
 *.sublime*
 *.ini
 *.sql
-app.js
