@@ -18,11 +18,11 @@
 	{% if notices %}
 		<div class="container">
 			<div class="row">
-				<div class="col-sm-12 col-md-6 col-md-offset-3">
+				<div class="col-sm-12 col-md-6 offset-md-3">
 					{% for notice in notices %}
 						<div class="alert alert-info alert-dismissible">
 							{% if user is defined %}<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true" data-id="{{ notice.id }}">&times;</span></button>{% endif %}
-							{{ notice.text }}
+							{{ notice.text | safe }}
 						</div>
 					{% endfor %}
 				</div>
@@ -61,24 +61,7 @@
 
 	<link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon" type="image/x-icon">
 
-	{% if not user or not user.dark_theme %}
-		<link rel="stylesheet" href="{{ url_for('static', filename='css/flatly.min.css') }}">
-	{% else %}
-		<link rel="stylesheet" href="{{ url_for('static', filename='css/darkly.min.css') }}">
-	{% endif %}
-
-	<style>
-		/* CSS classes just to make my name purple, what of it? :3 */
-
-		.syfaro {
-			color: #a77bdb;
-		}
-
-		.syfaro:hover {
-			color: #7f50c3;
-			text-decoration: none;
-		}
-	</style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pulse.min.css') }}">
 </head>
 <body>
 	<script src="https://cdn.ravenjs.com/3.18.1/raven.min.js" crossorigin="anonymous"></script>
@@ -92,11 +75,11 @@
 	<div class="container" style="margin-top: 1em; margin-bottom: 1em">
 		<footer class="footer">
 			<div class="row">
-				<div class="col-xs-4 text-left">
+				<div class="col-4 text-left">
 					<a href="mailto:Syfaro<syfaro@huefox.com>?subject=Multiuploader">Bug? Suggestion?</a>
 				</div>
 
-				<div class="col-xs-4 text-center text-muted">
+				<div class="col-4 text-center text-muted">
 					 <div>
 						 <a title="Donate" href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=syfaro@huefox.com&lc=US&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted" target="_blank" class="syfaro donate">Donate &hearts;</a>
 					 </div>
@@ -107,7 +90,7 @@
 				</div>
 
 				{% if user is defined %}
-					<div class="col-xs-4 text-right">
+					<div class="col-4 text-right">
 						<ul class="list-inline">
 							<li><a href="/settings">Settings</a></li>
 							<li><a href="/logout">Log out</a></li>
@@ -122,8 +105,8 @@
 		<div class="modal-dialog">
 			<div class="modal-content">
 				<div class="modal-header">
+                    <h5 class="modal-title">Donate</h5>
 					<button type="button" class="close" data-dismiss="modal">&times;</button>
-					<h4>Donate</h4>
 				</div>
 
 				<div class="modal-body">
@@ -133,16 +116,16 @@
 					</div>
 
 					<div style="margin-top: 10px">
-						If you feel generous, you can find my character reference at <a href="https://syfaro.net/char" class="syfaro">syfaro.net/char</a>.
+						If you feel generous, you can find my character reference at <a href="https://syfaro.net/char">syfaro.net/char</a>.
 					</div>
 
 					<div style="margin-top: 10px">
-						<a href="https://ko-fi.com/syfaro" class="syfaro">Buy Me a Coffee</a>
+						Or you could <a href="https://ko-fi.com/syfaro">Buy Me a Coffee</a>.
 					</div>
 
 					<div style="margin-top: 10px">
 						Prefer PayPal still? You can do that <a title="Donate" href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=syfaro@huefox.com&lc=US&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted"
-						 target="_blank" class="syfaro donate">here</a>.
+						 target="_blank" class="donate">here</a>.
 					</div>
 				</div>
 

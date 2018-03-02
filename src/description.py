@@ -11,6 +11,7 @@ def parse_description(description, uploading_to):
     while match:
         if runs > 500:
             break
+        runs += 1
 
         start, end = match.span(0)
 
@@ -143,7 +144,13 @@ def parse_description(description, uploading_to):
         url = re.compile('\[([^\]]+)\]\(([^)"]+)(?: \"([^\"]+)\")?\)')
         match = url.search(description)
 
+        runs = 0
+
         while match:
+            if runs > 500:
+                break
+            runs += 1
+
             start, end = match.span(0)
 
             new_link = '[url={url}]{text}[/url]'.format(

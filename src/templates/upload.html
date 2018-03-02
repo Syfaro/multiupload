@@ -2,6 +2,15 @@
 
 {% block body %}
 	<div class="container">
+ 		<div class="row">
+			<div class="col-sm-12">
+				<h2><a href="/beta">Try the new interface here</a></h2>
+			</div>
+		</div>
+	</div>
+
+    <div class="container">
+
 		<div class="row">
 			<div class="col-sm-12">
 				<h1>Upload new art</h1>
@@ -30,8 +39,8 @@
 					</div>
 
 					<div class="form-group">
-						<button type="button" class="btn btn-default btn-sm" data-toggle="modal" data-target=".add-user-modal">Add user link</button>
-						<button type="button" class="btn btn-default btn-sm" data-toggle="modal" data-target=".description-preview-modal">Preview description</button>
+						<button type="button" class="btn btn-secondary btn-sm" data-toggle="modal" data-target=".add-user-modal">Add user link</button>
+						<button type="button" class="btn btn-secondary btn-sm" data-toggle="modal" data-target=".description-preview-modal">Preview description</button>
 
 						<p class="help-block">
 							Markdown URLs will be converted for sites that do not support it.
@@ -74,7 +83,7 @@
 						<input type="file" class="form-control upload-image" name="image" accept="image/*">
 					</div>
 
-					<img class="img-responsive block-center preview-image">
+					<img class="img-fluid block-center preview-image">
 				</div>
 
 				<div class="col-sm-12 col-md-3">
@@ -85,14 +94,14 @@
 							<label>
 								<input type="checkbox" name="account" value="{{ account.id }}" {% if account.used_last == 1 %}checked{% endif %} data-site="{{ account.site_id }}" data-site-name="{{ account.site.name }}" data-account="{{ account.username }}">
 								{{ account.site.name }} - {{ account.username }}
-								<a href="/remove/{{ account.id }}" class="btn btn-xs btn-danger">Remove</a>
+								<a href="/remove/{{ account.id }}" class="btn btn-sm btn-danger">Remove</a>
 							</label>
 						</div>
 					{% endfor %}
 
-					<a href="/add" class="btn btn-xs btn-default">Add account</a>
+					<a href="/add" class="btn btn-sm btn-secondary">Add account</a>
 
-					<div class="hidden twitter-link">
+					<div class="d-none twitter-link">
 						<h3>Twitter links to</h3>
 
 						<div class="twitter-links"></div>
@@ -101,7 +110,7 @@
 			</div>
 
 			<div class="row" style="margin-top: 20px">
-				<div class="col-sm-12 col-md-4 col-md-offset-4 text-center">
+				<div class="col-sm-12 col-md-4 offset-md-4 text-center">
 					<button type="submit" class="btn btn-lg btn-primary">Upload</button>
 				</div>
 			</div>
@@ -113,8 +122,8 @@
 		<div class="modal-dialog">
 			<div class="modal-content">
 				<div class="modal-header">
+                    <h5 class="modal-title">Link a user</h5>
 					<button type="button" class="close" data-dismiss="modal">&times;</button>
-					<h4>Link a user</h4>
 				</div>
 
 				<div class="modal-body">
@@ -172,7 +181,7 @@
 				</div>
 
 				<div class="modal-footer">
-					<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
 					<button type="button" class="btn btn-primary add-user-link">Add user link</button>
 				</div>
 			</div>
@@ -183,15 +192,15 @@
 		<div class="modal-dialog">
 			<div class="modal-content">
 				<div class="modal-header">
+                    <h5 class="modal-title">Preview description</h5>
 					<button type="button" class="close" data-dismiss="modal">&times;</button>
-					<h4>Preview description</h4>
 				</div>
 
 				<div class="modal-body">
 				</div>
 
 				<div class="modal-footer">
-					<button type="button" class="btn btn-primary" data-dismiss="modal">Done</button>
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Done</button>
 				</div>
 			</div>
 		</div>
@@ -251,9 +260,9 @@
     		var hasChecked = document.querySelectorAll('input[name="account"][data-site="4"]:checked');
 
     		if (hasChecked.length > 0) {
-    			inkbunnyMessage.classList.remove('hidden');
+    			inkbunnyMessage.classList.remove('d-none');
     		} else {
-    			inkbunnyMessage.classList.add('hidden');
+    			inkbunnyMessage.classList.add('d-none');
     		}
     	};
 
@@ -277,7 +286,7 @@
     		}
 
     		if (!hasTwitterSelected) {
-    			document.querySelector('.twitter-link').classList.add('hidden');
+    			document.querySelector('.twitter-link').classList.add('d-none');
     			return;
     		}
 
@@ -297,7 +306,7 @@
     		}
 
     		if (otherSitesSelected.length === 0) {
-    			document.querySelector('.twitter-link').classList.add('hidden');
+    			document.querySelector('.twitter-link').classList.add('d-none');
     			return;
     		}
 
@@ -321,7 +330,7 @@
     			links.appendChild(item);
     		}
 
-    		document.querySelector('.twitter-link').classList.remove('hidden');
+    		document.querySelector('.twitter-link').classList.remove('d-none');
     	};
     	updateTwitterLinks();
     	for (var i = 0; i < sites.length; i++) {

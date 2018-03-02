@@ -311,7 +311,7 @@ class SubmissionInformation {
         }, m('.modal-dialog',
             m('.modal-content', [
                 m('.modal-header', [
-                    m('m5', {
+                    m('h5', {
                         class: 'modal-title',
                     }, 'Link a user'),
                     m('button', {
