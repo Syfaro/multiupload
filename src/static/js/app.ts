@@ -1,5 +1,6 @@
 import * as m from 'mithril';
 import * as stream from 'mithril/stream';
+import twitter from 'twitter-text';
 
 const API_ENDPOINT = '/api/v1';
 
@@ -125,6 +126,8 @@ class SubmissionInformation {
 
     updateInterval: number;
 
+    charsRemaining = 0;
+
     sub: Submission = {
         title: '',
         tags: '',
@@ -187,6 +190,20 @@ class SubmissionInformation {
             }, 'requires'),
             ' keywords for sex, species, and essential themes.',
         ]))
+    }
+
+    formatTwitterPost(message: String): String {
+        const sitesToReplace = this.sites.map(site => site['name'].toUpperCase() + '_URL');
+
+        let newMessage = message;
+
+        sitesToReplace.forEach(site => {
+            newMessage = newMessage.replace(site, 'https://example.com');
+        });
+
+        console.log(newMessage);
+
+        return newMessage;
     }
 
     hasAllItems() {
@@ -300,6 +317,21 @@ class SubmissionInformation {
                             for: 'explicit',
                         }, 'Explicit'),
                     ]),
+                ]),
+                m('div', {"class": "form-group"}, [
+                    m('label', {"for": "twitter-text"}, 'Twitter Text'),
+                    m('textarea', {
+                        class: 'form-control',
+                        id: 'twitter-text',
+                        placeholder: 'Twitter text',
+                        name: 'twitter-text',
+                        oninput: m.withAttr('value', val => {
+                            this.charsRemaining = twitter.getTweetLength(this.formatTwitterPost(val));
+                        }),
+                    }),
+                    m('p', {
+                        class: 'help-block',
+                    }, `Enter the text to go on Twitter here. Entering SITENAME_URL will be replaced with the link for that site. You have ${280-this.charsRemaining} characters remaining.`)
                 ])
             ]
         ]
