@@ -32,8 +32,8 @@ class FurAffinity(Site):
     """FurAffinity."""
     SITE = Sites.FurAffinity
 
-    def __init__(self, credentials=None):
-        super().__init__(credentials)
+    def __init__(self, credentials=None, account=None):
+        super().__init__(credentials, account)
         if credentials:
             self.credentials = json.loads(credentials)
 
