@@ -185,7 +185,7 @@ def upload_post():
             if site.SITE == account.site:
                 s = site(decrypted, account)
 
-                errors = s.validate_submission()
+                errors = s.validate_submission(submission)
                 if errors:
                     for error in errors:
                         flash(error)
