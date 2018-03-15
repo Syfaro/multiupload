@@ -4,9 +4,11 @@ node_modules/
 dist/
 uploads/
 .vscode/
+.idea/
 config.py
 *.db
 *.pyc
 *.sublime*
 *.ini
 *.sql
+package-lock.json
