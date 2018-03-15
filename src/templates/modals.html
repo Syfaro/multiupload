@@ -1,0 +1,83 @@
+{% macro userLinkModal(sites) -%}
+    <div class="modal add-user-modal fade">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+                    <h5 class="modal-title">Link a user</h5>
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+				</div>
+
+				<div class="modal-body">
+					<form>
+						<div class="form-group">
+							<input type="text" name="username" class="form-control form-control-lg" placeholder="Username">
+						</div>
+
+						<div>
+							<label>
+								Please select which site this user is on.
+							</label>
+
+							{% for id, name in sites %}
+								<div class="form-check">
+                                    <input class="form-check-input" type="radio" name="site_name" value="{{ id }}" id="site{{ id }}">
+                                    <label class="form-check-label" for="site{{ id }}">{{ name }}</label>
+								</div>
+							{% endfor %}
+						</div>
+
+						<div class="mt-2">
+							<label>
+								Please select what kind of link you want it to be.
+							</label>
+
+							<div class="form-check">
+                                <input class="form-check-input" type="radio" name="link_type" value="0" checked id="justLink">
+                                <label class="form-check-label" for="justLink">Just link</label>
+							</div>
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="link_type" value="1" id="justProfile">
+                                <label class="form-check-label" for="justProfile">Just profile picture</label>
+							</div>
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="link_type" value="2" id="bothLink">
+                                <label class="form-check-label" for="bothLink">Link and profile picture</label>
+							</div>
+
+                            <div class="form-text text-muted">
+                                Note that only a link is guaranteed to work on every site, profile pictures may not show up.
+                            </div>
+						</div>
+					</form>
+				</div>
+
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+					<button type="button" class="btn btn-primary add-user-link">Add user link</button>
+				</div>
+			</div>
+		</div>
+	</div>
+{%- endmacro %}
+
+{% macro descriptionPreviewModal() -%}
+    <div class="modal description-preview-modal fade">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+                    <h5 class="modal-title">Preview description</h5>
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+				</div>
+
+				<div class="modal-body">
+				</div>
+
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Done</button>
+				</div>
+			</div>
+		</div>
+	</div>
+{%- endmacro %}

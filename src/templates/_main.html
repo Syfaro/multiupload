@@ -31,6 +31,8 @@
 	{% endif %}
 {%- endmacro %}
 
+{% set page = page|default('unknown') %}
+
 <!--
         ,-.      .-,
         |-.\ __ /.-|
@@ -62,6 +64,31 @@
 	<link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon" type="image/x-icon">
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pulse.min.css') }}">
+
+    <style>
+        .page-header h1 {
+            padding: 2rem 0;
+            font-size: 3rem;
+        }
+
+        .page-header + h1 {
+            margin: -3rem 0 2rem;
+        }
+
+        .settings .row:not(:first-child) {
+            margin-bottom: 20px;
+        }
+
+        .description-preview-modal .card-text {
+            white-space: pre-wrap;
+        }
+
+        @media(max-width: 576px) {
+            .page-header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
 </head>
 <body>
 	<script src="https://cdn.ravenjs.com/3.18.1/raven.min.js" crossorigin="anonymous"></script>
@@ -70,33 +97,69 @@
 	<script src="{{ url_for('static', filename='js/jquery-2.2.4.min.js') }}"></script>
 	<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
 
+    <nav class="navbar navbar-expand-md navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">Furry Art Multiuploader</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarContent">
+                {% if g.user %}
+                    <ul class="navbar-nav mr-auto">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle {{ 'active' if page in ('upload', 'csv', 'review') }}" href="#" data-toggle="dropdown">
+                                Upload
+                            </a>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item {{ 'active' if page == 'upload' }}" href="/upload">Simple Upload</a>
+                                <a class="dropdown-item {{ 'active' if page == 'csv' }}" href="/upload/csv">Spreadsheet Upload</a>
+                                <a class="dropdown-item" href="/beta">Beta Interface</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item {{ 'active' if page == 'review' }}" href="/upload/review">Pending Review</a>
+                            </div>
+                        </li>
+
+                        <li class="nav-item {{ 'active' if page == 'accounts' }}">
+                            <a class="nav-link" href="/accounts">Manage Accounts</a>
+                        </li>
+                    </ul>
+
+                    <ul class="navbar-nav ml-auto">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle {{ 'active' if page in ('settings') }}" href="#" data-toggle="dropdown">
+                                {{ g.user.username }}
+                            </a>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item {{ 'active' if page == 'settings' }}" href="/settings">Settings</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="/logout">Sign Out</a>
+                            </div>
+                        </li>
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
 	{% block body %}{% endblock %}
 
 	<div class="container" style="margin-top: 1em; margin-bottom: 1em">
 		<footer class="footer">
 			<div class="row">
-				<div class="col-4 text-left">
-					<a href="mailto:Syfaro<syfaro@huefox.com>?subject=Multiuploader">Bug? Suggestion?</a>
-				</div>
+				<div class="col-sm-12 text-center text-muted">
+                    <div>
+                        <a href="mailto:Syfaro<syfaro@huefox.com>?subject=Multiuploader">Bug? Suggestion?</a>
+                    </div>
 
-				<div class="col-4 text-center text-muted">
-					 <div>
-						 <a title="Donate" href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=syfaro@huefox.com&lc=US&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted" target="_blank" class="syfaro donate">Donate &hearts;</a>
-					 </div>
+                    <div>
+					    <a title="Donate" href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=syfaro@huefox.com&lc=US&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted" target="_blank" class="syfaro donate">Donate &hearts;</a>
+					</div>
 
 					<div>
 						<span title="Current revision" style="color: #{{ git_version[1:7] }}; font-family: monospace">{{ git_version }}</span>
 					</div>
 				</div>
-
-				{% if user is defined %}
-					<div class="col-4 text-right">
-						<ul class="list-inline">
-							<li><a href="/settings">Settings</a></li>
-							<li><a href="/logout">Log out</a></li>
-						</ul>
-					</div>
-				{% endif %}
 			</div>
 		</footer>
 	</div>

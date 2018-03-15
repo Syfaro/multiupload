@@ -97,6 +97,7 @@ def switchtheme():
 def settings():
     sofurry = []
     furaffinity = []
+    tumblr = []
 
     for account in g.user.accounts:
         site = Sites(account.site_id)
@@ -117,8 +118,16 @@ def settings():
                 'username': account.username,
                 'enabled': not resolution or resolution.val == 'yes'
             })
+        elif site == Sites.Tumblr:
+            header = account['tumblr_title']
 
-    return render_template('settings.html', user=g.user, sofurry=sofurry, furaffinity=furaffinity)
+            tumblr.append({
+                'id': account.id,
+                'username': account.username,
+                'enabled': header and header.val == 'yes'
+            })
+
+    return render_template('settings.html', user=g.user, sofurry=sofurry, furaffinity=furaffinity, tumblr=tumblr)
 
 
 @app.route('/settings/sofurry/remap', methods=['POST'])
@@ -160,6 +169,28 @@ def settings_furaffinity_resolution():
             resolution.val = 'yes'
         else:
             resolution.val = 'no'
+
+    db.session.commit()
+
+    return redirect(url_for('user.settings'))
+
+
+@app.route('/settings/tumblr/title', methods=['POST'])
+@login_required
+def settings_tumblr_title():
+    tumblr_accounts = [account for account in g.user.accounts if account.site == Sites.Tumblr]
+
+    for account in tumblr_accounts:
+        header = account['tumblr_title']
+
+        if not header:
+            header = AccountConfig(account.id, 'tumblr_title', 'no')
+            db.session.add(header)
+
+        if request.form.get('account[{id}]'.format(id=account.id)) == 'on':
+            header.val = 'yes'
+        else:
+            header.val = 'no'
 
     db.session.commit()
 

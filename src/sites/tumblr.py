@@ -101,6 +101,9 @@ class Tumblr(Site):
         t = tumblpy.Tumblpy(current_app.config['TUMBLR_KEY'], current_app.config['TUMBLR_SECRET'],
                             self.credentials['token'], self.credentials['secret'])
 
+        if self.account['tumblr_title'] and self.account['tumblr_title'].val == 'yes':
+            submission.description = '## ' + submission.title + '\n\n' + submission.description
+
         try:
             res = t.post('post', blog_url=self.account.username, params={
                 'type': 'photo',

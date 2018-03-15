@@ -1,21 +1,16 @@
 {% extends '_main.html' %}
 
+{% set page='upload' %}
+
+{% from 'modals.html' import userLinkModal, descriptionPreviewModal %}
+
 {% block body %}
-	<div class="container">
- 		<div class="row">
-			<div class="col-sm-12">
-				<h2><a href="/beta">Try the new interface here</a></h2>
-			</div>
-		</div>
-	</div>
-
     <div class="container">
-
 		<div class="row">
 			<div class="col-sm-12">
-				<h1>Upload new art</h1>
-
-				<p>Hello, {{ user.username }}!</p>
+				<div class="page-header">
+                    <h1>Upload New Art</h1>
+                </div>
 			</div>
 		</div>
 	</div>
@@ -36,15 +31,14 @@
 
 					<div class="form-group">
 						<textarea class="form-control description" name="description" placeholder="Description" autocomplete="off">{{ request.form.description }}</textarea>
+                        <p class="help-block">
+							Markdown URLs will be converted for sites that do not support it.
+						</p>
 					</div>
 
 					<div class="form-group">
 						<button type="button" class="btn btn-secondary btn-sm" data-toggle="modal" data-target=".add-user-modal">Add user link</button>
 						<button type="button" class="btn btn-secondary btn-sm" data-toggle="modal" data-target=".description-preview-modal">Preview description</button>
-
-						<p class="help-block">
-							Markdown URLs will be converted for sites that do not support it.
-						</p>
 					</div>
 
 					<div class="form-group">
@@ -90,18 +84,13 @@
 					<h2>Upload to</h2>
 
 					{% for account in user.accounts %}
-						<div class="checkbox">
-							<label>
-								<input type="checkbox" name="account" value="{{ account.id }}" {% if account.used_last == 1 %}checked{% endif %} data-site="{{ account.site_id }}" data-site-name="{{ account.site.name }}" data-account="{{ account.username }}">
-								{{ account.site.name }} - {{ account.username }}
-								<a href="/remove/{{ account.id }}" class="btn btn-sm btn-danger">Remove</a>
-							</label>
+						<div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="account" value="{{ account.id }}" id="account{{ account.id }}" {{ 'checked' if account.used_last == 1 }} data-site="{{ account.site_id }}" data-site-name="{{ account.site.name }}" data-account="{{ account.username }}">
+                            <label class="form-check-label" for="account{{ account.id }}">{{ account.site.name }} - {{ account.username }}</label>
 						</div>
 					{% endfor %}
 
-					<a href="/add" class="btn btn-sm btn-secondary">Add account</a>
-
-					<div class="d-none twitter-link">
+					<div class="d-none twitter-link mt-2">
 						<h3>Twitter links to</h3>
 
 						<div class="twitter-links"></div>
@@ -111,6 +100,7 @@
 
 			<div class="row" style="margin-top: 20px">
 				<div class="col-sm-12 col-md-4 offset-md-4 text-center">
+                    <button type="submit" class="btn btn-lg btn-secondary" formaction="/upload/save">Save For Later</button>
 					<button type="submit" class="btn btn-lg btn-primary">Upload</button>
 				</div>
 			</div>
@@ -118,93 +108,8 @@
 		</form>
 	</div>
 
-	<div class="modal add-user-modal fade">
-		<div class="modal-dialog">
-			<div class="modal-content">
-				<div class="modal-header">
-                    <h5 class="modal-title">Link a user</h5>
-					<button type="button" class="close" data-dismiss="modal">&times;</button>
-				</div>
-
-				<div class="modal-body">
-					<form>
-						<div class="form-group">
-							<input type="text" name="username" class="form-control" placeholder="Username">
-						</div>
-
-						<div class="well">
-							<label>
-								Please select which site this user is on.
-							</label>
-
-							{% for site in sites %}
-								<div class="radio">
-									<label>
-										<input type="radio" name="site_name" value="{{ site.id }}"> {{ site.name }}
-									</label>
-								</div>
-							{% endfor %}
-						</div>
-
-						<div class="well">
-							<label>
-								Please select what kind of link you want it to be.
-							</label>
-
-							<div class="radio">
-								<label>
-									<input type="radio" name="link_type" value="0" checked> Just link
-								</label>
-							</div>
-
-							<div class="radio">
-								<label>
-									<input type="radio" name="link_type" value="1"> Just profile picture
-								</label>
-
-								<p class="help-block">
-									Note that this option may not be available on all sites. It may appear as a link.
-								</p>
-							</div>
-
-							<div class="radio">
-								<label>
-									<input type="radio" name="link_type" value="2"> Link and profile picture
-								</label>
-
-								<p class="help-block">
-									Note that this option may not be available on all sites. It may appear as a link.
-								</p>
-							</div>
-						</div>
-					</form>
-				</div>
-
-				<div class="modal-footer">
-					<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-					<button type="button" class="btn btn-primary add-user-link">Add user link</button>
-				</div>
-			</div>
-		</div>
-	</div>
-
-	<div class="modal description-preview-modal fade">
-		<div class="modal-dialog">
-			<div class="modal-content">
-				<div class="modal-header">
-                    <h5 class="modal-title">Preview description</h5>
-					<button type="button" class="close" data-dismiss="modal">&times;</button>
-				</div>
-
-				<div class="modal-body">
-				</div>
-
-				<div class="modal-footer">
-					<button type="button" class="btn btn-secondary" data-dismiss="modal">Done</button>
-				</div>
-			</div>
-		</div>
-	</div>
+    {{ userLinkModal(sites) }}
+    {{ descriptionPreviewModal() }}
 
     <script>
     	var imagePreview = document.querySelector('.preview-image');
@@ -316,16 +221,21 @@
 
     		for (var i = 0; i < otherSitesSelected.length; i++) {
     			var item = document.createElement('div');
+    			item.classList.add('form-check');
 
     			var checkbox = document.createElement('input');
+    			checkbox.classList.add('form-check-input');
     			checkbox.type = 'radio';
     			checkbox.value = otherSitesSelected[i].id;
     			checkbox.name = 'twitterlink';
+    			checkbox.id = 'site' + otherSitesSelected[i].id;
 
     			var label = document.createElement('label');
-    			label.appendChild(checkbox);
-    			label.innerHTML += ' ' + otherSitesSelected[i].siteName + ' - ' + otherSitesSelected[i].userName;
+    			label.classList.add('form-check-label');
+    			label.innerHTML = otherSitesSelected[i].siteName + ' - ' + otherSitesSelected[i].userName;
+    			label.htmlFor = 'site' + otherSitesSelected[i].id;
 
+    			item.appendChild(checkbox);
     			item.appendChild(label);
     			links.appendChild(item);
     		}

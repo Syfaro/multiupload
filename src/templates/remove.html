@@ -1,20 +1,24 @@
 {% extends '_main.html' %}
 
+{% set page='accounts' %}
+
 {% block body %}
 	<div class="container">
 		<div class="row">
 			<div class="col-sm-12">
-				<h1>Remove account</h1>
+				<div class="page-header">
+                    <h1>Remove account</h1>
+                </div>
 
 				<p>
-					Are you sure you wish to remove account {{ account.username }} on {{ account.site.name }}?
+                    Are you sure you wish to remove account <strong>{{ account.username }}</strong> on <strong>{{ account.site.name }}</strong>?
 				</p>
 
 				<p>
 					<form method="POST" action="/remove">
 						<input type="hidden" name="id" value="{{ account.id }}">
 						<button type="submit" class="btn btn-danger">Yes</button>
-						<a href="/upload" class="btn btn-secondary">No</a>
+						<a href="/accounts" class="btn btn-secondary">No</a>
 					</form>
 				</p>
 			</div>

@@ -1,0 +1,46 @@
+{% extends '_main.html' %}
+
+{% set page='review' %}
+
+{% block body %}
+	<div class="container">
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="page-header">
+                    <h1>Submissions Pending Review</h1>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th class="col-md-1">Title</th>
+                            <th>Description</th>
+                            <th>Keywords</th>
+                            <th>Rating</th>
+                            <th>Sites</th>
+                            <th>Image</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sub in submissions %}
+                            <tr>
+                                <th>{{ sub.title}}</th>
+                                <td>{{ sub.description|has_text }}</td>
+                                <td>{{ sub.tags|has_text }}</td>
+                                <td>{{ sub.rating|has_text }}</td>
+                                <td>{{ sub.account_ids|has_text }}</td>
+                                <td>{{ sub.image_filename|has_text }}</td>
+                                <td><a href="/upload/review/{{ sub.id }}" class="btn btn-sm btn-secondary">Review</a></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

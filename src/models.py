@@ -12,6 +12,8 @@ from sqlalchemy import func
 
 from constant import Sites
 
+from submission import Rating
+
 db = SQLAlchemy()
 
 
@@ -123,3 +125,51 @@ class NoticeViewed(db.Model):
     def __init__(self, notice, user):
         self.notice_id = notice
         self.user_id = user
+
+
+class SavedSubmission(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    # Using Weasyl's lengths as restrictions here as they were easy to find
+    title = db.Column(db.String(100), nullable=True)
+    description = db.Column(db.String(10000), nullable=True)
+    tags = db.Column(db.String(10000), nullable=True)
+    rating = db.Column(db.Enum(Rating), nullable=True)
+    original_filename = db.Column(db.String(1000), nullable=True)
+    image_filename = db.Column(db.String(1000), nullable=True)
+    image_mimetype = db.Column(db.String(50), nullable=True)
+    account_ids = db.Column(db.String(1000), nullable=True)
+
+    submitted = db.Column(db.Boolean, default=False, nullable=False)
+
+    def __init__(self, user, title, description, tags, rating):
+        self.user_id = user.id
+        self.title = title
+        self.description = description
+        self.tags = tags
+        self.rating = rating
+
+    def set_accounts(self, ids):
+        self.account_ids = ' '.join(ids)
+
+    @property
+    def accounts(self):
+        if self.account_ids is None:
+            return []
+
+        return [Account.query.get(account) for account in self.account_ids.split(' ')]
+
+    def all_selected_accounts(self, user):
+        accounts = self.accounts
+        all_accounts = user.accounts
+
+        result = []
+
+        for a in all_accounts:
+            result.append({
+                'account': a,
+                'selected': a in accounts,
+            })
+
+        return result

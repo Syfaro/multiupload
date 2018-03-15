@@ -1,0 +1,100 @@
+{% extends '_main.html' %}
+
+{% set page='review' %}
+
+{% from 'modals.html' import userLinkModal, descriptionPreviewModal %}
+
+{% block body %}
+	<div class="container">
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="page-header">
+                    <h1>Review Submission</h1>
+                </div>
+            </div>
+        </div>
+
+        <form method="POST" action="/upload" enctype="multipart/form-data">
+            <input type="hidden" name="id" value="{{ sub.id }}">
+
+            <div class="row">
+                <div class="col-sm-12 col-md-4">
+                    <div class="form-group">
+                        <label for="title">Title</label>
+                        <input type="text" value="{{ sub.title }}" name="title" id="title" placeholder="Title" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea class="form-control" name="description" id="description" placeholder="Description">{{ sub.description if sub.description is not none }}</textarea>
+
+                        <p class="form-text">
+                            <button type="button" class="btn btn-secondary btn-sm mb-1" data-toggle="modal" data-target=".add-user-modal">Add user link</button>
+                            <button type="button" class="btn btn-secondary btn-sm" data-toggle="modal" data-target=".description-preview-modal">Preview description</button>
+                        </p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="keywords">Keywords</label>
+                        <textarea class="form-control" name="keywords" id="keywords" placeholder="Keywords">{{ sub.tags if sub.tags is not none }}</textarea>
+                    </div>
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="rating" id="ratingGeneral" value="general" {{ 'checked' if sub.rating == rating.general }}>
+                        <label class="form-check-label" for="ratingGeneral">General</label>
+                    </div>
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="rating" id="ratingMature" value="mature" {{ 'checked' if sub.rating == rating.mature }}>
+                        <label class="form-check-label" for="ratingMature">Mature</label>
+                    </div>
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="rating" id="ratingExplicit" value="explicit" {{ 'checked' if sub.rating == rating.explicit }}>
+                        <label class="form-check-label" for="ratingExplicit">Explicit</label>
+                    </div>
+                </div>
+
+                <div class="col-sm-12 col-md-4">
+                    <div class="form-group">
+                        <label for="image">Image</label>
+                        <input type="file" class="form-control upload-image" id="image" name="image" accept="image/*">
+                    </div>
+
+                    <img class="img-fluid block-center preview-image" {{ 'src=/upload/imagepreview/' + sub.image_filename if sub.image_filename is not none }}>
+                </div>
+
+                <div class="col-sm-12 col-md-4">
+                    <label>Upload to</label>
+
+					{% for account in accounts %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="account" value="{{ account.account.id }}" id="account{{ account.account.id }}" {{ 'checked' if account.selected }} data-site="{{ account.account.site_id }}" data-site-name="{{ account.account.site.name }}" data-account="{{ account.account.username }}">
+                            <label class="form-check-label" for="account{{ account.account.id }}">{{ account.account.site.name }} - {{ account.account.username }}</label>
+                        </div>
+					{% endfor %}
+				</div>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-sm-12 col-md-4 offset-md-4 text-center">
+                    <div>
+                        <button type="submit" class="btn btn-secondary btn-lg" formaction="/upload/save">Save For Later</button>
+                        <button type="submit" class="btn btn-primary btn-lg">Upload</button>
+                    </div>
+
+                    <div class="mt-1">
+                        <button type="submit" class="btn btn-danger btn-sm" formaction="/upload/remove">Remove</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+	</div>
+
+    {{ userLinkModal(sites) }}
+    {{ descriptionPreviewModal() }}
+
+    <script src="{{ url_for('static', filename='js/upload/review.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/upload/userlink.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/upload/preview.js') }}"></script>
+{% endblock %}

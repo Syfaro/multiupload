@@ -1,9 +1,14 @@
 from typing import List
 
+import csv
 import time
 import simplecrypt
 
+from os.path import join
+from io import StringIO
+
 from flask import Blueprint
+from flask import current_app
 from flask import flash
 from flask import g
 from flask import jsonify
@@ -11,7 +16,10 @@ from flask import redirect
 from flask import render_template
 from flask import request
 from flask import session
+from flask import send_from_directory
 from flask import url_for
+
+from werkzeug.utils import secure_filename
 
 from requests import HTTPError
 
@@ -20,6 +28,7 @@ from constant import Sites
 from description import parse_description
 
 from models import Account
+from models import SavedSubmission
 from models import Site
 from models import db
 
@@ -33,12 +42,26 @@ from sites.known import KNOWN_SITES
 from sites.known import known_list
 
 from submission import Submission
+from submission import Rating
 
 from utils import get_active_notices
 from utils import login_required
 from utils import send_to_influx
+from utils import random_string
 
 app = Blueprint('upload', __name__)
+
+
+def safe_ext(name: str):
+    if '.' not in name:
+        return False
+
+    split = name.rsplit('.', 1)[1].lower()\
+
+    if split not in current_app.config['ALLOWED_EXTENSIONS']:
+        return False
+
+    return split
 
 
 @app.route('/beta', methods=['GET'])
@@ -108,6 +131,15 @@ def upload_post():
     keywords = request.form.get('keywords', None)
     rating = request.form.get('rating', None)
 
+    saved_id = request.form.get('id')
+
+    if saved_id:
+        saved = SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(id=saved_id).first()
+    else:
+        saved = SavedSubmission(g.user, title, description, keywords, rating)
+        db.session.add(saved)
+    saved.set_accounts(request.form.getlist('account'))
+
     upload = request.files.get('image', None)
 
     has_error = False
@@ -124,7 +156,7 @@ def upload_post():
         flash('Missing keywords.')
         has_error = True
 
-    if not upload:
+    if not upload and not saved_id:
         flash('Missing image.')
         has_error = True
 
@@ -137,9 +169,23 @@ def upload_post():
         has_error = True
 
     if has_error:
-        return redirect(url_for('upload.upload_form'))
+        i = saved.id
+        if not saved_id or not all(v is None for v in [title, description, keywords, rating]):
+            ext = safe_ext(upload.filename)
+            if upload and ext:
+                saved.original_filename = secure_filename(upload.filename)
 
-    submission = Submission(title, description, keywords, rating, upload)
+                name = random_string(16) + '.' + ext
+
+                upload.save(join(current_app.config['UPLOAD_FOLDER'], name))
+                saved.image_filename = name
+                saved.image_mimetype = upload.mimetype
+                db.session.commit()
+                i = saved.id
+
+        return redirect(url_for('upload.upload_review', review=i))
+
+    submission = Submission(title, description, keywords, rating, saved if saved_id else upload)
 
     basic_error = False
 
@@ -173,6 +219,8 @@ def upload_post():
             twitter_link_id = None
     twitter_link = None
 
+    upload_error = False
+
     uploads: List[dict] = []
     for account in accounts:
         start_time = time.time()
@@ -199,18 +247,21 @@ def upload_post():
                 except BadCredentials:
                     flash('Unable to upload on {site} to account {account}, you may need to log in again.'.format(
                         site=account.site.name, account=account.username))
+                    upload_error = True
                     continue
 
                 except SiteError as ex:
                     flash('Unable to upload on {site} to account {account}: {msg}'.format(
                         site=account.site.name, account=account.username, msg=ex.message
                     ))
+                    upload_error = True
                     continue
 
                 except HTTPError:
                     flash('Unable to upload on {site} to account {account} due to a site issue.'.format(
                         site=account.site.name, account=account.username
                     ))
+                    upload_error = True
                     continue
 
                 uploads.append({
@@ -223,9 +274,153 @@ def upload_post():
 
         write_upload_time(start_time, account.site.value)
 
+    if upload_error:
+        flash('As an error occured, the submission has not been removed from the pending review list.')
+    else:
+        db.session.delete(saved)
+
+    db.session.commit()
+
     write_upload_time(total_time, measurement='upload_time_total')
 
     return render_template('after_upload.html', uploads=uploads, user=g.user)
+
+
+@app.route('/upload/csv', methods=['GET'])
+@login_required
+def upload_csv():
+    return render_template('review/upload.html')
+
+
+@app.route('/upload/csv', methods=['POST'])
+@login_required
+def upload_from_csv():
+    file = request.files.get('csv')
+    if not file:
+        raise Exception('Missing CSV file.')
+
+    reader = csv.DictReader(StringIO(file.read().decode('utf-8')))
+
+    for row in reader:
+        title = row.get('title')
+        description = row.get('description')
+        tags = row.get('tags')
+        rating = row.get('rating')
+        if rating:
+            rating = Rating(rating)
+
+        if all(v is None for v in [title, description, tags, rating]):
+            continue
+
+        sub = SavedSubmission(g.user, title, description, tags, rating)
+
+        db.session.add(sub)
+
+    db.session.commit()
+
+    return redirect(url_for('upload.upload_list'))
+
+
+@app.route('/upload/review', methods=['GET'])
+@login_required
+def upload_list():
+    submissions = SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(submitted=False).all()
+
+    return render_template('review/list.html', user=g.user, submissions=submissions)
+
+
+@app.route('/upload/remove', methods=['POST'])
+@login_required
+def upload_remove():
+    sub_id = request.form.get('id')
+
+    if not sub_id:
+        return redirect(url_for('upload.upload_list'))
+
+    sub = SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(id=sub_id).first()
+
+    if not sub:
+        return redirect(url_for('upload.upload_list'))
+
+    db.session.delete(sub)
+    db.session.commit()
+
+    return redirect(url_for('upload.upload_list'))
+
+
+@app.route('/upload/save', methods=['POST'])
+@login_required
+def upload_save():
+    title = request.form.get('title')
+    description = request.form.get('description')
+    tags = request.form.get('keywords')
+    rating = request.form.get('rating')
+    if rating:
+        rating = Rating(rating)
+    accounts = request.form.getlist('account')
+
+    sub: SavedSubmission = SavedSubmission.query.filter_by(
+        user_id=g.user.id).filter_by(id=request.form.get('id')).first()
+
+    if not sub:
+        sub = SavedSubmission(g.user, title, description, tags, rating)
+        db.session.add(sub)
+
+    sub.title = title
+    sub.description = description
+    sub.tags = tags
+    sub.rating = rating
+    sub.set_accounts(accounts)
+
+    image = request.files.get('image')
+    ext = safe_ext(image.filename)
+    if image and ext:
+        sub.original_filename = secure_filename(image.filename)
+
+        name = random_string(16) + '.' + ext
+
+        image.save(join(current_app.config['UPLOAD_FOLDER'], name))
+        sub.image_filename = name
+        sub.image_mimetype = image.mimetype
+
+    db.session.commit()
+
+    return redirect(url_for('upload.upload_list'))
+
+
+@app.route('/upload/review/<int:review>', methods=['GET'])
+@login_required
+def upload_review(review):
+    q = SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(submitted=False)
+    if review:
+        q = q.filter_by(id=review)
+    sub: SavedSubmission = q.first()
+
+    remaining = SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(submitted=False).count()
+
+    if sub:
+        return render_template('review/review.html', sub=sub, rating=Rating, user=g.user, remaining=remaining,
+                               accounts=sub.all_selected_accounts(g.user), sites=known_list())
+
+    return 'Nothing in review queue.'
+
+
+@app.route('/upload/review/<int:review>', methods=['POST'])
+@login_required
+def submit_review(review):
+    sub = SavedSubmission.query.get(review)
+    if sub is None:
+        return 'Invalid item.'
+    if sub.user_id != g.user.id:
+        return 'Not yours to review.'
+
+    print(sub.title)
+
+
+@app.route('/accounts')
+@login_required
+def manage_accounts():
+    return render_template('accounts.html', sites=known_list(), user=g.user)
 
 
 @app.route('/add')
@@ -372,3 +567,13 @@ def remove():
 
     flash('Account removed.')
     return redirect(url_for('upload.upload_form'))
+
+
+@app.route('/upload/imagepreview/<filename>')
+def view_upload(filename):
+    return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
+
+
+@app.app_template_filter('has_text')
+def has_text(s):
+    return '✗' if not s else '✓'

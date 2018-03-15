@@ -1,12 +1,14 @@
 {% extends '_main.html' %}
 
+{% set page='settings' %}
+
 {% block body %}
-	<div class="container">
+	<div class="container settings">
 		<div class="row">
 			<div class="col-sm-12 col-md-4 offset-md-4">
-				<h1>Settings</h1>
-
-				<a href="/upload" class="btn btn-primary">Return home</a>
+				<div class="page-header">
+                    <h1>Settings</h1>
+                </div>
 			</div>
 		</div>
 
@@ -69,6 +71,33 @@
 						</form>
 					{% else %}
 						<p>No SoFurry accounts configured.</p>
+					{% endif %}
+				</div>
+			</div>
+		</div>
+
+        <div class="row">
+			<div class="col-sm-12 col-md-4 offset-md-4">
+				<h2>Tumblr settings</h2>
+
+				<div>
+					<p>Include title in submission. It does not currently appear in the preview.</p>
+
+					{% if tumblr | length > 0 %}
+						<form method="POST" action="/settings/tumblr/title">
+							{% for account in tumblr %}
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" name="account[{{ account.id }}]" {% if account.enabled %}checked{% endif %}>
+										{{ account.username }}
+									</label>
+								</div>
+							{% endfor %}
+
+							<button type="submit" class="btn btn-primary btn-sm">Update</button>
+						</form>
+					{% else %}
+						<p>No Tumblr accounts configured.</p>
 					{% endif %}
 				</div>
 			</div>

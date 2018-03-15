@@ -1,10 +1,14 @@
 {% extends '_main.html' %}
 
+{% set page='accounts' %}
+
 {% block body %}
 	<div class="container">
 		<div class="row">
 			<div class="col-sm-12 col-md-4 offset-md-4">
-				<h1>Log into {{ site.name }}</h1>
+				<div class="page-header">
+                    <h1>Log into {{ site.name }}</h1>
+                </div>
 
 				<p>
 					You must first enable API access on your <a href="https://inkbunny.net/account.php" target="_blank">account settings</a>.

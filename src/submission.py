@@ -3,6 +3,9 @@ from typing import Tuple
 
 from enum import Enum
 from io import BytesIO
+from os.path import join
+
+from flask import current_app
 
 from PIL import Image
 from raven import breadcrumbs
@@ -47,9 +50,15 @@ class Submission(object):
         parsed_tags = Submission.tags_from_str(tags)
         self.tags, self.hashtags = parsed_tags
 
-        self.image_filename = image.filename
-        self.image_bytes = BytesIO(image.read())  # TODO: some kind of size check?
-        self.image_mimetype = image.mimetype
+        if hasattr(image, 'original_filename'):
+            self.image_filename = image.original_filename
+            self.image_mimetype = image.image_mimetype
+            with open(join(current_app.config['UPLOAD_FOLDER'], image.image_filename), 'rb') as f:
+                self.image_bytes = BytesIO(f.read())
+        else:
+            self.image_filename = image.filename
+            self.image_bytes = BytesIO(image.read())  # TODO: some kind of size check?
+            self.image_mimetype = image.mimetype
 
     def get_image(self) -> Tuple[str, BytesIO]:
         """Returns a tuple suitable for uploading."""
