@@ -3,15 +3,16 @@ const deviantArtBox = document.querySelector('.deviantart-category');
 const deviantArtCategories = document.querySelector('.deviantart-categories');
 
 const loadingSpinner = document.querySelector('.spinner');
-
-let hasExisting = document.querySelector('input[name="deviantart-category"]').value;
+const hasExisting = document.querySelector('input[name="deviantart-category"]').value;
 
 const getCategories = selected => {
-    loadingSpinner.classList.remove('d-none');
-
     const accountID = deviantArtAccounts[0].value;
+    const selects = document.querySelectorAll('.deviantart-categories select');
 
     if (selected.length > 1 && selected[0] === '/') selected = selected.substr(1);
+
+    loadingSpinner.classList.remove('d-none');
+    selects.forEach(select => select.disabled = 'disabled');
 
     return new Promise(resolve => {
         fetch(`/api/v1/deviantart/category?account=${accountID}&path=${selected}`, {
@@ -20,11 +21,12 @@ const getCategories = selected => {
             resolve(json['categories']);
 
             loadingSpinner.classList.add('d-none');
+            selects.forEach(select => select.removeAttribute('disabled'));
         });
     });
 };
 
-const addCategories = (categories, selected=null) => {
+const addCategories = (categories, selected = null) => {
     if (categories.length === 0) return;
     if (selected && selected[0] === '/') selected = selected.substr(1);
 
@@ -81,20 +83,17 @@ const updateDeviantArtBox = () => {
         deviantArtCategories.innerHTML = '';
 
         if (hasExisting.length === 0) addSubCategory('/');
-        loadExisting();
+        else loadExisting();
     } else {
         deviantArtBox.classList.add('d-none');
     }
 };
 
 const loadExisting = async () => {
-    const existing = hasExisting;
-    if (existing.length === 0) return;
-
-    let parts = existing.split('/');
+    let parts = hasExisting.split('/');
     parts.unshift('/');
-    let prev = '';
 
+    let prev = '';
     let prevParts = [];
 
     for (let [idx, part] of parts.entries()) {
