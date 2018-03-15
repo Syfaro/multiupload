@@ -3,7 +3,7 @@ const formats = document.querySelectorAll('input[name="twitter-fmt"]');
 const twitterAccount = document.querySelector('input[name="twitter-account"]');
 const format = document.querySelector('input[name="twitter-format"]');
 
-const hasSiteSelected = (id) => twitterAccount.value.split(' ').includes(id.toString());
+const hasSiteSelected = id => twitterAccount.value.split(' ').includes(id.toString());
 
 const updateTwitterLinks = () => {
     let hasTwitterSelected = false;
