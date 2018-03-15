@@ -74,7 +74,7 @@ def beta_upload(p=None):
 @app.route('/upload', methods=['GET'])
 @login_required
 def upload_form():
-    return render_template('upload.html', user=g.user, sites=Site.query.all(),
+    return render_template('upload.html', user=g.user, sites=known_list(),
                            notices=get_active_notices(for_user=g.user.id))
 
 
