@@ -57,7 +57,7 @@ class Submission(object):
                 self.image_bytes = BytesIO(f.read())
         else:
             self.image_filename = image.filename
-            self.image_bytes = BytesIO(image.read())  # TODO: some kind of size check?
+            self.image_bytes = BytesIO(image.read())
             self.image_mimetype = image.mimetype
 
     def get_image(self) -> Tuple[str, BytesIO]:
@@ -69,8 +69,8 @@ class Submission(object):
         image = Image.open(self.image_bytes)
         image.thumbnail((height, width), Image.ANTIALIAS)
 
-        if image.mode != 'RGB':
-            image = image.convert('RGB')  # Everything works better as RGB
+        if not image.mode.startswith('RGB'):
+            image = image.convert('RGBA')  # Everything works better as RGB
 
         resized_image = BytesIO()
         image.save(resized_image, 'JPEG')  # TODO: should this always be JPEG?
