@@ -84,8 +84,8 @@
         }
 
         @media(max-width: 576px) {
-            .page-header h1 {
-                font-size: 2em;
+            .page-header + h1 {
+                margin: -2rem 0 2rem;
             }
         }
     </style>
@@ -100,12 +100,13 @@
     <nav class="navbar navbar-expand-md navbar-dark bg-primary">
         <div class="container">
             <a class="navbar-brand" href="/">Furry Art Multiuploader</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarContent">
-                <span class="navbar-toggler-icon"></span>
-            </button>
 
-            <div class="collapse navbar-collapse" id="navbarContent">
-                {% if g.user %}
+            {% if g.user %}
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarContent">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarContent">
                     <ul class="navbar-nav mr-auto">
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle {{ 'active' if page in ('upload', 'csv', 'review') }}" href="#" data-toggle="dropdown">
@@ -137,8 +138,8 @@
                             </div>
                         </li>
                     </ul>
-                {% endif %}
-            </div>
+                </div>
+            {% endif %}
         </div>
     </nav>
 
@@ -153,58 +154,16 @@
                     </div>
 
                     <div>
-					    <a title="Donate" href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=syfaro@huefox.com&lc=US&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted" target="_blank" class="syfaro donate">Donate &hearts;</a>
+					    <a title="Donate" href="https://ko-fi.com/syfaro" target="_blank">Donate &hearts;</a>
 					</div>
 
 					<div>
-						<span title="Current revision" style="color: #{{ git_version[1:7] }}; font-family: monospace">{{ git_version }}</span>
+						<a title="Current revision" style="color: #{{ git_version[1:7] }}; font-family: monospace" href="https://git.huefox.com/syfaro/multiupload/commit/{{ git_version }}">{{ git_version }}</a>
 					</div>
 				</div>
 			</div>
 		</footer>
 	</div>
-
-	<div class="modal donate-modal fade">
-		<div class="modal-dialog">
-			<div class="modal-content">
-				<div class="modal-header">
-                    <h5 class="modal-title">Donate</h5>
-					<button type="button" class="close" data-dismiss="modal">&times;</button>
-				</div>
-
-				<div class="modal-body">
-					<div>
-						You know what's really cool? Artwork. That's why I made this tool!
-						Instead of a monetary donation, artistic ones are just as good, if not better.
-					</div>
-
-					<div style="margin-top: 10px">
-						If you feel generous, you can find my character reference at <a href="https://syfaro.net/char">syfaro.net/char</a>.
-					</div>
-
-					<div style="margin-top: 10px">
-						Or you could <a href="https://ko-fi.com/syfaro">Buy Me a Coffee</a>.
-					</div>
-
-					<div style="margin-top: 10px">
-						Prefer PayPal still? You can do that <a title="Donate" href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=syfaro@huefox.com&lc=US&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted"
-						 target="_blank" class="donate">here</a>.
-					</div>
-				</div>
-
-				<div class="modal-footer">
-					<button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
-				</div>
-			</div>
-		</div>
-	</div>
-
-	<script>
-		document.querySelector('.donate').addEventListener('click', function (ev) {
-			ev.preventDefault();
-			$('.donate-modal').modal('show');
-		});
-	</script>
 
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/fetch/2.0.3/fetch.min.js"></script>
 	<script src="{{ url_for('static', filename='js/notices.js') }}"></script>

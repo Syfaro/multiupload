@@ -24,7 +24,7 @@
 	<div class="container">
 		<div class="row">
 			<div class="col-sm-12 col-md-6">
-				<h2>Register</h2>
+				<h2>Sign Up</h2>
 				<form method="POST" action="/register">
 					<div class="form-group">
 						<input type="text" class="form-control" name="username" placeholder="Username" maxlength="16">
@@ -39,13 +39,13 @@
 					</div>
 
 					<div class="form-group">
-						<button type="submit" class="btn btn-primary">Register</button>
+						<button type="submit" class="btn btn-primary">Sign Up</button>
 					</div>
 				</form>
 			</div>
 
 			<div class="col-sm-12 col-md-6">
-				<h2>Login</h2>
+				<h2>Sign In</h2>
 				<form method="POST" action="/login">
 					<div class="form-group">
 						<input type="text" class="form-control" name="username" placeholder="Username" maxlength="16">
@@ -56,7 +56,7 @@
 					</div>
 
 					<div class="form-group">
-						<button type="submit" class="btn btn-primary">Login</button>
+						<button type="submit" class="btn btn-primary">Sign In</button>
 					</div>
 				</form>
 			</div>
@@ -90,14 +90,12 @@
 					There are no advertisements or tracking scripts and
 					server access logs are purged daily.
 					All login data is fully encrypted with the user's own password.
-					This is why you must type in your password before adding an account
-					or uploading a new submission.
-					This means, even if our database was compromised,
-					any resulting data would be useless.
+					This means even if our database was compromised
+					any obtained credentials would be useless.
 				</p>
 
 				<p>
-					For those technically inclined, passwords are hashed using bcrypt with 12 rounds. Account login data is encrypted with AES256 using an open source library available <a href="https://github.com/andrewcooke/simple-crypt">here</a>.
+					For those technically inclined, passwords are hashed using bcrypt with 12 rounds. Account login data is encrypted with AES256.
 				</p>
 
 				<p>
