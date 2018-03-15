@@ -78,3 +78,18 @@ def login_required(f):
         return f(*args, **kwargs)
 
     return decorated_function
+
+
+def save_multi_dict(d):
+    n = {}
+
+    for k, v in d.items():
+        i = d.getlist(k)
+        if len(i) > 1:
+            n[k] = i
+        else:
+            n[k] = i[0]
+
+    print(n)
+
+    return n

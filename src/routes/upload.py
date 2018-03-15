@@ -29,7 +29,6 @@ from description import parse_description
 
 from models import Account
 from models import SavedSubmission
-from models import Site
 from models import db
 
 from sentry import sentry
@@ -48,6 +47,7 @@ from utils import get_active_notices
 from utils import login_required
 from utils import send_to_influx
 from utils import random_string
+from utils import save_multi_dict
 
 app = Blueprint('upload', __name__)
 
@@ -144,7 +144,7 @@ def upload_post():
         saved = SavedSubmission(g.user, title, description, keywords, rating)
         db.session.add(saved)
 
-    saved.data = request.form.to_dict()
+    saved.data = save_multi_dict(request.form)
     saved.set_accounts(request.form.getlist('account'))
 
     upload = request.files.get('image', None)
@@ -382,7 +382,8 @@ def upload_save():
     sub.tags = tags
     sub.rating = rating
     sub.set_accounts(accounts)
-    sub.data = request.form.to_dict()
+    print(request.form)
+    sub.data = save_multi_dict(request.form)
 
     image = request.files.get('image')
     ext = safe_ext(image.filename)

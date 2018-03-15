@@ -58,15 +58,7 @@
                         <label class="form-check-label" for="ratingExplicit">Explicit</label>
                     </div>
 
-                    <div class="deviantart-category">
-                        <h3 class="mt-2">DeviantArt Category</h3>
-
-                        <input type="hidden" name="deviantart-category" value="{{ sub.data.get('deviantart-category') }}">
-
-                        <div class="deviantart-categories"></div>
-
-                        <div class="spinner d-none"></div>
-                    </div>
+                    {% include 'sites/deviantart/left_sidebar.html' %}
                 </div>
 
                 <div class="col-sm-12 col-md-4">
