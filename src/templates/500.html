@@ -4,7 +4,9 @@
 	<div class="container">
 		<div class="row text-center">
 			<div class="col-sm-12 col-md-4 offset-md-4">
-				<h1>Internal server error</h1>
+				<div class="page-header">
+                    <h1>Internal server error</h1>
+                </div>
 
 				<p>
 					Please try again.
@@ -25,6 +27,6 @@
 		<input type="hidden" name="event_id" value="{{ event_id }}">
 		<input type="hidden" name="public_dsn" value="{{ public_dsn }}">
 
-		<script src="{{ url_for('static', filename='js/error.js') }}">
+        <script src="{{ url_for('static', filename='js/error.js') }}"></script>
 	{% endif %}
 {% endblock %}
