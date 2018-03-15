@@ -9,6 +9,7 @@ from sites.sofurry import SoFurry
 from sites.tumblr import Tumblr
 from sites.twitter import Twitter
 from sites.weasyl import Weasyl
+from sites.deviantart import DeviantArt
 
 KNOWN_SITES = [
     FurAffinity,
@@ -18,6 +19,7 @@ KNOWN_SITES = [
     Tumblr,
     Twitter,
     Weasyl,
+    DeviantArt
 ]
 
 

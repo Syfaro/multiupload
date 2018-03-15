@@ -251,6 +251,7 @@ def upload_post():
                 try:
                     link = s.submit_artwork(submission, extra={
                         'twitter_link': twitter_link,
+                        'deviantart_category': request.form.get('deviantart-category'),
                     })
 
                 except BadCredentials:
@@ -522,7 +523,7 @@ def add_account_post(site_id):
 
     except AccountExists:
         flash('Account already exists.')
-        return redirect(url_for('upload.upload_form'))
+        return redirect(url_for('upload.manage_accounts'))
 
     send_to_influx({
         'measurement': 'account_time_add',
@@ -534,7 +535,7 @@ def add_account_post(site_id):
         },
     })
 
-    return redirect(url_for('upload.upload_form'))
+    return redirect(url_for('upload.manage_accounts'))
 
 
 @app.route('/remove/<int:account_id>')
@@ -548,7 +549,7 @@ def remove_form(account_id):
 
     if account.user_id != g.user.id:
         flash('Account does not belong to you.')
-        return redirect(url_for('upload.upload_form'))
+        return redirect(url_for('upload.manage_accounts'))
 
     return render_template('remove.html', account=account, user=g.user)
 
@@ -559,23 +560,23 @@ def remove():
     account_id = request.form.get('id')
     if not account_id:
         flash('Missing account ID.')
-        return redirect(url_for('upload.upload_form'))
+        return redirect(url_for('upload.manage_accounts'))
 
     account = Account.query.get(account_id)
 
     if not account:
         flash('Account does not exist.')
-        return redirect(url_for('upload.upload_form'))
+        return redirect(url_for('upload.manage_accounts'))
 
     if account.user_id != g.user.id:
         flash('Account does not belong to you.')
-        return redirect(url_for('upload.upload_form'))
+        return redirect(url_for('upload.manage_accounts'))
 
     db.session.delete(account)
     db.session.commit()
 
     flash('Account removed.')
-    return redirect(url_for('upload.upload_form'))
+    return redirect(url_for('upload.manage_accounts'))
 
 
 @app.route('/upload/imagepreview/<filename>')

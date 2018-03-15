@@ -15,4 +15,5 @@ class Sites(Enum):
     Inkbunny = 4
     SoFurry = 5
     Tumblr = 7
+    DeviantArt = 8
     Twitter = 100

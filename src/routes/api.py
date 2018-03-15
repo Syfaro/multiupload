@@ -2,17 +2,29 @@ from flask import Blueprint
 from flask import jsonify
 from flask import g
 from flask import request
+from flask import session
+from flask import Response
+
+import requests
+from simplecrypt import decrypt
+from werkzeug.contrib.cache import SimpleCache
 
 from utils import login_required
 
 from models import Account
+from models import db
 
+from constant import HEADERS
 from constant import Sites
 from sites.known import known_list
 
 from description import parse_description
 
+from sites.deviantart import DeviantArt
+
 app = Blueprint('api', __name__)
+
+cache = SimpleCache()
 
 
 @app.route('/sites')
@@ -83,3 +95,30 @@ def description():
     return jsonify({
         'descriptions': descriptions,
     })
+
+
+@app.route('/deviantart/category', methods=['GET'])
+@login_required
+def get_deviantart_category():
+    path = request.args.get('path', '/')
+    cached = cache.get('deviantart-' + path)
+    if cached:
+        return Response(cached, mimetype='application/json')
+
+    account = request.args.get('account')
+
+    a: Account = Account.query.get(account)
+
+    da = DeviantArt.get_da()
+    r = da.refresh_token(decrypt(session['password'], a.credentials))
+    a.update_credentials(r['refresh_token'])
+    db.session.commit()
+
+    sub = requests.get('https://www.deviantart.com/api/v1/oauth2/stash/publish/categorytree', headers=HEADERS, params={
+        'access_token': r['access_token'],
+        'catpath': path,
+    }).content
+
+    cache.set('deviantart-' + path, sub, timeout=60*60*24)  # keep cached for 24 hours
+
+    return Response(sub, mimetype='application/json')

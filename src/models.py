@@ -69,6 +69,9 @@ class Account(db.Model):
         self.username = username
         self.credentials = encrypt(session['password'], credentials)
 
+    def update_credentials(self, credentials):
+        self.credentials = encrypt(session['password'], credentials)
+
     def __getitem__(self, arg):
         return self.config.filter_by(key=arg).first()
 

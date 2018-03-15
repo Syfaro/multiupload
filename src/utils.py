@@ -65,13 +65,13 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'id' not in session:
-            return redirect(url_for('home'))
+            return redirect(url_for('home.home'))
 
         user = User.query.get(session['id'])
 
         if not user:
             session.pop('id')
-            return redirect(url_for('home'))
+            return redirect(url_for('home.home'))
 
         g.user = user
 
