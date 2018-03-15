@@ -22,14 +22,16 @@
 			</div>
         </div>
 
-        <div class="row">
-            <div class="col-sm-12">
-                <h2>Remove Account</h2>
+        {% if user.accounts.count() > 0 %}
+            <div class="row">
+                <div class="col-sm-12">
+                    <h2>Remove Account</h2>
 
-                {% for account in user.accounts %}
-                    <a class="btn btn-danger mb-1" href="/remove/{{ account.id }}">{{ account.site.name }} - {{ account.username }}</a>
-                {% endfor %}
+                    {% for account in user.accounts %}
+                        <a class="btn btn-danger mb-1" href="/remove/{{ account.id }}">{{ account.site.name }} - {{ account.username }}</a>
+                    {% endfor %}
+                </div>
             </div>
-		</div>
+        {% endif %}
 	</div>
 {% endblock %}

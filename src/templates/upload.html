@@ -90,6 +90,10 @@
 						</div>
 					{% endfor %}
 
+                    {% if user.accounts.count() == 0 %}
+                        <a href="/accounts" class="btn btn-lg btn-primary">Add Account</a>
+                    {% endif %}
+
 					<div class="d-none twitter-link mt-2">
 						<h3>Twitter links to</h3>
 
