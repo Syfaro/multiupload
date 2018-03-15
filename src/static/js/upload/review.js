@@ -1,9 +1,10 @@
 const imagePreview = document.querySelector('.preview-image');
 
-document.querySelector('.upload-image').addEventListener('change', () => {
-    if (!this.files) return;
-    if (this.files.length > 1 || this.files.length === 0) return;
-    imagePreview.src = URL.createObjectURL(this.files[0]);
+document.querySelector('.upload-image').addEventListener('change', (ev) => {
+    let files = ev.target.files;
+    if (!files) return;
+    if (files.length > 1 || files.length === 0) return;
+    imagePreview.src = URL.createObjectURL(files[0]);
 });
 
 const description = document.querySelector('[name=description]');

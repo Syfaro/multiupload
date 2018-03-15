@@ -63,9 +63,10 @@ const addCategories = (categories, selected = null) => {
         select.appendChild(option);
     });
 
-    deviantArtCategories.appendChild(select);
+    if (selected !== null)
+        select.value = selected;
 
-    if (selected) select.value = selected;
+    deviantArtCategories.appendChild(select);
 };
 
 const addSubCategory = subcat => {

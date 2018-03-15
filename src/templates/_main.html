@@ -31,6 +31,20 @@
 	{% endif %}
 {%- endmacro %}
 
+{% set siteTemplatesToLoad = ['deviantart', 'inkbunny', 'twitter'] %} {# TODO: this needs to be dynamic #}
+
+{% macro getSiteTemplates(location) -%}
+    {% for site in siteTemplatesToLoad %}
+        {% include 'sites/' + site + '/' + location + '.html' ignore missing %}
+    {% endfor %}
+{%- endmacro %}
+
+{% macro getSiteScripts() -%}
+    {% for site in siteTemplatesToLoad %}
+        <script src="{{ url_for('static', filename='js/upload/' + site + '.js') }}"></script>
+    {% endfor %}
+{%- endmacro %}
+
 {% set page = page|default('unknown') %}
 
 <!--
@@ -64,73 +78,9 @@
 	<link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon" type="image/x-icon">
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pulse.min.css') }}">
-
-    <style>
-        .page-header h1 {
-            padding: 2rem 0;
-            font-size: 3rem;
-        }
-
-        .page-header + h1 {
-            margin: -3rem 0 2rem;
-        }
-
-        .settings .row:not(:first-child) {
-            margin-bottom: 20px;
-        }
-
-        .description-preview-modal .card-text {
-            white-space: pre-wrap;
-        }
-
-        .spinner {
-            border: 5px solid #f3f3f3;
-            border-color: var(--gray);
-            -webkit-animation: spin 1s linear infinite;
-            -o-animation: spin 1s linear infinite;
-            animation: spin 1s linear infinite;
-            border-top: 5px solid #555;
-            border-top-color: var(--primary);
-            -webkit-border-radius: 50%;
-            -moz-border-radius: 50%;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            margin: 0 auto;
-        }
-
-        @keyframes spin {
-            0% {
-                -webkit-transform: rotate(0deg);
-                -moz-transform: rotate(0deg);
-                -ms-transform: rotate(0deg);
-                -o-transform: rotate(0deg);
-                transform: rotate(0deg);
-            }
-
-            100% {
-                -webkit-transform: rotate(360deg);
-                -moz-transform: rotate(360deg);
-                -ms-transform: rotate(360deg);
-                -o-transform: rotate(360deg);
-                transform: rotate(360deg);
-            }
-        }
-
-        @media(max-width: 576px) {
-            .page-header + h1 {
-                margin: -2rem 0 2rem;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/site.css') }}">
 </head>
 <body>
-	<script src="https://cdn.ravenjs.com/3.18.1/raven.min.js" crossorigin="anonymous"></script>
-	<script src="{{ url_for('static', filename='js/raven.js') }}"></script>
-
-	<script src="{{ url_for('static', filename='js/jquery-2.2.4.min.js') }}"></script>
-	<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
-
     <nav class="navbar navbar-expand-md navbar-dark bg-primary">
         <div class="container">
             <a class="navbar-brand" href="/">Furry Art Multiuploader</a>
@@ -176,6 +126,12 @@
             {% endif %}
         </div>
     </nav>
+
+    <script src="https://cdn.ravenjs.com/3.18.1/raven.min.js" crossorigin="anonymous"></script>
+	<script src="{{ url_for('static', filename='js/raven.js') }}"></script>
+
+	<script src="{{ url_for('static', filename='js/jquery-2.2.4.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
 
 	{% block body %}{% endblock %}
 

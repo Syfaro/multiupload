@@ -1,0 +1,20 @@
+{% macro twitterFormat(name, id) -%}
+    <div class="form-check">
+        <input class="form-check-input" type="radio" name="twitter-fmt" value="{{ id }}" id="twfm-{{ id }}" {{ 'checked' if sub.data.get('twitter-format') == id or (sub.data.get('twitter-format') is none and id == 'single') }}>
+        <label class="form-check-label" for="twfm-{{ id }}">{{ name }}</label>
+    </div>
+{%- endmacro %}
+
+<div class="d-none twitter-link mt-2">
+    <input type="hidden" name="twitter-account" value="{{ sub.data.get('twitter-account') or '' }}">
+    <input type="hidden" name="twitter-format" value="{{ sub.data.get('twitter-format') or 'single' }}">
+
+    <label>Twitter Format</label>
+
+    {{ twitterFormat('Single Link', 'single') }}
+    {{ twitterFormat('Multiple Sites', 'multi') }}
+
+    <label class="mt-2">Twitter Links To</label>
+
+    <div class="twitter-links"></div>
+</div>

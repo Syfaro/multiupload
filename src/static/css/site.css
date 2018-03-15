@@ -1,0 +1,56 @@
+.page-header h1 {
+    padding: 2rem 0;
+    font-size: 3rem;
+}
+
+.page-header + h1 {
+    margin: -3rem 0 2rem;
+}
+
+.settings .row:not(:first-child) {
+    margin-bottom: 20px;
+}
+
+.description-preview-modal .card-text {
+    white-space: pre-wrap;
+}
+
+.spinner {
+    border: 5px solid #f3f3f3;
+    border-color: var(--gray);
+    -webkit-animation: spin 1s linear infinite;
+    -o-animation: spin 1s linear infinite;
+    animation: spin 1s linear infinite;
+    border-top: 5px solid #555;
+    border-top-color: var(--primary);
+    -webkit-border-radius: 50%;
+    -moz-border-radius: 50%;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% {
+        -webkit-transform: rotate(0deg);
+        -moz-transform: rotate(0deg);
+        -ms-transform: rotate(0deg);
+        -o-transform: rotate(0deg);
+        transform: rotate(0deg);
+    }
+
+    100% {
+        -webkit-transform: rotate(360deg);
+        -moz-transform: rotate(360deg);
+        -ms-transform: rotate(360deg);
+        -o-transform: rotate(360deg);
+        transform: rotate(360deg);
+    }
+}
+
+@media(max-width: 576px) {
+    .page-header + h1 {
+        margin: -2rem 0 2rem;
+    }
+}

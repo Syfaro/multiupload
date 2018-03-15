@@ -149,8 +149,9 @@ class SavedSubmission(db.Model):
 
     submitted = db.Column(db.Boolean, default=False, nullable=False)
 
-    def __init__(self, user, title, description, tags, rating):
-        self.user_id = user.id
+    def __init__(self, user=None, title=None, description=None, tags=None, rating=None):
+        if user:
+            self.user_id = user.id
         self.title = title
         self.description = description
         self.tags = tags
@@ -182,7 +183,7 @@ class SavedSubmission(db.Model):
 
     @property
     def data(self) -> dict:
-        return json.loads(self.site_data)
+        return json.loads(self.site_data) if self.site_data else {}
 
     @data.setter
     def data(self, value: dict) -> None:

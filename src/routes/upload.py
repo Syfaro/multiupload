@@ -74,8 +74,10 @@ def beta_upload(p=None):
 @app.route('/upload', methods=['GET'])
 @login_required
 def upload_form():
-    return render_template('upload.html', user=g.user, sites=known_list(),
-                           notices=get_active_notices(for_user=g.user.id))
+    accounts = map(lambda account: {'account': account, 'selected': account.used_last}, g.user.accounts)
+
+    return render_template('review/review.html', user=g.user, accounts=accounts, sites=known_list(),
+                           notices=get_active_notices(for_user=g.user.id), sub=SavedSubmission(), rating=Rating)
 
 
 @app.route('/preview/description')
@@ -409,10 +411,8 @@ def upload_review(review=None):
         q = q.filter_by(id=review)
     sub: SavedSubmission = q.first()
 
-    remaining = SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(submitted=False).count()
-
     if sub:
-        return render_template('review/review.html', sub=sub, rating=Rating, user=g.user, remaining=remaining,
+        return render_template('review/review.html', sub=sub, rating=Rating, user=g.user,
                                accounts=sub.all_selected_accounts(g.user), sites=known_list())
 
     return 'Nothing in review queue.'
