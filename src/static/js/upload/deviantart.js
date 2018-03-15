@@ -4,10 +4,14 @@ const deviantArtCategories = document.querySelector('.deviantart-categories');
 
 const loadingSpinner = document.querySelector('.spinner');
 
+let hasExisting = document.querySelector('input[name="deviantart-category"]').value;
+
 const getCategories = selected => {
-    loadingSpinner.style.display = 'block';
+    loadingSpinner.classList.remove('d-none');
 
     const accountID = deviantArtAccounts[0].value;
+
+    if (selected.length > 1 && selected[0] === '/') selected = selected.substr(1);
 
     return new Promise(resolve => {
         fetch(`/api/v1/deviantart/category?account=${accountID}&path=${selected}`, {
@@ -15,46 +19,56 @@ const getCategories = selected => {
         }).then(resp => resp.json()).then(json => {
             resolve(json['categories']);
 
-            loadingSpinner.style.display = 'none';
+            loadingSpinner.classList.add('d-none');
         });
     });
 };
 
+const addCategories = (categories, selected=null) => {
+    if (categories.length === 0) return;
+    if (selected && selected[0] === '/') selected = selected.substr(1);
+
+    const select = document.createElement('select');
+    select.classList.add('form-control', 'mb-2');
+
+    select.addEventListener('input', ev => {
+        const target = ev.target;
+        const val = target.options[target.selectedIndex];
+
+        if (val.dataset.hasChild !== 'false') {
+            addSubCategory(val.value);
+        } else {
+            document.querySelector('input[name="deviantart-category"]').value = val.value;
+        }
+
+        while (select.nextSibling) {
+            select.parentNode.removeChild(select.nextSibling);
+        }
+    });
+
+    categories.unshift({
+        'title': 'Select One',
+        'catpath': '',
+        'has_subcategory': 'false'
+    });
+
+    categories.forEach(category => {
+        const option = document.createElement('option');
+        option.innerHTML = category['title'];
+        option.value = category['catpath'];
+        option.dataset.hasChild = category['has_subcategory'];
+
+        select.appendChild(option);
+    });
+
+    deviantArtCategories.appendChild(select);
+
+    if (selected) select.value = selected;
+};
+
 const addSubCategory = subcat => {
     getCategories(subcat).then(categories => {
-        const select = document.createElement('select');
-        select.classList.add('form-control', 'mb-2');
-
-        select.addEventListener('input', ev => {
-            const target = ev.target;
-            const val = target.options[target.selectedIndex];
-
-            if (val.dataset.hasChild !== 'false') addSubCategory(val.value);
-            else {
-                document.querySelector('input[name="deviantart-category"]').value = val.value;
-            }
-
-            while (select.nextSibling) {
-                select.parentNode.removeChild(select.nextSibling);
-            }
-        });
-
-        categories.unshift({
-            'title': 'Select One',
-            'catpath': '',
-            'has_subcategory': 'false'
-        });
-
-        categories.forEach(category => {
-            const option = document.createElement('option');
-            option.innerHTML = category['title'];
-            option.value = category['catpath'];
-            option.dataset.hasChild = category['has_subcategory'];
-
-            select.appendChild(option);
-        });
-
-        deviantArtCategories.appendChild(select);
+        addCategories(categories);
     });
 };
 
@@ -65,16 +79,40 @@ const updateDeviantArtBox = () => {
         deviantArtBox.classList.remove('d-none');
 
         deviantArtCategories.innerHTML = '';
-        addSubCategory('/');
+
+        if (hasExisting.length === 0) addSubCategory('/');
+        loadExisting();
     } else {
         deviantArtBox.classList.add('d-none');
     }
 };
 
-for (let i = 0; i < inkbunny.length; i++) {
+const loadExisting = async () => {
+    const existing = hasExisting;
+    if (existing.length === 0) return;
+
+    let parts = existing.split('/');
+    parts.unshift('/');
+    let prev = '';
+
+    let prevParts = [];
+
+    for (let [idx, part] of parts.entries()) {
+        let path = `${prev}${prev.length > 1 ? '/' : ''}${part}`;
+
+        if (part !== '/') prevParts.push(part);
+
+        let categories = await getCategories(path);
+        addCategories(categories, prevParts.join('/') + (prevParts.length > 0 ? '/' : '') + parts[idx + 1]);
+
+        prev = path;
+    }
+};
+
+for (let i = 0; i < deviantArtAccounts.length; i++) {
     deviantArtAccounts[i].addEventListener('change', () => {
         updateDeviantArtBox();
     });
 }
 
-updateDeviantArtBox();
+setTimeout(updateDeviantArtBox, 250);

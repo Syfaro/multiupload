@@ -1,5 +1,7 @@
 from typing import List
 
+import json
+
 from bcrypt import gensalt
 from bcrypt import hashpw
 
@@ -143,6 +145,7 @@ class SavedSubmission(db.Model):
     image_filename = db.Column(db.String(1000), nullable=True)
     image_mimetype = db.Column(db.String(50), nullable=True)
     account_ids = db.Column(db.String(1000), nullable=True)
+    site_data = db.Column(db.String(10000), nullable=True)  # arbitrary data stored as JSON
 
     submitted = db.Column(db.Boolean, default=False, nullable=False)
 
@@ -176,3 +179,11 @@ class SavedSubmission(db.Model):
             })
 
         return result
+
+    @property
+    def data(self) -> dict:
+        return json.loads(self.site_data)
+
+    @data.setter
+    def data(self, value: dict) -> None:
+        self.site_data = json.dumps(value)

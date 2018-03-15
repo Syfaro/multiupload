@@ -57,6 +57,16 @@
                         <input class="form-check-input" type="radio" name="rating" id="ratingExplicit" value="explicit" {{ 'checked' if sub.rating == rating.explicit }}>
                         <label class="form-check-label" for="ratingExplicit">Explicit</label>
                     </div>
+
+                    <div class="deviantart-category">
+                        <h3 class="mt-2">DeviantArt Category</h3>
+
+                        <input type="hidden" name="deviantart-category" value="{{ sub.data.get('deviantart-category') }}">
+
+                        <div class="deviantart-categories"></div>
+
+                        <div class="spinner d-none"></div>
+                    </div>
                 </div>
 
                 <div class="col-sm-12 col-md-4">
@@ -101,4 +111,5 @@
     <script src="{{ url_for('static', filename='js/upload/review.js') }}"></script>
     <script src="{{ url_for('static', filename='js/upload/userlink.js') }}"></script>
     <script src="{{ url_for('static', filename='js/upload/preview.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/upload/deviantart.js') }}"></script>
 {% endblock %}

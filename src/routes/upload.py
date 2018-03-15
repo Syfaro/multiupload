@@ -144,6 +144,7 @@ def upload_post():
         saved = SavedSubmission(g.user, title, description, keywords, rating)
         db.session.add(saved)
 
+    saved.data = request.form.to_dict()
     saved.set_accounts(request.form.getlist('account'))
 
     upload = request.files.get('image', None)
@@ -251,7 +252,7 @@ def upload_post():
                 try:
                     link = s.submit_artwork(submission, extra={
                         'twitter_link': twitter_link,
-                        'deviantart_category': request.form.get('deviantart-category'),
+                        **saved.data,
                     })
 
                 except BadCredentials:
@@ -381,6 +382,7 @@ def upload_save():
     sub.tags = tags
     sub.rating = rating
     sub.set_accounts(accounts)
+    sub.data = request.form.to_dict()
 
     image = request.files.get('image')
     ext = safe_ext(image.filename)
