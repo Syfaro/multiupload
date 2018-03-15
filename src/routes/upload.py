@@ -134,10 +134,16 @@ def upload_post():
     saved_id = request.form.get('id')
 
     if saved_id:
-        saved = SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(id=saved_id).first()
+        saved: SavedSubmission = SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(id=saved_id).first()
+        saved.title = title
+        saved.description = description
+        saved.tags = keywords
+        if rating:
+            saved.rating = Rating(rating)
     else:
         saved = SavedSubmission(g.user, title, description, keywords, rating)
         db.session.add(saved)
+
     saved.set_accounts(request.form.getlist('account'))
 
     upload = request.files.get('image', None)
@@ -169,8 +175,10 @@ def upload_post():
         has_error = True
 
     if has_error:
-        i = saved.id
-        if not saved_id or not all(v is None for v in [title, description, keywords, rating]):
+        if all(v is None or v == '' for v in [title, description, keywords, rating, upload]):
+            return redirect(url_for('upload.upload_form'))
+
+        if upload:
             ext = safe_ext(upload.filename)
             if upload and ext:
                 saved.original_filename = secure_filename(upload.filename)
@@ -180,8 +188,9 @@ def upload_post():
                 upload.save(join(current_app.config['UPLOAD_FOLDER'], name))
                 saved.image_filename = name
                 saved.image_mimetype = upload.mimetype
-                db.session.commit()
-                i = saved.id
+
+        db.session.commit()
+        i = saved.id
 
         return redirect(url_for('upload.upload_review', review=i))
 
@@ -390,7 +399,7 @@ def upload_save():
 
 @app.route('/upload/review/<int:review>', methods=['GET'])
 @login_required
-def upload_review(review):
+def upload_review(review=None):
     q = SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(submitted=False)
     if review:
         q = q.filter_by(id=review)

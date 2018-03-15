@@ -13,7 +13,11 @@
                 </div>
             </div>
         </div>
+    </div>
 
+    {{ flashes() }}
+
+    <div class="container">
         <form method="POST" action="/upload" enctype="multipart/form-data">
             <input type="hidden" name="id" value="{{ sub.id }}">
 
