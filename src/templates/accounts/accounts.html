@@ -27,9 +27,9 @@
         </div>
 
         {% if user.accounts.count() > 0 %}
-            <div class="row">
+            <div class="row mt-3">
                 <div class="col-sm-12">
-                    <h2>Remove Account</h2>
+                    <h1>Remove Account</h1>
 
                     {% for account in user.accounts %}
                         <a class="btn btn-danger mb-1" href="{{ url_for('accounts.remove', account_id=account.id) }}">{{ account.site.name }} - {{ account.username }}</a>
