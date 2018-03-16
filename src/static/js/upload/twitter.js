@@ -91,7 +91,7 @@ const updateTwitterLinks = () => {
     }
 
     if (format.value === 'single') {
-        let items = twitterAccount.value.split(' ');
+        const items = twitterAccount.value.split(' ');
         if (items.length > 1)
             twitterAccount.value = items[0];
     }

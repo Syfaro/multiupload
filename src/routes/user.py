@@ -1,7 +1,6 @@
 import bcrypt
 import passwordmeter
 import simplecrypt
-
 from flask import Blueprint
 from flask import flash
 from flask import g
@@ -11,12 +10,10 @@ from flask import request
 from flask import url_for
 
 from constant import Sites
-
 from models import Account
 from models import AccountConfig
 from models import NoticeViewed
 from models import db
-
 from utils import login_required
 
 app = Blueprint('user', __name__)
@@ -33,15 +30,15 @@ def dismiss_notice(alert):
     return 'Saved'
 
 
-@app.route('/changepass', methods=['GET'])
+@app.route('/password', methods=['GET'])
 @login_required
-def change_password_form():
+def change_password():
     return render_template('change_password.html', user=g.user)
 
 
-@app.route('/changepass', methods=['POST'])
+@app.route('/password', methods=['POST'])
 @login_required
-def change_password():
+def change_password_post():
     current_password = request.form.get('current_password', None)
     new_password = request.form.get('new_password', None)
     new_password_confirm = request.form.get('new_password_confirm', None)
@@ -82,17 +79,7 @@ def change_password():
     return redirect(url_for('upload.upload_form'))
 
 
-@app.route('/switchtheme')
-@login_required
-def switchtheme():
-    g.user.dark_theme = not g.user.dark_theme
-
-    db.session.commit()
-
-    return redirect(url_for('user.settings'))
-
-
-@app.route('/settings')
+@app.route('/')
 @login_required
 def settings():
     sofurry = []
@@ -130,9 +117,9 @@ def settings():
     return render_template('settings.html', user=g.user, sofurry=sofurry, furaffinity=furaffinity, tumblr=tumblr)
 
 
-@app.route('/settings/sofurry/remap', methods=['POST'])
+@app.route('/sofurry/remap', methods=['POST'])
 @login_required
-def settings_sofurry_remap():
+def settings_sofurry_remap_post():
     sofurry_accounts = [account for account in g.user.accounts if account.site == Sites.SoFurry]
 
     for account in sofurry_accounts:
@@ -152,9 +139,9 @@ def settings_sofurry_remap():
     return redirect(url_for('user.settings'))
 
 
-@app.route('/settings/furaffinity/resolution', methods=['POST'])
+@app.route('/furaffinity/resolution', methods=['POST'])
 @login_required
-def settings_furaffinity_resolution():
+def settings_furaffinity_resolution_post():
     furaffinity_accounts = [account for account in g.user.accounts if account.site == Sites.FurAffinity]
 
     for account in furaffinity_accounts:
@@ -175,9 +162,9 @@ def settings_furaffinity_resolution():
     return redirect(url_for('user.settings'))
 
 
-@app.route('/settings/tumblr/title', methods=['POST'])
+@app.route('/tumblr/title', methods=['POST'])
 @login_required
-def settings_tumblr_title():
+def settings_tumblr_title_post():
     tumblr_accounts = [account for account in g.user.accounts if account.site == Sites.Tumblr]
 
     for account in tumblr_accounts:

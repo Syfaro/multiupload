@@ -17,7 +17,7 @@
 				<h2>Account</h2>
 
 				<div>
-					<a href="/changepass">Change password</a>
+					<a href="{{ url_for('user.change_password') }}">Change password</a>
 				</div>
 			</div>
 		</div>
@@ -30,7 +30,7 @@
 					<p class="help-block">Make explicit correspond to SoFurry's extreme rating.</p>
 
 					{% if sofurry | length > 0 %}
-						<form method="POST" action="/settings/sofurry/remap">
+						<form method="POST" action="{{ url_for('user.settings_sofurry_remap_post') }}">
 							{% for account in sofurry %}
 								<div class="checkbox">
 									<label>
@@ -57,7 +57,7 @@
 					<p class="help-block">Enable uploading higher resolution images to FurAffinity.</p>
 
 					{% if furaffinity | length > 0 %}
-						<form method="POST" action="/settings/furaffinity/resolution">
+						<form method="POST" action="{{ url_for('user.settings_furaffinity_resolution_post') }}">
 							{% for account in furaffinity %}
 								<div class="checkbox">
 									<label>
@@ -84,7 +84,7 @@
 					<p>Include title in submission. It does not currently appear in the preview.</p>
 
 					{% if tumblr | length > 0 %}
-						<form method="POST" action="/settings/tumblr/title">
+						<form method="POST" action="{{ url_for('user.settings_tumblr_title_post') }}">
 							{% for account in tumblr %}
 								<div class="checkbox">
 									<label>

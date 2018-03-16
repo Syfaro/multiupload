@@ -1,6 +1,7 @@
 {% extends '_main.html' %}
 
 {% set page='accounts' %}
+{% set page='accounts' %}
 
 {% block body %}
 	<div class="container">
@@ -18,10 +19,12 @@
 	<div class="container">
 		<div class="row">
 			<div class="col-sm-12 col-md-4 offset-md-4">
-				<form method="POST" action="/add/{{ site.value }}">
-					<div class="form-group">
-						<input type="text" class="form-control" name="username" placeholder="Username" disabled="disabled" value="{{ extra_data.me.screen_name }}">
-					</div>
+				<form method="POST" action="{{ url_for('accounts.add_post', site_id=site.value) }}">
+					<ul>
+						{% for blog in extra_data.user.user.blogs %}
+							<li>{{ blog.name }} — <a href="{{ blog.url }}">{{ blog.url }}</a></li>
+						{% endfor %}
+					</ul>
 
 					<div class="form-group">
 						<button type="submit" class="btn btn-primary form-control">Add</button>

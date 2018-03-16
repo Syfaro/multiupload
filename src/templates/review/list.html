@@ -35,7 +35,7 @@
                                 <td>{{ sub.rating|has_text }}</td>
                                 <td>{{ sub.account_ids|has_text }}</td>
                                 <td>{{ sub.image_filename|has_text }}</td>
-                                <td><a href="/upload/review/{{ sub.id }}" class="btn btn-sm btn-secondary">Review</a></td>
+                                <td><a href="{{ url_for('upload.review', id=sub.id) }}" class="btn btn-sm btn-secondary">Review</a></td>
                             </tr>
                         {% endfor %}
                     </tbody>

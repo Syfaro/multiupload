@@ -27,7 +27,7 @@
     {{ flashes() }}
 
     <div class="container">
-        <form method="POST" action="/upload" enctype="multipart/form-data">
+        <form method="POST" action="{{ url_for('upload.create_post') }}" enctype="multipart/form-data">
             <input type="hidden" name="id" value="{{ sub.id or '' }}">
 
             <div class="row">
@@ -67,7 +67,7 @@
                         <input type="file" class="form-control upload-image" id="image" name="image" accept="image/*">
                     </div>
 
-                    <img class="img-fluid block-center preview-image" {{ 'src=/upload/imagepreview/' + sub.image_filename if sub.image_filename is not none }}>
+                    <img class="img-fluid block-center preview-image" {{ 'src=' + url_for('upload.image', filename=sub.image_filename) if sub.image_filename is not none }}>
                 </div>
 
                 <div class="col-sm-12 col-md-4">
@@ -87,13 +87,13 @@
             <div class="row mt-3">
                 <div class="col-sm-12 col-md-4 offset-md-4 text-center">
                     <div>
-                        <button type="submit" class="btn btn-secondary btn-lg" formaction="/upload/save">Save For Later</button>
+                        <button type="submit" class="btn btn-secondary btn-lg" formaction="{{ url_for('upload.save') }}">Save For Later</button>
                         <button type="submit" class="btn btn-primary btn-lg">Upload</button>
                     </div>
 
                     {% if sub.id %}
                         <div class="mt-1">
-                            <button type="submit" class="btn btn-danger btn-sm" formaction="/upload/remove">Remove</button>
+                            <button type="submit" class="btn btn-danger btn-sm" formaction="{{ url_for('upload.remove') }}">Remove</button>
                         </div>
                     {% endif %}
                 </div>

@@ -9,6 +9,10 @@
 				<div class="page-header">
                     <h1>Log into {{ site.name }}</h1>
                 </div>
+
+				<p>
+					You must first enable API access on your <a href="https://inkbunny.net/account.php" target="_blank">account settings</a>.
+				</p>
 			</div>
 		</div>
 	</div>
@@ -18,21 +22,13 @@
 	<div class="container">
 		<div class="row">
 			<div class="col-sm-12 col-md-4 offset-md-4">
-				<form method="POST" action="/add/{{ site.value }}">
+				<form method="POST" action="{{ url_for('accounts.add_post', site_id=site.value) }}">
 					<div class="form-group">
 						<input type="text" class="form-control" name="username" placeholder="Username" autocomplete="off">
 					</div>
 
 					<div class="form-group">
 						<input type="password" class="form-control" name="password" placeholder="Password for {{ site.name }}" autocomplete="off">
-					</div>
-
-					<div class="center-block text-center">
-						<img src="data:image/jpeg;base64,{{ extra_data.captcha }}" class="img-responsive center-block mb-1">
-					</div>
-
-					<div class="form-group">
-						<input type="text" class="form-control" name="captcha" placeholder="Captcha text" autocomplete="off">
 					</div>
 
 					<div class="form-group">

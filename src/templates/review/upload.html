@@ -10,7 +10,7 @@
             </div>
 
             <div class="col-sm-12 col-md-4 offset-md-4">
-                <form>
+                <form method="POST" action="{{ url_for('upload.csv_post') }}">
                     <div class="form-group">
                         <label for="file">CSV File</label>
                         <input type="file" class="form-control-file" id="file" name="file">

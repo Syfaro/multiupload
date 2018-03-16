@@ -1,17 +1,14 @@
-from typing import List
-from typing import Tuple
-
 from enum import Enum
 from io import BytesIO
 from os.path import join
-
-from flask import current_app
+from typing import List
+from typing import Tuple
 
 from PIL import Image
+from flask import current_app
 from raven import breadcrumbs
 
 from constant import Sites
-
 from description import parse_description
 
 

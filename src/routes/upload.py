@@ -1,12 +1,10 @@
-from typing import List
-
 import csv
 import time
-import simplecrypt
-
-from os.path import join
 from io import StringIO
+from os.path import join
+from typing import List
 
+import simplecrypt
 from flask import Blueprint
 from flask import current_app
 from flask import flash
@@ -15,53 +13,31 @@ from flask import jsonify
 from flask import redirect
 from flask import render_template
 from flask import request
-from flask import session
 from flask import send_from_directory
+from flask import session
 from flask import url_for
-
+from requests import HTTPError
 from werkzeug.utils import secure_filename
 
-from requests import HTTPError
-
 from constant import Sites
-
 from description import parse_description
-
 from models import Account
 from models import SavedSubmission
 from models import db
-
-from sentry import sentry
-
-from sites import AccountExists
 from sites import BadCredentials
 from sites import SiteError
-
 from sites.known import KNOWN_SITES
 from sites.known import known_list
-
-from submission import Submission
 from submission import Rating
-
+from submission import Submission
 from utils import get_active_notices
 from utils import login_required
-from utils import send_to_influx
 from utils import random_string
+from utils import safe_ext
 from utils import save_multi_dict
+from utils import send_to_influx
 
 app = Blueprint('upload', __name__)
-
-
-def safe_ext(name: str):
-    if '.' not in name:
-        return False
-
-    split = name.rsplit('.', 1)[1].lower()\
-
-    if split not in current_app.config['ALLOWED_EXTENSIONS']:
-        return False
-
-    return split
 
 
 @app.route('/beta', methods=['GET'])
@@ -73,7 +49,7 @@ def beta_upload(p=None):
 
 @app.route('/upload', methods=['GET'])
 @login_required
-def upload_form():
+def create():
     accounts = map(lambda account: {'account': account, 'selected': account.used_last}, g.user.accounts)
 
     return render_template('review/review.html', user=g.user, accounts=accounts, sites=known_list(),
@@ -82,7 +58,7 @@ def upload_form():
 
 @app.route('/preview/description')
 @login_required
-def preview_description():
+def preview():
     accounts = request.args.getlist('account')
     description = request.args.get('description', '')
 
@@ -125,7 +101,7 @@ def write_upload_time(start_time, site=None, measurement='upload_time'):
 
 @app.route('/upload', methods=['POST'])
 @login_required
-def upload_post():
+def create_post():
     total_time = time.time()
 
     title = request.form.get('title', None)
@@ -179,7 +155,7 @@ def upload_post():
 
     if has_error:
         if all(v is None or v == '' for v in [title, description, keywords, rating, upload]):
-            return redirect(url_for('upload.upload_form'))
+            return redirect(url_for('upload.create'))
 
         if upload:
             ext = safe_ext(upload.filename)
@@ -195,11 +171,9 @@ def upload_post():
         db.session.commit()
         i = saved.id
 
-        return redirect(url_for('upload.upload_review', review=i))
+        return redirect(url_for('upload.review', review=i))
 
     submission = Submission(title, description, keywords, rating, saved if saved_id else upload)
-
-    basic_error = False
 
     for account in Account.query.filter_by(user_id=g.user.id).all():
         account.used_last = 0
@@ -210,16 +184,13 @@ def upload_post():
 
         if not account or account.user_id != g.user.id:
             flash('Account does not exist or does not belong to current user.')
-            return redirect(url_for('upload.upload_form'))
+            return redirect(url_for('upload.create'))
 
         account.used_last = 1
 
         accounts.append(account)
 
     db.session.commit()
-
-    if basic_error:
-        return redirect(url_for('upload.upload_form'))
 
     accounts = sorted(accounts, key=lambda x: x.site_id)
 
@@ -301,13 +272,13 @@ def upload_post():
 
 @app.route('/upload/csv', methods=['GET'])
 @login_required
-def upload_csv():
+def csv():
     return render_template('review/upload.html')
 
 
 @app.route('/upload/csv', methods=['POST'])
 @login_required
-def upload_from_csv():
+def csv_post():
     file = request.files.get('csv')
     if not file:
         raise Exception('Missing CSV file.')
@@ -331,12 +302,12 @@ def upload_from_csv():
 
     db.session.commit()
 
-    return redirect(url_for('upload.upload_list'))
+    return redirect(url_for('upload.list'))
 
 
 @app.route('/upload/review', methods=['GET'])
 @login_required
-def upload_list():
+def list():
     submissions = SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(submitted=False).all()
 
     return render_template('review/list.html', user=g.user, submissions=submissions)
@@ -344,26 +315,26 @@ def upload_list():
 
 @app.route('/upload/remove', methods=['POST'])
 @login_required
-def upload_remove():
+def remove():
     sub_id = request.form.get('id')
 
     if not sub_id:
-        return redirect(url_for('upload.upload_list'))
+        return redirect(url_for('upload.list'))
 
     sub = SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(id=sub_id).first()
 
     if not sub:
-        return redirect(url_for('upload.upload_list'))
+        return redirect(url_for('upload.list'))
 
     db.session.delete(sub)
     db.session.commit()
 
-    return redirect(url_for('upload.upload_list'))
+    return redirect(url_for('upload.list'))
 
 
 @app.route('/upload/save', methods=['POST'])
 @login_required
-def upload_save():
+def save():
     title = request.form.get('title')
     description = request.form.get('description')
     tags = request.form.get('keywords')
@@ -400,190 +371,26 @@ def upload_save():
 
     db.session.commit()
 
-    return redirect(url_for('upload.upload_list'))
+    return redirect(url_for('upload.list'))
 
 
-@app.route('/upload/review/<int:review>', methods=['GET'])
+@app.route('/upload/review/<int:id>', methods=['GET'])
 @login_required
-def upload_review(review=None):
+def review(id=None):
     q = SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(submitted=False)
-    if review:
-        q = q.filter_by(id=review)
+    if id:
+        q = q.filter_by(id=id)
     sub: SavedSubmission = q.first()
 
     if sub:
         return render_template('review/review.html', sub=sub, rating=Rating, user=g.user,
                                accounts=sub.all_selected_accounts(g.user), sites=known_list())
 
-    return 'Nothing in review queue.'
-
-
-@app.route('/upload/review/<int:review>', methods=['POST'])
-@login_required
-def submit_review(review):
-    sub = SavedSubmission.query.get(review)
-    if sub is None:
-        return 'Invalid item.'
-    if sub.user_id != g.user.id:
-        return 'Not yours to review.'
-
-    print(sub.title)
-
-
-@app.route('/accounts')
-@login_required
-def manage_accounts():
-    return render_template('accounts.html', sites=known_list(), user=g.user)
-
-
-@app.route('/add')
-@login_required
-def add():
-    return render_template('add_site.html', sites=known_list(), user=g.user)
-
-
-@app.route('/add/<int:site_id>', methods=['GET'])
-@login_required
-def add_account_form(site_id):
-    try:
-        site = Sites(site_id)
-    except ValueError:
-        return 'Unknown site ID!'
-
-    extra_data = {}
-
-    for known_site in KNOWN_SITES:
-        if known_site.SITE == site:
-            s = known_site()
-
-            try:
-                pre = s.pre_add_account()
-            except SiteError as ex:
-                sentry.captureException()
-                return 'There was an error with the site: {msg}'.format(msg=ex.message)
-
-            if pre is not None:
-                if isinstance(pre, dict):
-                    extra_data = pre
-                else:
-                    return pre
-
-    return render_template('add_site/%d.html' % site_id, site=site, extra_data=extra_data, user=g.user)
-
-
-@app.route('/add/<int:site_id>/callback', methods=['GET'])
-@login_required
-def add_account_callback(site_id):
-    site = Sites(site_id)
-
-    if not site:
-        return 'Unknown site ID!'
-
-    extra_data = {}
-
-    for known_site in KNOWN_SITES:
-        if known_site.SITE == site:
-            s = known_site()
-
-            try:
-                callback = s.add_account_callback()
-            except SiteError as ex:
-                sentry.captureException()
-                return 'There was an error with the site: {msg}'.format(msg=ex.message)
-
-            if callback is not None:
-                if isinstance(callback, dict):
-                    extra_data = callback
-                elif isinstance(callback, str):
-                    return callback
-                else:
-                    return callback
-
-    return render_template('add_site/%d.html' % site_id, site=site, extra_data=extra_data, user=g.user)
-
-
-@app.route('/add/<int:site_id>', methods=['POST'])
-@login_required
-def add_account_post(site_id):
-    start_time = time.time()
-
-    try:
-        site = Sites(site_id)
-    except ValueError:
-        flash('Unknown site ID.')
-        return redirect(url_for('upload.add_account_form'))
-
-    try:
-        for known_site in KNOWN_SITES:
-            if known_site.SITE == site:
-                s = known_site()
-                data = s.parse_add_form(request.form)
-                s.add_account(data)
-
-    except BadCredentials:
-        flash('Unable to authenticate')
-        return redirect(url_for('upload.add_account_form', site_id=site.value))
-
-    except AccountExists:
-        flash('Account already exists.')
-        return redirect(url_for('upload.manage_accounts'))
-
-    send_to_influx({
-        'measurement': 'account_time_add',
-        'fields': {
-            'duration': time.time() - start_time,
-        },
-        'tags': {
-            'site': site.value,
-        },
-    })
-
-    return redirect(url_for('upload.manage_accounts'))
-
-
-@app.route('/remove/<int:account_id>')
-@login_required
-def remove_form(account_id):
-    account = Account.query.get(account_id)
-
-    if not account:
-        flash('Account does not exist.')
-        return redirect(url_for('upload.upload_form'))
-
-    if account.user_id != g.user.id:
-        flash('Account does not belong to you.')
-        return redirect(url_for('upload.manage_accounts'))
-
-    return render_template('remove.html', account=account, user=g.user)
-
-
-@app.route('/remove', methods=['POST'])
-@login_required
-def remove():
-    account_id = request.form.get('id')
-    if not account_id:
-        flash('Missing account ID.')
-        return redirect(url_for('upload.manage_accounts'))
-
-    account = Account.query.get(account_id)
-
-    if not account:
-        flash('Account does not exist.')
-        return redirect(url_for('upload.manage_accounts'))
-
-    if account.user_id != g.user.id:
-        flash('Account does not belong to you.')
-        return redirect(url_for('upload.manage_accounts'))
-
-    db.session.delete(account)
-    db.session.commit()
-
-    flash('Account removed.')
-    return redirect(url_for('upload.manage_accounts'))
+    return redirect(url_for('upload.list'))
 
 
 @app.route('/upload/imagepreview/<filename>')
-def view_upload(filename):
+def image(filename):
     return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
 
 

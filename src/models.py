@@ -1,19 +1,14 @@
-from typing import List
-
 import json
+from typing import List
 
 from bcrypt import gensalt
 from bcrypt import hashpw
-
 from flask import session
-
 from flask_sqlalchemy import SQLAlchemy
-
 from simplecrypt import encrypt
 from sqlalchemy import func
 
 from constant import Sites
-
 from submission import Rating
 
 db = SQLAlchemy()

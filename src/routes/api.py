@@ -1,26 +1,21 @@
+import requests
 from flask import Blueprint
-from flask import jsonify
+from flask import Response
 from flask import g
+from flask import jsonify
 from flask import request
 from flask import session
-from flask import Response
-
-import requests
 from simplecrypt import decrypt
 from werkzeug.contrib.cache import SimpleCache
 
-from utils import login_required
-
-from models import Account
-from models import db
-
 from constant import HEADERS
 from constant import Sites
-from sites.known import known_list
-
 from description import parse_description
-
+from models import Account
+from models import db
 from sites.deviantart import DeviantArt
+from sites.known import known_list
+from utils import login_required
 
 app = Blueprint('api', __name__)
 

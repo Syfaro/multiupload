@@ -97,16 +97,16 @@
                                 Upload
                             </a>
                             <div class="dropdown-menu">
-                                <a class="dropdown-item {{ 'active' if page == 'upload' }}" href="/upload">Simple Upload</a>
-                                <a class="dropdown-item {{ 'active' if page == 'csv' }}" href="/upload/csv">Spreadsheet Upload</a>
-                                <a class="dropdown-item" href="/beta">Beta Interface</a>
+                                <a class="dropdown-item {{ 'active' if page == 'upload' }}" href="{{ url_for('upload.create') }}">Simple Upload</a>
+                                <a class="dropdown-item {{ 'active' if page == 'csv' }}" href="{{ url_for('upload.csv') }}">Spreadsheet Upload</a>
+                                <a class="dropdown-item" href="{{ url_for('upload.beta_upload') }}">Beta Interface</a>
                                 <div class="dropdown-divider"></div>
-                                <a class="dropdown-item {{ 'active' if page == 'review' }}" href="/upload/review">Pending Review</a>
+                                <a class="dropdown-item {{ 'active' if page == 'review' }}" href="{{ url_for('upload.list') }}">Pending Review</a>
                             </div>
                         </li>
 
                         <li class="nav-item {{ 'active' if page == 'accounts' }}">
-                            <a class="nav-link" href="/accounts">Manage Accounts</a>
+                            <a class="nav-link" href="{{ url_for('accounts.manage') }}">Manage Accounts</a>
                         </li>
                     </ul>
 
@@ -116,9 +116,9 @@
                                 {{ g.user.username }}
                             </a>
                             <div class="dropdown-menu">
-                                <a class="dropdown-item {{ 'active' if page == 'settings' }}" href="/settings">Settings</a>
+                                <a class="dropdown-item {{ 'active' if page == 'settings' }}" href="{{ url_for('user.settings') }}">Settings</a>
                                 <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="/logout">Sign Out</a>
+                                <a class="dropdown-item" href="{{ url_for('home.logout') }}">Sign Out</a>
                             </div>
                         </li>
                     </ul>

@@ -1,23 +1,20 @@
 import os
 import time
-import requests
 
+import requests
 from flask import Flask
 from flask import g
 from flask import render_template
 from flask import request
-
 from influxdb import InfluxDBClient
-
 from raven import fetch_git_sha
 
 from models import db
-
+from routes.accounts import app as accounts_app
+from routes.api import app as api_app
 from routes.home import app as home_app
 from routes.upload import app as upload_app
 from routes.user import app as user_app
-from routes.api import app as api_app
-
 from sentry import sentry
 
 app = Flask(__name__)
@@ -28,8 +25,9 @@ app.config['SENTRY_RELEASE'] = fetch_git_sha(os.path.join(os.path.dirname(__file
 app.logger.propagate = True
 
 app.register_blueprint(home_app)
-app.register_blueprint(user_app)
 app.register_blueprint(upload_app)
+app.register_blueprint(user_app, url_prefix='/user')
+app.register_blueprint(accounts_app, url_prefix='/account')
 app.register_blueprint(api_app, url_prefix='/api/v1')
 
 app.jinja_env.globals['git_version'] = app.config['SENTRY_RELEASE'][:7]

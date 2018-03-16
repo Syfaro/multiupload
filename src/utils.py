@@ -5,7 +5,7 @@ from subprocess import PIPE
 from subprocess import Popen
 
 import requests
-
+from flask import current_app
 from flask import g
 from flask import redirect
 from flask import session
@@ -13,7 +13,6 @@ from flask import url_for
 
 from models import Notice
 from models import User
-
 from sentry import sentry
 
 rng = SystemRandom()
@@ -93,3 +92,15 @@ def save_multi_dict(d):
     print(n)
 
     return n
+
+
+def safe_ext(name: str):
+    if '.' not in name:
+        return False
+
+    split = name.rsplit('.', 1)[1].lower()\
+
+    if split not in current_app.config['ALLOWED_EXTENSIONS']:
+        return False
+
+    return split

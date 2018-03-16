@@ -22,8 +22,8 @@
 					{% endfor %}
 				</ul>
 
-				<a href="/upload" class="btn btn-primary">Upload another?</a>
-                <a href="/upload/review" class="btn btn-secondary">Review pending</a>
+				<a href="{{ url_for('upload.create') }}" class="btn btn-primary">Upload another?</a>
+                <a href="{{ url_for('upload.list') }}" class="btn btn-secondary">Review pending</a>
 			</div>
 		</div>
 	</div>
