@@ -1,9 +1,13 @@
-import csv
+import os
+import shutil
 import time
+from csv import DictReader
 from io import StringIO
 from os.path import join
 from typing import List
+from zipfile import ZipFile
 
+import magic
 import simplecrypt
 from flask import Blueprint
 from flask import current_app
@@ -16,6 +20,7 @@ from flask import send_from_directory
 from flask import session
 from flask import url_for
 from requests import HTTPError
+from sqlalchemy import func
 from werkzeug.utils import secure_filename
 
 from models import Account
@@ -217,20 +222,15 @@ def create_art_post():
     return render_template('after_upload.html', uploads=uploads, user=g.user)
 
 
-@app.route('/csv', methods=['GET'])
-@login_required
-def csv():
-    return render_template('review/upload.html')
+def parse_csv(f, known_files=None, base_files=None):
+    reader = DictReader(StringIO(f.read()))
 
+    mime = magic.Magic(mime=True)
 
-@app.route('/csv', methods=['POST'])
-@login_required
-def csv_post():
-    file = request.files.get('csv')
-    if not file:
-        raise Exception('Missing CSV file.')
+    if base_files:
+        foldername = base_files.split('/')[-1]
 
-    reader = csv.DictReader(StringIO(file.read().decode('utf-8')))
+    count = 0
 
     for row in reader:
         title = row.get('title')
@@ -239,15 +239,125 @@ def csv_post():
         rating = row.get('rating')
         if rating:
             rating = Rating(rating)
+        filename = row.get('file')
+        accounts = row.get('accounts').split()
 
-        if all(v is None for v in [title, description, tags, rating]):
+        if all(v is None for v in [title, description, tags, rating, filename]):
             continue
 
         sub = SavedSubmission(g.user, title, description, tags, rating)
 
+        account_ids = []
+
+        for account in accounts:
+            sitename, username = account.split('.', 1)
+
+            for site in known_list():
+                if sitename.casefold() == site[1].casefold():
+                    siteid = site[0]
+
+                    a = Account.query.filter_by(user_id=g.user.id).filter_by(
+                        site_id=siteid).filter(func.lower(Account.username) == func.lower(username)).first()
+
+                    if not a:
+                        flash('Unknown account: {account}'.format(account=account))
+                        break
+
+                    account_ids.append(str(a.id))
+
+                    break
+
+        sub.set_accounts(account_ids)
+
+        count += 1
+
+        if base_files:
+            if filename in known_files:
+                sub.image_filename = foldername + '/' + filename
+                sub.image_mimetype = mime.from_file(os.path.join(base_files, filename))
+            else:
+                flash('Unknown image: {name}'.format(name=filename))
+
         db.session.add(sub)
 
     db.session.commit()
+
+    return count
+
+
+@app.route('/csv', methods=['GET'])
+@login_required
+def csv():
+    return render_template('review/csv.html')
+
+
+@app.route('/csv', methods=['POST'])
+@login_required
+def csv_post():
+    file = request.files.get('file')
+    if not file:
+        flash('Missing CSV file.')
+        return redirect(url_for('upload.zip'))
+
+    parse_csv(file)
+
+    return redirect(url_for('upload.list'))
+
+
+@app.route('/zip', methods=['GET'])
+@login_required
+def zip():
+    return render_template('review/zip.html')
+
+
+@app.route('/zip', methods=['POST'])
+@login_required
+def zip_post():
+    file = request.files.get('file')
+    if not file:
+        flash('Missing ZIP file.')
+        return redirect(url_for('upload.zip'))
+
+    folder = os.path.join(current_app.config['UPLOAD_FOLDER'], random_string(16))
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+
+    csv_files = []
+    image_files = []
+
+    with ZipFile(file) as z:
+        for info in z.infolist():
+            if info.file_size > 1000 * 1000 * 10:  # 10MB
+                flash('Rejecting {name} as it is larger than 10MB.'.format(name=info.filename))
+                continue
+
+            _, ext = os.path.splitext(info.filename)
+            ext = ext.lower()
+
+            z.extract(info.filename, folder)
+
+            if ext in ('.png', '.jpg', '.jpeg', '.gif'):
+                image_files.append(info.filename)
+            elif ext in ('.csv', '.xls', 'xlsx'):
+                csv_files.append(info.filename)
+            else:
+                flash('Unknown file: {name}'.format(name=info.filename))
+
+    no_valid = all(not f for f in [csv_files, image_files])
+
+    if no_valid:
+        flash('No valid files found in ZIP!')
+        shutil.rmtree(folder)
+
+        return redirect(url_for('upload.list'))
+
+    count = 0
+
+    for c in csv_files:
+        with open(os.path.join(folder, c)) as f:
+            count += parse_csv(f, image_files, folder)
+
+    flash('Added {count} submissions.'.format(count=count))
 
     return redirect(url_for('upload.list'))
 
@@ -275,6 +385,8 @@ def remove():
 
     db.session.delete(sub)
     db.session.commit()
+
+    flash('Removed submission.')
 
     return redirect(url_for('upload.list'))
 
@@ -317,6 +429,8 @@ def save():
 
     db.session.commit()
 
+    flash('Submission saved.')
+
     return redirect(url_for('upload.list'))
 
 
@@ -335,7 +449,7 @@ def review(id=None):
     return redirect(url_for('upload.list'))
 
 
-@app.route('/imagepreview/<filename>')
+@app.route('/imagepreview/<path:filename>')
 def image(filename):
     return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
 

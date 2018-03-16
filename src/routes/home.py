@@ -32,6 +32,11 @@ def home():
     return render_template('home.html', text=text, notices=get_active_notices())
 
 
+@app.route('/upload')
+def upload_redir():
+    return redirect(url_for('upload.create_art'))
+
+
 @app.route('/logout')
 def logout():
     session.pop('id', None)

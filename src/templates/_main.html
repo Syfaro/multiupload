@@ -98,7 +98,7 @@
                             </a>
                             <div class="dropdown-menu">
                                 <a class="dropdown-item {{ 'active' if page == 'upload' }}" href="{{ url_for('upload.create_art') }}">Simple Upload</a>
-                                <a class="dropdown-item {{ 'active' if page == 'csv' }}" href="{{ url_for('upload.csv') }}">Spreadsheet Upload</a>
+                                <a class="dropdown-item {{ 'active' if page == 'csv' }}" href="{{ url_for('upload.zip') }}">ZIP or CSV Upload</a>
                                 <a class="dropdown-item" href="{{ url_for('home.beta') }}">Beta Interface</a>
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item {{ 'active' if page == 'review' }}" href="{{ url_for('upload.list') }}">Pending Review</a>

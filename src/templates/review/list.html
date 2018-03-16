@@ -11,13 +11,17 @@
                 </div>
             </div>
         </div>
+    </div>
 
+    {{ flashes() }}
+
+    <div class="container list">
         <div class="row">
             <div class="table-responsive">
                 <table class="table">
                     <thead>
                         <tr>
-                            <th class="col-md-1">Title</th>
+                            <th style="width: 30%">Title</th>
                             <th>Description</th>
                             <th>Keywords</th>
                             <th>Rating</th>
@@ -35,7 +39,13 @@
                                 <td>{{ sub.rating|has_text }}</td>
                                 <td>{{ sub.account_ids|has_text }}</td>
                                 <td>{{ sub.image_filename|has_text }}</td>
-                                <td><a href="{{ url_for('upload.review', id=sub.id) }}" class="btn btn-sm btn-secondary">Review</a></td>
+                                <td>
+                                    <form action="{{ url_for('upload.remove') }}" method="POST">
+                                        <input type="hidden" name="id" value="{{ sub.id }}">
+                                        <a href="{{ url_for('upload.review', id=sub.id) }}" class="btn btn-sm btn-secondary">Review</a>
+                                        <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                                    </form>
+                                </td>
                             </tr>
                         {% endfor %}
                     </tbody>
