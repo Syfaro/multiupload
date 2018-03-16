@@ -89,8 +89,6 @@ def save_multi_dict(d):
         else:
             n[k] = i[0]
 
-    print(n)
-
     return n
 
 

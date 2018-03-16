@@ -21,6 +21,18 @@ from submission import Rating
 from submission import Submission
 
 
+SHORT_NAMES = {
+    Sites.FurAffinity: 'FA',
+    Sites.Weasyl: 'Weasyl',
+    Sites.FurryNetwork: 'FN',
+    Sites.Inkbunny: 'IB',
+    Sites.SoFurry: 'SF',
+    Sites.Tumblr: 'Tumblr',
+    Sites.DeviantArt: 'DA',
+    Sites.Twitter: 'Twitter',
+}
+
+
 class Twitter(Site):
     """Twitter."""
     SITE = Sites.Twitter
@@ -102,12 +114,27 @@ class Twitter(Site):
 
         api = tweepy.API(auth)
 
-        status = '{title} {hashtags}'.format(title=submission.title, hashtags=self.tag_str(submission.hashtags))
+        use_custom_text = extra.get('twitter-custom', 'n')
+        custom_text = extra.get('twitter-custom-text')
 
-        if isinstance(extra, dict):
-            link = extra.get('twitter_link', None)
-            if link:
-                status = status.strip() + ' ' + link
+        format: str = extra.get('twitter-format', '')
+        links: list = extra.get('twitter-links')
+
+        if use_custom_text == 'y':
+            status = custom_text.strip()
+        else:
+            status = '{title} {hashtags}'.format(title=submission.title,
+                                                 hashtags=self.tag_str(submission.hashtags)).strip()
+
+        if links:
+            if format == 'single' or format == '':
+                    status = status + ' ' + links[0][1]
+            elif format == 'multi':
+                status += '\n'
+
+                for link in links:
+                    name = SHORT_NAMES[link[0]]
+                    status += '\n{name}: {link}'.format(name=name, link=link[1])
 
         try:
             tweet = api.update_with_media(filename=submission.image_filename,

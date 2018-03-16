@@ -194,13 +194,15 @@ def create_post():
 
     accounts = sorted(accounts, key=lambda x: x.site_id)
 
-    twitter_link_id = request.form.get('twitterlink', None)
-    if twitter_link_id is not None:
+    twitter_account = request.form.get('twitter-account')
+    twitter_account_ids = []
+    if twitter_account is not None:
         try:
-            twitter_link_id = int(twitter_link_id)
+            for i in twitter_account.split(' '):
+                twitter_account_ids.append(int(i))
         except ValueError:
-            twitter_link_id = None
-    twitter_link = None
+            pass
+    twitter_links = []
 
     upload_error = False
 
@@ -209,8 +211,6 @@ def create_post():
         start_time = time.time()
 
         decrypted = simplecrypt.decrypt(session['password'], account.credentials)
-
-        link = None
 
         for site in KNOWN_SITES:
             if site.SITE == account.site:
@@ -224,7 +224,7 @@ def create_post():
 
                 try:
                     link = s.submit_artwork(submission, extra={
-                        'twitter_link': twitter_link,
+                        'twitter-links': twitter_links,
                         **saved.data,
                     })
 
@@ -253,8 +253,8 @@ def create_post():
                     'name': '{site} - {account}'.format(site=site.SITE.name, account=account.username)
                 })
 
-        if account.id == twitter_link_id:
-            twitter_link = link
+                if account.id in twitter_account_ids:
+                    twitter_links.append((site.SITE, link, ))
 
         write_upload_time(start_time, account.site.value)
 
@@ -355,7 +355,6 @@ def save():
     sub.tags = tags
     sub.rating = rating
     sub.set_accounts(accounts)
-    print(request.form)
     sub.data = save_multi_dict(request.form)
 
     image = request.files.get('image')

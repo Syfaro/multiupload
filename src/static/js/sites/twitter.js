@@ -2,6 +2,9 @@ const sites = document.querySelectorAll('input[name="account"]');
 const formats = document.querySelectorAll('input[name="twitter-fmt"]');
 const twitterAccount = document.querySelector('input[name="twitter-account"]');
 const format = document.querySelector('input[name="twitter-format"]');
+const useCustom = document.querySelector('input[name="twitter-custom"]');
+const customTextBox = document.querySelector('.twitter-custom');
+const customText = document.querySelector('textarea[name="twitter-custom-text"]');
 
 const hasSiteSelected = id => twitterAccount.value.split(' ').includes(id.toString());
 
@@ -62,7 +65,7 @@ const updateTwitterLinks = () => {
         checkbox.value = otherSitesSelected[i].id;
         checkbox.name = 'twitterlink';
         checkbox.id = 'site' + otherSitesSelected[i].id;
-        if (otherSitesSelected[i].site !== null && hasSiteSelected(otherSitesSelected[i].id)) checkbox.checked = true;
+        if (otherSitesSelected[i].site === null || hasSiteSelected(otherSitesSelected[i].id)) checkbox.checked = true;
 
         const label = document.createElement('label');
         label.classList.add('form-check-label');
@@ -74,13 +77,12 @@ const updateTwitterLinks = () => {
         label.htmlFor = 'site' + otherSitesSelected[i].id;
 
         checkbox.addEventListener('change', ev => {
-            if (!ev.target.checked) return;
-
             if (format.value === 'multi') {
-                let accounts = twitterAccount.value.split(' ');
-                accounts.push(ev.target.value);
-                twitterAccount.value = accounts.join(' ');
+                const selected = Array.from(document.querySelectorAll('input[name="twitterlink"]:checked')).filter(input => input.checked).map(input => input.value);
+                twitterAccount.value = selected.join(' ');
             } else {
+                if (!ev.target.checked) return;
+
                 twitterAccount.value = ev.target.value;
             }
         });
@@ -112,3 +114,14 @@ formats.forEach(item => {
         updateTwitterLinks();
     });
 });
+
+useCustom.addEventListener('change', ev => {
+    if (ev.target.checked) {
+        customTextBox.classList.remove('d-none');
+    } else {
+        customTextBox.classList.add('d-none');
+        customText.value = '';
+    }
+});
+
+if (useCustom.checked) customTextBox.classList.remove('d-none');
