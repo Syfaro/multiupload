@@ -9,7 +9,6 @@ from flask import Blueprint
 from flask import current_app
 from flask import flash
 from flask import g
-from flask import jsonify
 from flask import redirect
 from flask import render_template
 from flask import request
@@ -19,8 +18,6 @@ from flask import url_for
 from requests import HTTPError
 from werkzeug.utils import secure_filename
 
-from constant import Sites
-from description import parse_description
 from models import Account
 from models import SavedSubmission
 from models import db
@@ -35,73 +32,23 @@ from utils import login_required
 from utils import random_string
 from utils import safe_ext
 from utils import save_multi_dict
-from utils import send_to_influx
+from utils import write_upload_time
 
 app = Blueprint('upload', __name__)
 
 
-@app.route('/beta', methods=['GET'])
-@app.route('/beta/<path:p>', methods=['GET'])
+@app.route('/art', methods=['GET'])
 @login_required
-def beta_upload(p=None):
-    return render_template('app.html', user=g.user)
-
-
-@app.route('/upload', methods=['GET'])
-@login_required
-def create():
+def create_art():
     accounts = map(lambda account: {'account': account, 'selected': account.used_last}, g.user.accounts)
 
     return render_template('review/review.html', user=g.user, accounts=accounts, sites=known_list(),
                            notices=get_active_notices(for_user=g.user.id), sub=SavedSubmission(), rating=Rating)
 
 
-@app.route('/preview/description')
+@app.route('/art', methods=['POST'])
 @login_required
-def preview():
-    accounts = request.args.getlist('account')
-    description = request.args.get('description', '')
-
-    descriptions = []
-    sites_done = []
-
-    for site in accounts:
-        account = Account.query.filter_by(user_id=session['id']).filter_by(id=int(site)).first()
-
-        if account.site.value in sites_done or account.site == Sites.Twitter:
-            continue
-
-        descriptions.append({
-            'site': account.site.name,
-            'description': parse_description(description, account.site.value),
-        })
-
-        sites_done.append(account.site.value)
-
-    return jsonify({
-        'descriptions': descriptions,
-    })
-
-
-def write_upload_time(start_time, site=None, measurement='upload_time'):
-    duration = time.time() - start_time
-
-    point = {
-        'measurement': measurement,
-        'fields': {
-            'duration': duration,
-        },
-    }
-
-    if site:
-        point['tags'] = {'site': site}
-
-    send_to_influx(point)
-
-
-@app.route('/upload', methods=['POST'])
-@login_required
-def create_post():
+def create_art_post():
     total_time = time.time()
 
     title = request.form.get('title', None)
@@ -155,7 +102,7 @@ def create_post():
 
     if has_error:
         if all(v is None or v == '' for v in [title, description, keywords, rating, upload]):
-            return redirect(url_for('upload.create'))
+            return redirect(url_for('upload.create_art'))
 
         if upload:
             ext = safe_ext(upload.filename)
@@ -184,7 +131,7 @@ def create_post():
 
         if not account or account.user_id != g.user.id:
             flash('Account does not exist or does not belong to current user.')
-            return redirect(url_for('upload.create'))
+            return redirect(url_for('upload.create_art'))
 
         account.used_last = 1
 
@@ -270,13 +217,13 @@ def create_post():
     return render_template('after_upload.html', uploads=uploads, user=g.user)
 
 
-@app.route('/upload/csv', methods=['GET'])
+@app.route('/csv', methods=['GET'])
 @login_required
 def csv():
     return render_template('review/upload.html')
 
 
-@app.route('/upload/csv', methods=['POST'])
+@app.route('/csv', methods=['POST'])
 @login_required
 def csv_post():
     file = request.files.get('csv')
@@ -305,7 +252,7 @@ def csv_post():
     return redirect(url_for('upload.list'))
 
 
-@app.route('/upload/review', methods=['GET'])
+@app.route('/list', methods=['GET'])
 @login_required
 def list():
     submissions = SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(submitted=False).all()
@@ -313,7 +260,7 @@ def list():
     return render_template('review/list.html', user=g.user, submissions=submissions)
 
 
-@app.route('/upload/remove', methods=['POST'])
+@app.route('/remove', methods=['POST'])
 @login_required
 def remove():
     sub_id = request.form.get('id')
@@ -332,7 +279,7 @@ def remove():
     return redirect(url_for('upload.list'))
 
 
-@app.route('/upload/save', methods=['POST'])
+@app.route('/save', methods=['POST'])
 @login_required
 def save():
     title = request.form.get('title')
@@ -373,7 +320,7 @@ def save():
     return redirect(url_for('upload.list'))
 
 
-@app.route('/upload/review/<int:id>', methods=['GET'])
+@app.route('/review/<int:id>', methods=['GET'])
 @login_required
 def review(id=None):
     q = SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(submitted=False)
@@ -388,7 +335,7 @@ def review(id=None):
     return redirect(url_for('upload.list'))
 
 
-@app.route('/upload/imagepreview/<filename>')
+@app.route('/imagepreview/<filename>')
 def image(filename):
     return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
 

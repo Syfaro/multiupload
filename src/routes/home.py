@@ -1,6 +1,7 @@
 import passwordmeter
 from flask import Blueprint
 from flask import flash
+from flask import g
 from flask import redirect
 from flask import render_template
 from flask import request
@@ -12,6 +13,7 @@ from models import db
 from sites.known import known_names
 from utils import english_series
 from utils import get_active_notices
+from utils import login_required
 from utils import send_to_influx
 
 app = Blueprint('home', __name__)
@@ -23,7 +25,7 @@ def home():
         user = User.query.get(session['id'])
 
         if user:
-            return redirect(url_for('upload.create'))
+            return redirect(url_for('upload.create_art'))
 
     text = english_series(known_names())
 
@@ -59,7 +61,7 @@ def login_post():
     session['id'] = user.id
     session['password'] = password
 
-    return redirect(url_for('upload.create'))
+    return redirect(url_for('upload.create_art'))
 
 
 @app.route('/register', methods=['POST'])
@@ -115,4 +117,11 @@ def register_post():
     session['id'] = user.id
     session['password'] = password
 
-    return redirect(url_for('upload.create'))
+    return redirect(url_for('upload.create_art'))
+
+
+@app.route('/beta', methods=['GET'])
+@app.route('/beta/<path:p>', methods=['GET'])
+@login_required
+def beta(p=None):
+    return render_template('app.html', user=g.user)

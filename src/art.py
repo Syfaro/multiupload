@@ -25,7 +25,7 @@ app.config['SENTRY_RELEASE'] = fetch_git_sha(os.path.join(os.path.dirname(__file
 app.logger.propagate = True
 
 app.register_blueprint(home_app)
-app.register_blueprint(upload_app)
+app.register_blueprint(upload_app, url_prefix='/upload')
 app.register_blueprint(user_app, url_prefix='/user')
 app.register_blueprint(accounts_app, url_prefix='/account')
 app.register_blueprint(api_app, url_prefix='/api/v1')

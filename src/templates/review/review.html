@@ -27,7 +27,7 @@
     {{ flashes() }}
 
     <div class="container">
-        <form method="POST" action="{{ url_for('upload.create_post') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ url_for('upload.create_art_post') }}" enctype="multipart/form-data">
             <input type="hidden" name="id" value="{{ sub.id or '' }}">
 
             <div class="row">

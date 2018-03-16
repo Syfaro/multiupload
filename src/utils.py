@@ -1,3 +1,4 @@
+import time
 from functools import wraps
 from random import SystemRandom
 from string import ascii_lowercase
@@ -102,3 +103,19 @@ def safe_ext(name: str):
         return False
 
     return split
+
+
+def write_upload_time(start_time, site=None, measurement='upload_time'):
+    duration = time.time() - start_time
+
+    point = {
+        'measurement': measurement,
+        'fields': {
+            'duration': duration,
+        },
+    }
+
+    if site:
+        point['tags'] = {'site': site}
+
+    send_to_influx(point)

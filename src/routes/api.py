@@ -92,6 +92,33 @@ def description():
     })
 
 
+@app.route('/preview/description')
+@login_required
+def preview():
+    accounts = request.args.getlist('account')
+    description = request.args.get('description', '')
+
+    descriptions = []
+    sites_done = []
+
+    for site in accounts:
+        account = Account.query.filter_by(user_id=session['id']).filter_by(id=int(site)).first()
+
+        if account.site.value in sites_done or account.site == Sites.Twitter:
+            continue
+
+        descriptions.append({
+            'site': account.site.name,
+            'description': parse_description(description, account.site.value),
+        })
+
+        sites_done.append(account.site.value)
+
+    return jsonify({
+        'descriptions': descriptions,
+    })
+
+
 @app.route('/deviantart/category', methods=['GET'])
 @login_required
 def get_deviantart_category():

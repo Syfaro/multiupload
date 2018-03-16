@@ -79,7 +79,7 @@ def change_password_post():
     return redirect(url_for('upload.upload_form'))
 
 
-@app.route('/')
+@app.route('/settings')
 @login_required
 def settings():
     sofurry = []
