@@ -8,13 +8,15 @@
 {%- endmacro %}
 
 <div class="d-none deviantart-category mt-2">
-    <label>DeviantArt Mature Classification</label>
+    <div class="deviantart-mature d-none">
+        <label>DeviantArt Mature Classification</label>
 
-    {{ matureBox('Nudity') }}
-    {{ matureBox('Sexual') }}
-    {{ matureBox('Gore') }}
-    {{ matureBox('Language') }}
-    {{ matureBox('Ideology') }}
+        {{ matureBox('Nudity') }}
+        {{ matureBox('Sexual') }}
+        {{ matureBox('Gore') }}
+        {{ matureBox('Language') }}
+        {{ matureBox('Ideology') }}
+    </div>
 
     <label class="mt-2">DeviantArt Category</label>
 

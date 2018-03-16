@@ -1,9 +1,12 @@
 const deviantArtAccounts = document.querySelectorAll('input[name="account"][data-site="8"]');
 const deviantArtBox = document.querySelector('.deviantart-category');
 const deviantArtCategories = document.querySelector('.deviantart-categories');
+const deviantArtMature = document.querySelector('.deviantart-mature');
 
 const loadingSpinner = document.querySelector('.spinner');
 const hasExisting = document.querySelector('input[name="deviantart-category"]').value;
+
+const ratings = document.querySelectorAll('input[name="rating"]');
 
 const getCategories = selected => {
     const accountID = deviantArtAccounts[0].value;
@@ -116,3 +119,16 @@ for (let i = 0; i < deviantArtAccounts.length; i++) {
 }
 
 setTimeout(updateDeviantArtBox, 250);
+
+ratings.forEach(rating => {
+    rating.addEventListener('change', ev => {
+        if (!ev.target.checked) return;
+
+        if (ev.target.value !== 'general') {
+            deviantArtMature.classList.remove('d-none');
+        } else {
+            Array.from(document.querySelectorAll('input[name="da-content"]')).forEach(input => input.checked = false);
+            deviantArtMature.classList.add('d-none');
+        }
+    });
+});

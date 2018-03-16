@@ -41,7 +41,7 @@
 
 {% macro getSiteScripts() -%}
     {% for site in siteTemplatesToLoad %}
-        <script src="{{ url_for('static', filename='js/upload/' + site + '.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/sites/' + site + '.js') }}"></script>
     {% endfor %}
 {%- endmacro %}
 
@@ -83,7 +83,7 @@
 <body>
     <nav class="navbar navbar-expand-md navbar-dark bg-primary">
         <div class="container">
-            <a class="navbar-brand" href="/">Furry Art Multiuploader</a>
+            <a class="navbar-brand" href="{{ url_for('home.home') }}">Furry Art Multiuploader</a>
 
             {% if g.user %}
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarContent">
@@ -135,10 +135,10 @@
 
 	{% block body %}{% endblock %}
 
-	<div class="container" style="margin-top: 1em; margin-bottom: 1em">
+	<div class="container mt-2 mb-2 text-center">
 		<footer class="footer">
 			<div class="row">
-				<div class="col-sm-12 text-center text-muted">
+				<div class="col-sm-12 text-muted">
                     <div>
                         <a href="mailto:Syfaro<syfaro@huefox.com>?subject=Multiuploader">Bug? Suggestion?</a>
                     </div>
