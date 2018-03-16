@@ -1,9 +1,8 @@
+import json
 from typing import Any
 from typing import List
 
-import json
 import tumblpy
-
 from flask import Response
 from flask import current_app
 from flask import flash
@@ -12,16 +11,12 @@ from flask import request
 from flask import session
 
 from constant import Sites
-
 from models import Account
 from models import db
-
 from sites import BadCredentials
 from sites import Site
 from sites import SiteError
-
 from submission import Submission
-
 from utils import tumblr_blog_name
 
 

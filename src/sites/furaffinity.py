@@ -1,29 +1,24 @@
-from typing import Any
-
 import base64
 import json
 import re
-import cfscrape
+from typing import Any
 
+import cfscrape
 from PIL import Image
 from bs4 import BeautifulSoup
-from requests import HTTPError
-
 from flask import flash
 from flask import g
 from flask import session
+from requests import HTTPError
 
 from constant import HEADERS
 from constant import Sites
-
 from models import Account
 from models import db
-
 from sites import AccountExists
 from sites import BadCredentials
 from sites import Site
 from sites import SiteError
-
 from submission import Rating
 from submission import Submission
 

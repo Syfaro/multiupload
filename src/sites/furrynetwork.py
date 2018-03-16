@@ -1,25 +1,20 @@
-from typing import Any
-
 import json
 import re
+from typing import Any
 
 import cfscrape
 import simplecrypt
-
 from flask import flash
 from flask import g
 from flask import session
 
 from constant import HEADERS
 from constant import Sites
-
 from models import Account
 from models import db
-
 from sites import BadCredentials
 from sites import Site
 from sites import SiteError
-
 from submission import Rating
 from submission import Submission
 

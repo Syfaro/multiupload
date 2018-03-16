@@ -1,29 +1,24 @@
 from typing import Any
-from typing import List
+from urllib.parse import urlencode
 
+import requests
 from flask import Response
 from flask import current_app
+from flask import g
 from flask import redirect
 from flask import request
 from flask import session
-from flask import g
 
 from constant import HEADERS
 from constant import Sites
-
 from models import Account
 from models import db
-
 from sites import AccountExists
 from sites import BadCredentials
 from sites import Site
 from sites import SiteError
-
-from submission import Submission
 from submission import Rating
-
-import requests
-from urllib.parse import urlencode
+from submission import Submission
 
 AUTH_ENDPOINT = 'https://www.deviantart.com/oauth2/authorize'
 TOKEN_ENDPOINT = 'https://www.deviantart.com/oauth2/token'

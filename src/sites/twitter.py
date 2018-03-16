@@ -1,8 +1,7 @@
+import json
 from typing import Any
 
-import json
 import tweepy
-
 from flask import Response
 from flask import current_app
 from flask import g
@@ -11,17 +10,13 @@ from flask import request
 from flask import session
 
 from constant import Sites
-
 from models import Account
 from models import db
-
 from sentry import sentry
-
 from sites import AccountExists
 from sites import BadCredentials
 from sites import Site
 from sites import SiteError
-
 from submission import Rating
 from submission import Submission
 
