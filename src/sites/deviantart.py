@@ -70,7 +70,8 @@ class DeviantArtAPI(object):
             'refresh_token': refresh,
         }).json()
 
-    def validate_token(self, token):
+    @staticmethod
+    def validate_token(token):
         return requests.post(PLACEBO_CALL, data={
             'access_token': token,
         }).json()
@@ -170,7 +171,7 @@ class DeviantArt(Site):
 
         if mature_level:
             data['mature_level'] = mature_level
-            data['mature_classification'] = ' '.join(request.form.getlist('da-content'))
+            data['mature_classification'] = request.form.getlist('da-content')
 
         pub = requests.post(
             'https://www.deviantart.com/api/v1/oauth2/stash/publish',
@@ -182,9 +183,6 @@ class DeviantArt(Site):
             raise SiteError(pub['error_description'])
 
         return pub['url']
-
-    def tag_str(self, tags: List[str]) -> str:
-        pass
 
     @staticmethod
     def get_da():
