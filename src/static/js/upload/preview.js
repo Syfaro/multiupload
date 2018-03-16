@@ -4,7 +4,7 @@ $('.description-preview-modal').on('show.bs.modal', function () {
 
     $.ajax({
         type: 'GET',
-        url: '/preview/description',
+        url: '/api/v1/preview/description',
         data: $('input[name="account"], #description').serialize()
     }).always(function (data) {
         body.innerHTML = '';

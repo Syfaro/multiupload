@@ -93,12 +93,12 @@
                 <div class="collapse navbar-collapse" id="navbarContent">
                     <ul class="navbar-nav mr-auto">
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {{ 'active' if page in ('upload', 'csv', 'review') }}" href="#" data-toggle="dropdown">
+                            <a class="nav-link dropdown-toggle {{ 'active' if page in ('upload', 'csv', 'review', 'zip') }}" href="#" data-toggle="dropdown">
                                 Upload
                             </a>
                             <div class="dropdown-menu">
                                 <a class="dropdown-item {{ 'active' if page == 'upload' }}" href="{{ url_for('upload.create_art') }}">Simple Upload</a>
-                                <a class="dropdown-item {{ 'active' if page == 'csv' }}" href="{{ url_for('upload.zip') }}">ZIP or CSV Upload</a>
+                                <a class="dropdown-item {{ 'active' if page in ('zip', 'csv') }}" href="{{ url_for('upload.zip') }}">ZIP or CSV Upload</a>
                                 <a class="dropdown-item" href="{{ url_for('home.beta') }}">Beta Interface</a>
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item {{ 'active' if page == 'review' }}" href="{{ url_for('upload.list') }}">Pending Review</a>

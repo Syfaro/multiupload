@@ -1,5 +1,7 @@
 {% extends '_main.html' %}
 
+{% set page = 'zip' %}
+
 {% block body %}
 	<div class="container">
 		<div class="row">
@@ -95,6 +97,18 @@ tumblr.purplefox.tumblr.com</pre></td>
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <div class="col-sm-12">
+                <h3>Example CSV File</h3>
+
+                <pre>title,tags,rating,file,accounts,description
+"Hello, world!",hello world test post,general,artwork.png,tumblr.purplefox.tumblr.com,"Your description can go here!
+And it still supports multiple lines."
+Another submission,a second test,general,submission.png,furaffinity.syfaro weasyl.syfaro,"Did you know that you can use Markdown style links?
+
+[My Homepage](https://syfaro.net) will convert to BBCode for sites that don't support Markdown automatically!"
+                </pre>
             </div>
 		</div>
 	</div>
