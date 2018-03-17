@@ -19,6 +19,7 @@ const updateTwitterLinks = () => {
     }
 
     if (!hasTwitterSelected) {
+        document.querySelector('.twitter-hashtag').classList.add('d-none');
         document.querySelector('.twitter-link').classList.add('d-none');
         return;
     }
@@ -98,6 +99,7 @@ const updateTwitterLinks = () => {
             twitterAccount.value = items[0];
     }
 
+    document.querySelector('.twitter-hashtag').classList.remove('d-none');
     document.querySelector('.twitter-link').classList.remove('d-none');
 };
 
