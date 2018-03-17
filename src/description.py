@@ -180,9 +180,8 @@ def parse_description(description, uploading_to):
 
         match = re.search(exp, description)
 
-    # FA, Inkbunny, and SoFurry don't support Markdown, try and convert some
-    # stuff
-    if uploading_to in (1, 4, 5):
+    # Various sites don't support Markdown, try and convert some stuff
+    if uploading_to in (1, 4, 5, 8):
         url = re.compile('\[([^\]]+)\]\(([^)"]+)(?: \"([^\"]+)\")?\)')
         match = url.search(description)
 
@@ -195,8 +194,13 @@ def parse_description(description, uploading_to):
 
             start, end = match.span(0)
 
-            new_link = '[url={url}]{text}[/url]'.format(
-                text=match.group(1), url=match.group(2))
+            if uploading_to == 8:  # DeviantArt uses HTML
+                new_link = '<a href="{url}">{text}</a>'
+            else:
+                new_link = '[url={url}]{text}[/url]'
+
+            new_link = new_link.format(text=match.group(1), url=match.group(2))
+
             description = description[0:start] + new_link + description[end:]
 
             match = url.search(description)
