@@ -33,6 +33,7 @@ from sites.known import known_list
 from submission import Rating
 from submission import Submission
 from utils import get_active_notices
+from utils import parse_resize
 from utils import login_required
 from utils import random_string
 from utils import safe_ext
@@ -56,10 +57,11 @@ def create_art():
 def create_art_post():
     total_time = time.time()
 
-    title = request.form.get('title', None)
-    description = request.form.get('description', None)
-    keywords = request.form.get('keywords', None)
-    rating = request.form.get('rating', None)
+    title = request.form.get('title')
+    description = request.form.get('description')
+    keywords = request.form.get('keywords')
+    rating = request.form.get('rating')
+    resize = request.form.get('resize')
 
     saved_id = request.form.get('id')
 
@@ -144,6 +146,13 @@ def create_art_post():
 
     db.session.commit()
 
+    if resize:
+        dimensions = parse_resize(resize)
+        if dimensions:
+            height, width = dimensions
+
+            submission.resize_image(height, width, replace=True)
+
     accounts = sorted(accounts, key=lambda x: x.site_id)
 
     twitter_account = request.form.get('twitter-account')
@@ -206,7 +215,7 @@ def create_art_post():
                 })
 
                 if account.id in twitter_account_ids:
-                    twitter_links.append((site.SITE, link, ))
+                    twitter_links.append((site.SITE, link,))
 
         write_upload_time(start_time, account.site.value)
 
@@ -223,7 +232,10 @@ def create_art_post():
 
 
 def parse_csv(f, known_files=None, base_files=None):
-    reader = DictReader(StringIO(f.read()))
+    r = f.read()
+    if hasattr(r, 'decode'):
+        r = r.decode('utf-8')
+    reader = DictReader(StringIO(r))
 
     mime = magic.Magic(mime=True)
 
@@ -246,6 +258,7 @@ def parse_csv(f, known_files=None, base_files=None):
             continue
 
         sub = SavedSubmission(g.user, title, description, tags, rating)
+        sub.data = row
 
         account_ids = []
 

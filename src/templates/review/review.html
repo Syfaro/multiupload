@@ -62,6 +62,11 @@
                         {{ getSiteTemplates('keywords') }}
                     </div>
 
+                    <div class="form-group">
+                        <label for="resize">Max Resolution</label>
+                        <input type="text" name="resize" id="resize" placeholder="Height x Width" class="form-control" value="{{ sub.data.resize if sub.data.resize is not none }}">
+                    </div>
+
                     {% for r in rating %}
                         {{ ratingCheckbox(r) }}
                     {% endfor %}

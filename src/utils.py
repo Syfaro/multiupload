@@ -4,7 +4,10 @@ from random import SystemRandom
 from string import ascii_lowercase
 from subprocess import PIPE
 from subprocess import Popen
+from typing import Tuple
+from typing import Union
 
+import re
 import requests
 from flask import current_app
 from flask import g
@@ -17,6 +20,8 @@ from models import User
 from sentry import sentry
 
 rng = SystemRandom()
+
+RESIZE_EXP = re.compile(r'(?P<height>\d+).+?(?P<width>\d+)')
 
 
 def random_string(length):
@@ -97,8 +102,7 @@ def safe_ext(name: str):
     if '.' not in name:
         return False
 
-    split = name.rsplit('.', 1)[1].lower()\
-
+    split = name.rsplit('.', 1)[1].lower()
     if split not in current_app.config['ALLOWED_EXTENSIONS']:
         return False
 
@@ -119,3 +123,17 @@ def write_upload_time(start_time, site=None, measurement='upload_time'):
         point['tags'] = {'site': site}
 
     send_to_influx(point)
+
+
+def parse_resize(s: str) -> Union[None, Tuple[int, int]]:
+    match = RESIZE_EXP.match(s.strip())
+    if not match:
+        return None
+
+    try:
+        height = int(match.group('height'))
+        width = int(match.group('width'))
+    except ValueError:
+        return None
+
+    return height, width

@@ -61,19 +61,26 @@ class Submission(object):
         """Returns a tuple suitable for uploading."""
         return self.image_filename, self.image_bytes
 
-    def resize_image(self, height: int, width: int) -> Tuple[str, BytesIO]:
+    def resize_image(self, height: int, width: int, replace: bool = False) -> Tuple[str, BytesIO]:
         """Resize image to specified height and width with antialiasing"""
         image = Image.open(self.image_bytes)
+
+        if image.height <= height and image.width <= width:
+            return self.image_filename, self.image_bytes
+
         image.thumbnail((height, width), Image.ANTIALIAS)
 
         if not image.mode.startswith('RGB'):
             image = image.convert('RGBA')  # Everything works better as RGB
 
         resized_image = BytesIO()
-        image.save(resized_image, 'JPEG')  # TODO: should this always be JPEG?
+        image.save(resized_image, image.format)
 
         breadcrumbs.record(message='Resized image',
                            category='furryapp', level='info')
+
+        if replace:
+            self.image_bytes = resized_image
 
         return self.image_filename, resized_image
 
