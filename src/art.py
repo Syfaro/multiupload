@@ -8,6 +8,7 @@ from flask import render_template
 from flask import request
 from influxdb import InfluxDBClient
 from raven import fetch_git_sha
+from flask_migrate import Migrate
 
 from models import db
 from routes.accounts import app as accounts_app
@@ -31,6 +32,8 @@ app.register_blueprint(accounts_app, url_prefix='/account')
 app.register_blueprint(api_app, url_prefix='/api/v1')
 
 app.jinja_env.globals['git_version'] = app.config['SENTRY_RELEASE'][:7]
+
+migrate = Migrate(app, db, render_as_batch=True)
 
 
 @app.before_request
@@ -82,5 +85,16 @@ if __name__ == '__main__':
 
         db.init_app(app)
         db.create_all()
+
+        from models import Site
+        from sites.known import known_list
+        for site in known_list():
+            s = Site.query.get(site[0])
+            if not s:
+                s = Site(site[1])
+                s.id = site[0]
+
+                db.session.add(s)
+        db.session.commit()
 
     app.run()

@@ -1,0 +1,11 @@
+Hi {username},
+
+Verify your email address by visiting this link: {link}
+
+Please let me know if you have any feature requests or find any bugs!
+
+If you'd be interested in receiving periodic email updates, take a look at settings on the site to join the mailing list.
+There's also a Telegram channel for important site updates at https://t.me/furryupload
+
+--
+Syfaro

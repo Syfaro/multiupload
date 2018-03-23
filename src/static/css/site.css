@@ -7,7 +7,7 @@
     margin: -3rem 0 2rem;
 }
 
-.settings .row:not(:first-child) {
+.settings .row {
     margin-bottom: 20px;
 }
 

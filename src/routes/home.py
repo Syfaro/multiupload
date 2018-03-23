@@ -1,5 +1,6 @@
 import passwordmeter
-from flask import Blueprint
+import requests
+from flask import Blueprint, current_app
 from flask import flash
 from flask import g
 from flask import redirect
@@ -7,6 +8,7 @@ from flask import render_template
 from flask import request
 from flask import session
 from flask import url_for
+from sqlalchemy import func
 
 from models import User
 from models import db
@@ -39,15 +41,15 @@ def upload_redir():
 
 @app.route('/logout')
 def logout():
-    session.pop('id', None)
+    session.clear()
 
     return redirect(url_for('home.home'))
 
 
 @app.route('/login', methods=['POST'])
 def login_post():
-    username = request.form.get('username', None)
-    password = request.form.get('password', None)
+    username = request.form.get('username')
+    password = request.form.get('password')
 
     if not username:
         flash('Missing username.')
@@ -57,10 +59,14 @@ def login_post():
         flash('Missing password.')
         return redirect(url_for('home.home'))
 
-    user = User.query.filter_by(username=username).first()
+    user = User.by_name_or_email(username)
 
     if not user or not user.verify(password):
         flash('Invalid username or password.')
+        return redirect(url_for('home.home'))
+
+    if username == user.email and not user.email_verified:
+        flash('You have not yet verified this email.')
         return redirect(url_for('home.home'))
 
     session['id'] = user.id
@@ -71,9 +77,10 @@ def login_post():
 
 @app.route('/register', methods=['POST'])
 def register_post():
-    username = request.form.get('username', None)
-    password = request.form.get('password', None)
-    confirm_password = request.form.get('confirm_password', None)
+    username = request.form.get('username')
+    password = request.form.get('password')
+    confirm_password = request.form.get('confirm_password')
+    email = request.form.get('email')
 
     if not username:
         flash('Missing username.')
@@ -91,6 +98,17 @@ def register_post():
         flash('Username is too long.')
         return redirect(url_for('home.home'))
 
+    if email:
+        if '@' not in email:
+            flash('Invalid email.')
+            return redirect(url_for('home.home'))
+
+        user = User.query.filter(func.lower(User.email) == func.lower(email)).first()
+
+        if user:
+            flash('Email already in use.')
+            return redirect(url_for('home.home'))
+
     strength, improvements = passwordmeter.test(password)
 
     send_to_influx({
@@ -105,7 +123,8 @@ def register_post():
               ('</li><li>'.join(improvements.values())))
         return redirect(url_for('home.home'))
 
-    by_username = User.query.filter_by(username=username.lower()).first()
+    by_username = User.query.filter(func.lower(User.username) == func.lower(username)).first()
+
     if by_username is not None:
         flash('Username is already in use.')
         return redirect(url_for('home.home'))
@@ -114,13 +133,28 @@ def register_post():
         flash('Password does not match confirmation.')
         return redirect(url_for('home.home'))
 
-    user = User(username, password)
+    user = User(username, password, email)
 
     db.session.add(user)
     db.session.commit()
 
     session['id'] = user.id
     session['password'] = password
+
+    if email:
+        with open('templates/email.txt') as f:
+            email_body = f.read()
+
+        requests.post(current_app.config['MAILGUN_ENDPOINT'], auth=('api', current_app.config['MAILGUN_KEY']), data={
+            'from': current_app.config['MAILGUN_ADDRESS'],
+            'to': email,
+            'subject': 'Verify your Furry Art Multiuploader email address',
+            'h:Reply-To': 'syfaro@huefox.com',
+            'text': email_body.format(username=username,
+                                      link=current_app.config['MAILGUN_VERIFY'].format(user.email_verifier))
+        })
+
+        flash('A link was sent to you to verify your email address.')
 
     return redirect(url_for('upload.create_art'))
 

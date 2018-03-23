@@ -82,7 +82,7 @@ class Inkbunny(Site):
 
         data = {
             'sid': j['sid'],
-            'submission_id': j['submision_id'],
+            'submission_id': j['submission_id'],
             'title': submission.title,
             'desc': submission.description_for_site(self.SITE),
             'keywords': submission.tags,

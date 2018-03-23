@@ -21,19 +21,19 @@ pip install -r requirements.txt
 Generate a config file:
 
 ~~~sh
-python generate_config.py >config.py
+python generate_config.py >src/config.py
 ~~~
 
 Customize it as necessary.
 
-Create the database.  For development purposes, SQLite3 will do:
+Migrate databases:
 
 ~~~sh
-sqlite3 <db.sql test.db
+FLASK_APP=src/art.py ./venv/bin/flask db upgrade
 ~~~
 
 Run it:
 
 ~~~sh
-python art.py
+python src/art.py
 ~~~

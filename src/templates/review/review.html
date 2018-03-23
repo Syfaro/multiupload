@@ -86,12 +86,21 @@
                 <div class="col-sm-12 col-md-4">
                     <label>Upload to</label>
 
+                    {% set ac = namespace(accounts=false) %}
+
 					{% for account in accounts %}
+                        {% set ac.accounts = true %}
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="account" value="{{ account.account.id }}" id="account{{ account.account.id }}" {{ 'checked' if account.selected }} data-site="{{ account.account.site_id }}" data-site-name="{{ account.account.site.name }}" data-account="{{ account.account.username }}">
                             <label class="form-check-label" for="account{{ account.account.id }}">{{ account.account.site.name }} - {{ account.account.username }}</label>
                         </div>
 					{% endfor %}
+
+                    {% if not ac.accounts %}
+                        <div>
+                            <a class="btn btn-primary" href="{{ url_for('accounts.manage') }}">Add Accounts</a>
+                        </div>
+                    {% endif %}
 
                     {{ getSiteTemplates('right_sidebar') }}
 				</div>

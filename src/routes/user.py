@@ -1,7 +1,8 @@
 import bcrypt
 import passwordmeter
+import requests
 import simplecrypt
-from flask import Blueprint
+from flask import Blueprint, session, current_app
 from flask import flash
 from flask import g
 from flask import redirect
@@ -10,7 +11,7 @@ from flask import request
 from flask import url_for
 
 from constant import Sites
-from models import Account
+from models import Account, User
 from models import AccountConfig
 from models import NoticeViewed
 from models import db
@@ -28,6 +29,58 @@ def dismiss_notice(alert):
     db.session.commit()
 
     return 'Saved'
+
+
+@app.route('/email/verify', methods=['GET'])
+def email_verify():
+    verifier = request.args.get('verifier')
+
+    if not verifier:
+        return 'Missing verifier.'
+
+    user: User = User.query.filter_by(email_verifier=verifier).first()
+
+    if user.email_verified:
+        return 'Already verified.'
+
+    user.email_verified = True
+
+    db.session.commit()
+
+    flash('Email verified!')
+
+    session['username'] = user.username
+
+    return redirect(url_for('home.home'))
+
+
+@app.route('/email/subscribe')
+@login_required
+def email_subscribe():
+    requests.post(current_app.config['MAILGUN_LIST_ENDPOINT'], auth=('api', current_app.config['MAILGUN_KEY']), data={
+        'subscribed': True,
+        'address': g.user.email,
+        'name': g.user.username,
+    })
+
+    g.user.email_subscribed = True
+    db.session.commit()
+
+    flash('Subscribed to mailing list!')
+    return redirect(url_for('user.settings'))
+
+
+@app.route('/email/unsubscribe')
+@login_required
+def email_unsubscribe():
+    requests.delete(current_app.config['MAILGUN_LIST_ENDPOINT'] + '/' + g.user.email,
+                    auth=('api', current_app.config['MAILGUN_KEY']))
+
+    g.user.email_subscribed = False
+    db.session.commit()
+
+    flash('Removed from mailing list.')
+    return redirect(url_for('user.settings'))
 
 
 @app.route('/password', methods=['GET'])
@@ -76,7 +129,7 @@ def change_password_post():
     db.session.commit()
 
     flash('Password changed.')
-    return redirect(url_for('upload.upload_form'))
+    return redirect(url_for('user.settings'))
 
 
 @app.route('/settings')

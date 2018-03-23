@@ -250,7 +250,7 @@ def parse_csv(f, known_files=None, base_files=None):
         tags = row.get('tags')
         rating = row.get('rating')
         if rating:
-            rating = Rating(rating)
+            rating = Rating(rating.lower())
         filename = row.get('file')
         accounts = row.get('accounts').split()
 

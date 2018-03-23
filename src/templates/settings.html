@@ -3,104 +3,116 @@
 {% set page='settings' %}
 
 {% block body %}
-	<div class="container settings">
-		<div class="row">
-			<div class="col-sm-12 col-md-4 offset-md-4">
-				<div class="page-header">
-                    <h1>Settings</h1>
-                </div>
-			</div>
-		</div>
+<div class="container settings">
+    <div class="row">
+        <div class="col-sm-12 col-md-4 offset-md-4">
+            <div class="page-header">
+                <h1>Settings</h1>
+            </div>
+        </div>
+    </div>
+</div>
 
-		<div class="row">
-			<div class="col-sm-12 col-md-4 offset-md-4">
-				<h2>Account</h2>
+{{ flashes('col-md-4 offset-md-4') }}
 
-				<div>
-					<a href="{{ url_for('user.change_password') }}">Change password</a>
-				</div>
-			</div>
-		</div>
+<div class="container settings">
+    <div class="row">
+        <div class="col-sm-12 col-md-4 offset-md-4">
+            <h2>Account</h2>
 
-		<div class="row">
-			<div class="col-sm-12 col-md-4 offset-md-4">
-				<h2>SoFurry settings</h2>
+            <div>
+                <a href="{{ url_for('user.change_password') }}">Change password</a>
+            </div>
 
-				<div>
-					<p class="help-block">Make explicit correspond to SoFurry's extreme rating.</p>
+            <div>
+                {% set sub = 'Unsubscribe' if g.user.email_subscribed else 'Subscribe' %}
+                <a href="{{ url_for('user.email_' + (sub|lower)) }}">{{ sub }} {{ 'from' if g.user.email_subscribed else 'to' }} the mailing list</a>
+            </div>
+        </div>
+    </div>
 
-					{% if sofurry | length > 0 %}
-						<form method="POST" action="{{ url_for('user.settings_sofurry_remap_post') }}">
-							{% for account in sofurry %}
-								<div class="checkbox">
-									<label>
-										<input type="checkbox" name="account[{{ account.id }}]" {% if account.enabled %}checked{% endif %}>
-										{{ account.username }}
-									</label>
-								</div>
-							{% endfor %}
+    <div class="row">
+        <div class="col-sm-12 col-md-4 offset-md-4">
+            <h2>SoFurry settings</h2>
 
-							<button type="submit" class="btn btn-primary btn-sm">Update</button>
-						</form>
-					{% else %}
-						<p>No SoFurry accounts configured.</p>
-					{% endif %}
-				</div>
-			</div>
-		</div>
+            <div>
+                <p class="help-block">Make explicit correspond to SoFurry's extreme rating.</p>
 
-		<div class="row">
-			<div class="col-sm-12 col-md-4 offset-md-4">
-				<h2>FurAffinity settings</h2>
+                {% if sofurry | length > 0 %}
+                <form method="POST" action="{{ url_for('user.settings_sofurry_remap_post') }}">
+                    {% for account in sofurry %}
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" name="account[{{ account.id }}]" {% if account.enabled %}checked{%
+                                   endif %}>
+                            {{ account.username }}
+                        </label>
+                    </div>
+                    {% endfor %}
 
-				<div>
-					<p class="help-block">Enable uploading higher resolution images to FurAffinity.</p>
+                    <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                </form>
+                {% else %}
+                <p>No SoFurry accounts configured.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 
-					{% if furaffinity | length > 0 %}
-						<form method="POST" action="{{ url_for('user.settings_furaffinity_resolution_post') }}">
-							{% for account in furaffinity %}
-								<div class="checkbox">
-									<label>
-										<input type="checkbox" name="account[{{ account.id }}]" {% if account.enabled %}checked{% endif %}>
-										{{ account.username }}
-									</label>
-								</div>
-							{% endfor %}
+    <div class="row">
+        <div class="col-sm-12 col-md-4 offset-md-4">
+            <h2>FurAffinity settings</h2>
 
-							<button type="submit" class="btn btn-primary btn-sm">Update</button>
-						</form>
-					{% else %}
-						<p>No SoFurry accounts configured.</p>
-					{% endif %}
-				</div>
-			</div>
-		</div>
+            <div>
+                <p class="help-block">Enable uploading higher resolution images to FurAffinity.</p>
 
-        <div class="row">
-			<div class="col-sm-12 col-md-4 offset-md-4">
-				<h2>Tumblr settings</h2>
+                {% if furaffinity | length > 0 %}
+                <form method="POST" action="{{ url_for('user.settings_furaffinity_resolution_post') }}">
+                    {% for account in furaffinity %}
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" name="account[{{ account.id }}]" {% if account.enabled %}checked{%
+                                   endif %}>
+                            {{ account.username }}
+                        </label>
+                    </div>
+                    {% endfor %}
 
-				<div>
-					<p>Include title in submission. It does not currently appear in the preview.</p>
+                    <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                </form>
+                {% else %}
+                <p>No SoFurry accounts configured.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 
-					{% if tumblr | length > 0 %}
-						<form method="POST" action="{{ url_for('user.settings_tumblr_title_post') }}">
-							{% for account in tumblr %}
-								<div class="checkbox">
-									<label>
-										<input type="checkbox" name="account[{{ account.id }}]" {% if account.enabled %}checked{% endif %}>
-										{{ account.username }}
-									</label>
-								</div>
-							{% endfor %}
+    <div class="row">
+        <div class="col-sm-12 col-md-4 offset-md-4">
+            <h2>Tumblr settings</h2>
 
-							<button type="submit" class="btn btn-primary btn-sm">Update</button>
-						</form>
-					{% else %}
-						<p>No Tumblr accounts configured.</p>
-					{% endif %}
-				</div>
-			</div>
-		</div>
-	</div>
+            <div>
+                <p>Include title in submission. It does not currently appear in the preview.</p>
+
+                {% if tumblr | length > 0 %}
+                <form method="POST" action="{{ url_for('user.settings_tumblr_title_post') }}">
+                    {% for account in tumblr %}
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" name="account[{{ account.id }}]" {% if account.enabled %}checked{%
+                                   endif %}>
+                            {{ account.username }}
+                        </label>
+                    </div>
+                    {% endfor %}
+
+                    <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                </form>
+                {% else %}
+                <p>No Tumblr accounts configured.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

@@ -1,4 +1,6 @@
 import json
+from random import SystemRandom
+from string import ascii_letters
 from typing import List
 
 from bcrypt import gensalt
@@ -18,12 +20,18 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(16), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
-    dark_theme = db.Column(db.Boolean, default=0)
+    email = db.Column(db.String(254), unique=True, nullable=True)
+    email_verifier = db.Column(db.String(16), unique=True)
+    email_verified = db.Column(db.Boolean, default=False)
+    email_subscribed = db.Column(db.Boolean, default=False, nullable=False)
 
     accounts = db.relationship('Account', backref='user', lazy='dynamic')
 
-    def __init__(self, username, password):
-        self.username = username.lower()
+    def __init__(self, username, password, email=None):
+        self.username = username
+        if email:
+            self.email = email
+        self.email_verifier = ''.join(SystemRandom().choice(ascii_letters) for _ in range(16))
         self.password = hashpw(password.encode('utf-8'), gensalt())
 
     def verify(self, password):
@@ -31,6 +39,11 @@ class User(db.Model):
         if hasattr(self_password, 'encode'):
             self_password = self_password.encode('utf-8')
         return hashpw(password.encode('utf-8'), self_password) == self_password
+
+    @classmethod
+    def by_name_or_email(cls, s):
+        return cls.query.filter(
+            (func.lower(cls.email) == func.lower(s)) | (func.lower(cls.username) == func.lower(s))).first()
 
 
 class Site(db.Model):
@@ -79,9 +92,9 @@ class Account(db.Model):
     @classmethod
     def lookup_username(cls, site: Sites, uid: int, username: str):
         return cls.query.filter_by(site_id=site.value) \
-                        .filter_by(user_id=uid) \
-                        .filter(func.lower(Account.username) == func.lower(username)) \
-                        .first()
+            .filter_by(user_id=uid) \
+            .filter(func.lower(Account.username) == func.lower(username)) \
+            .first()
 
 
 class AccountConfig(db.Model):
@@ -133,14 +146,14 @@ class SavedSubmission(db.Model):
 
     # Using Weasyl's lengths as restrictions here as they were easy to find
     title = db.Column(db.String(100), nullable=True)
-    description = db.Column(db.String(10000), nullable=True)
-    tags = db.Column(db.String(10000), nullable=True)
+    description = db.Column(db.Text, nullable=True)
+    tags = db.Column(db.Text, nullable=True)
     rating = db.Column(db.Enum(Rating), nullable=True)
     original_filename = db.Column(db.String(1000), nullable=True)
     image_filename = db.Column(db.String(1000), nullable=True)
     image_mimetype = db.Column(db.String(50), nullable=True)
     account_ids = db.Column(db.String(1000), nullable=True)
-    site_data = db.Column(db.String(10000), nullable=True)  # arbitrary data stored as JSON
+    site_data = db.Column(db.Text, nullable=True)  # arbitrary data stored as JSON
 
     submitted = db.Column(db.Boolean, default=False, nullable=False)
 
