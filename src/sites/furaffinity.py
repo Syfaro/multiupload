@@ -102,9 +102,7 @@ class FurAffinity(Site):
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         sess = cfscrape.create_scraper()
 
-        image = Image.open(submission.image_bytes)
-        height, width = image.size
-
+        height, width = submission.image_res()
         needs_resize = height > 1280 or width > 1280
 
         req = sess.get('https://www.furaffinity.net/submit/', cookies=self.credentials, headers=HEADERS)
@@ -116,7 +114,10 @@ class FurAffinity(Site):
         }, cookies=self.credentials, headers=HEADERS)
         req.raise_for_status()
 
-        key = BeautifulSoup(req.content, 'html.parser').select('input[name="key"]')[0]['value']
+        try:
+            key = BeautifulSoup(req.content, 'html.parser').select('input[name="key"]')[0]['value']
+        except (ValueError, IndexError):
+            raise SiteError('Unable to get FurAffinity upload token from part 2')
 
         if needs_resize:
             image = submission.resize_image(1280, 1280)
@@ -132,7 +133,10 @@ class FurAffinity(Site):
         }, cookies=self.credentials, headers=HEADERS)
         req.raise_for_status()
 
-        key = BeautifulSoup(req.content, 'html.parser').select('input[name="key"]')[0]['value']
+        try:
+            key = BeautifulSoup(req.content, 'html.parser').select('input[name="key"]')[0]['value']
+        except (ValueError, IndexError):
+            raise SiteError('Unable to get FurAffinity upload token from part 3')
 
         req = sess.post('https://www.furaffinity.net/submit/', data={
             'part': '5',

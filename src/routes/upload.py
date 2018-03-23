@@ -127,7 +127,7 @@ def create_art_post():
 
         return redirect(url_for('upload.review', review=i))
 
-    submission = Submission(title, description, keywords, rating, saved if saved_id else upload)
+    submission = Submission(title, description, keywords, rating, upload if upload else saved)
 
     for account in Account.query.filter_by(user_id=g.user.id).all():
         account.used_last = 0
@@ -221,6 +221,18 @@ def create_art_post():
 
     if upload_error:
         flash('As an error occured, the submission has not been removed from the pending review list.')
+
+        if upload:
+            ext = safe_ext(upload.filename)
+            if upload and ext:
+                saved.original_filename = secure_filename(upload.filename)
+
+                name = random_string(16) + '.' + ext
+
+                upload.save(join(current_app.config['UPLOAD_FOLDER'], name))
+                saved.image_filename = name
+                saved.image_mimetype = upload.mimetype
+
     else:
         db.session.delete(saved)
 

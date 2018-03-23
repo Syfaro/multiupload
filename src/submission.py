@@ -48,10 +48,11 @@ class Submission(object):
         self.tags, self.hashtags = parsed_tags
 
         if hasattr(image, 'original_filename'):
-            self.image_filename = image.original_filename
-            self.image_mimetype = image.image_mimetype
-            with open(join(current_app.config['UPLOAD_FOLDER'], image.image_filename), 'rb') as f:
-                self.image_bytes = BytesIO(f.read())
+            if image.original_filename:
+                self.image_filename = image.original_filename
+                self.image_mimetype = image.image_mimetype
+                with open(join(current_app.config['UPLOAD_FOLDER'], image.image_filename), 'rb') as f:
+                    self.image_bytes = BytesIO(f.read())
         else:
             self.image_filename = image.filename
             self.image_bytes = BytesIO(image.read())
@@ -61,11 +62,18 @@ class Submission(object):
         """Returns a tuple suitable for uploading."""
         return self.image_filename, self.image_bytes
 
+    def image_res(self) -> Tuple[int, int]:
+        image = Image.open(self.image_bytes)
+        height, width = image.height, image.width
+        self.image_bytes.seek(0)
+        return height, width
+
     def resize_image(self, height: int, width: int, replace: bool = False) -> Tuple[str, BytesIO]:
         """Resize image to specified height and width with antialiasing"""
         image = Image.open(self.image_bytes)
 
         if image.height <= height and image.width <= width:
+            self.image_bytes.seek(0)
             return self.image_filename, self.image_bytes
 
         image.thumbnail((height, width), Image.ANTIALIAS)
@@ -82,6 +90,7 @@ class Submission(object):
         if replace:
             self.image_bytes = resized_image
 
+        self.image_bytes.seek(0)
         return self.image_filename, resized_image
 
     def description_for_site(self, site: Sites) -> str:
