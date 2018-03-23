@@ -9,6 +9,7 @@ from zipfile import ZipFile
 
 import magic
 import simplecrypt
+from chardet import UniversalDetector
 from flask import Blueprint
 from flask import current_app
 from flask import flash
@@ -250,9 +251,14 @@ def create_art_post():
 
 
 def parse_csv(f, known_files=None, base_files=None):
-    r = f.read()
-    if hasattr(r, 'decode'):
-        r = r.decode('utf-8')
+    detector = UniversalDetector()
+    for line in f.readlines():
+        detector.feed(line)
+        if detector.done:
+            break
+    detector.close()
+    f.seek(0)
+    r = f.read().decode(detector.result.get('encoding', 'utf-8'))
     reader = DictReader(StringIO(r))
 
     mime = magic.Magic(mime=True)
@@ -270,7 +276,7 @@ def parse_csv(f, known_files=None, base_files=None):
         if rating:
             rating = Rating(rating.lower())
         filename = row.get('file')
-        accounts = row.get('accounts').split()
+        accounts = row.get('accounts')
 
         if all(v is None for v in [title, description, tags, rating, filename]):
             continue
@@ -280,30 +286,33 @@ def parse_csv(f, known_files=None, base_files=None):
 
         account_ids = []
 
-        for account in accounts:
-            sitename, username = account.split('.', 1)
+        if accounts:
+            accounts = accounts.split()
+            for account in accounts:
+                sitename, username = account.split('.', 1)
 
-            for site in known_list():
-                if sitename.casefold() == site[1].casefold():
-                    siteid = site[0]
+                for site in known_list():
+                    if sitename.casefold() == site[1].casefold():
+                        siteid = site[0]
 
-                    a = Account.query.filter_by(user_id=g.user.id).filter_by(
-                        site_id=siteid).filter(func.lower(Account.username) == func.lower(username)).first()
+                        a = Account.query.filter_by(user_id=g.user.id).filter_by(
+                            site_id=siteid).filter(func.lower(Account.username) == func.lower(username)).first()
 
-                    if not a:
-                        flash('Unknown account: {account}'.format(account=account))
+                        if not a:
+                            flash('Unknown account: {account}'.format(account=account))
+                            break
+
+                        account_ids.append(str(a.id))
+
                         break
 
-                    account_ids.append(str(a.id))
-
-                    break
-
-        sub.set_accounts(account_ids)
+            sub.set_accounts(account_ids)
 
         count += 1
 
         if base_files:
             if filename in known_files:
+                sub.original_filename = filename
                 sub.image_filename = foldername + '/' + filename
                 sub.image_mimetype = mime.from_file(os.path.join(base_files, filename))
             else:
@@ -367,6 +376,9 @@ def zip_post():
 
             z.extract(info.filename, folder)
 
+            if info.filename.startswith('__MACOSX/'):
+                continue
+
             if ext in ('.png', '.jpg', '.jpeg', '.gif'):
                 image_files.append(info.filename)
             elif ext in ('.csv', '.xls', 'xlsx'):
@@ -385,7 +397,7 @@ def zip_post():
     count = 0
 
     for c in csv_files:
-        with open(os.path.join(folder, c)) as f:
+        with open(os.path.join(folder, c), 'rb') as f:
             count += parse_csv(f, image_files, folder)
 
     flash('Added {count} submissions.'.format(count=count))
