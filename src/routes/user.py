@@ -1,3 +1,6 @@
+from random import SystemRandom
+from string import ascii_letters
+
 import bcrypt
 import passwordmeter
 import requests
@@ -80,6 +83,49 @@ def email_unsubscribe():
     db.session.commit()
 
     flash('Removed from mailing list.')
+    return redirect(url_for('user.settings'))
+
+
+@app.route('/email', methods=['GET'])
+@login_required
+def change_email():
+    return render_template('change_email.html', user=g.user)
+
+
+@app.route('/email', methods=['POST'])
+@login_required
+def change_email_post():
+    email = request.form.get('email')
+    password = request.form.get('password')
+
+    if not email or not password:
+        flash('Missing data')
+        return redirect(url_for('user.change_email'))
+
+    if not g.user.verify(password):
+        flash('Incorrect password')
+        return redirect(url_for('user.change_email'))
+
+    g.user.email = email
+    g.user.email_verified = 0
+    g.user.email_verifier = ''.join(SystemRandom().choice(ascii_letters) for _ in range(16))
+
+    with open('templates/email.txt') as f:
+        email_body = f.read()
+
+    requests.post(current_app.config['MAILGUN_ENDPOINT'], auth=('api', current_app.config['MAILGUN_KEY']), data={
+        'from': current_app.config['MAILGUN_ADDRESS'],
+        'to': email,
+        'subject': 'Verify your Furry Art Multiuploader email address',
+        'h:Reply-To': 'syfaro@huefox.com',
+        'text': email_body.format(username=g.user.username,
+                                  link=current_app.config['MAILGUN_VERIFY'].format(g.user.email_verifier))
+    })
+
+    flash('A link was sent to you to verify your email address.')
+
+    db.session.commit()
+
     return redirect(url_for('user.settings'))
 
 

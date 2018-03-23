@@ -25,9 +25,15 @@
             </div>
 
             <div>
-                {% set sub = 'Unsubscribe' if g.user.email_subscribed else 'Subscribe' %}
-                <a href="{{ url_for('user.email_' + (sub|lower)) }}">{{ sub }} {{ 'from' if g.user.email_subscribed else 'to' }} the mailing list</a>
+                <a href="{{ url_for('user.change_email') }}">Update email</a>
             </div>
+
+            {% if g.user.email != '' %}
+                <div>
+                    {% set sub = 'Unsubscribe' if g.user.email_subscribed else 'Subscribe' %}
+                    <a href="{{ url_for('user.email_' + (sub|lower)) }}">{{ sub }} {{ 'from' if g.user.email_subscribed else 'to' }} the mailing list</a>
+                </div>
+            {% endif %}
         </div>
     </div>
 
