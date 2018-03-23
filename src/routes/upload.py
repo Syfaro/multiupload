@@ -95,7 +95,7 @@ def create_art_post():
         flash('Missing keywords.')
         has_error = True
 
-    if not upload and not saved_id:
+    if not upload and (not saved_id or saved.image_filename == ''):
         flash('Missing image.')
         has_error = True
 
@@ -125,9 +125,14 @@ def create_art_post():
         db.session.commit()
         i = saved.id
 
-        return redirect(url_for('upload.review', review=i))
+        return redirect(url_for('upload.review', id=i))
 
-    submission = Submission(title, description, keywords, rating, upload if upload else saved)
+    if saved_id and saved.image_filename != '':
+        image_upload = saved
+    else:
+        image_upload = upload
+
+    submission = Submission(title, description, keywords, rating, image_upload)
 
     for account in Account.query.filter_by(user_id=g.user.id).all():
         account.used_last = 0
@@ -229,6 +234,7 @@ def create_art_post():
 
                 name = random_string(16) + '.' + ext
 
+                upload.seek(0)
                 upload.save(join(current_app.config['UPLOAD_FOLDER'], name))
                 saved.image_filename = name
                 saved.image_mimetype = upload.mimetype
@@ -442,7 +448,7 @@ def save():
     sub.data = save_multi_dict(request.form)
 
     image = request.files.get('image')
-    ext = safe_ext(image.filename)
+    ext = safe_ext(image.filename) if image else None
     if image and ext:
         sub.original_filename = secure_filename(image.filename)
 
