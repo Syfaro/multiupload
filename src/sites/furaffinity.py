@@ -1,11 +1,13 @@
 import base64
 import json
+import os
 import re
+import time
 from typing import Any
 
 import cfscrape
-from PIL import Image
 from bs4 import BeautifulSoup
+from flask import current_app
 from flask import flash
 from flask import g
 from flask import session
@@ -133,9 +135,19 @@ class FurAffinity(Site):
         }, cookies=self.credentials, headers=HEADERS)
         req.raise_for_status()
 
+        page = BeautifulSoup(req.content, 'html.parser')
+
         try:
-            key = BeautifulSoup(req.content, 'html.parser').select('input[name="key"]')[0]['value']
+            key = page.select('input[name="key"]')[0]['value']
         except (ValueError, IndexError):
+            text = page.select('font')
+            print(text)
+            with open(os.path.join(current_app.config['DEBUG_FOLDER'], '{0}.html'.format(int(time.time()))), 'wb') as f:
+                f.write(req.content)
+            if text:
+                message = text[-1].get_text()
+                print(message)
+                raise SiteError('Got error: {0}'.format(message))
             raise SiteError('Unable to get FurAffinity upload token from part 3')
 
         req = sess.post('https://www.furaffinity.net/submit/', data={

@@ -34,8 +34,8 @@ from sites.known import known_list
 from submission import Rating
 from submission import Submission
 from utils import get_active_notices
-from utils import parse_resize
 from utils import login_required
+from utils import parse_resize
 from utils import random_string
 from utils import safe_ext
 from utils import save_multi_dict
