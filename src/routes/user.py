@@ -149,7 +149,7 @@ def change_username_post():
         flash('Incorrect password.')
         return redirect(url_for('user.change_username'))
 
-    if User.by_name_or_email(username):
+    if User.by_name_or_email(username) and username.casefold() != g.user.username.casefold():
         flash('Username is already in use.')
         return redirect(url_for('user.change_username'))
 
