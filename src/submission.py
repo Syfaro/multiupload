@@ -80,13 +80,14 @@ class Submission(object):
             self.image_bytes.seek(0)
             return self.image_filename, self.image_bytes
 
-        image.thumbnail((height, width), Image.ANTIALIAS)
-
         if not image.mode.startswith('RGB'):
             image = image.convert('RGBA')  # Everything works better as RGB
 
+        image.thumbnail((height, width), Image.ANTIALIAS)
+
         resized_image = BytesIO()
         image.save(resized_image, image.format)
+        resized_image.seek(0)
 
         breadcrumbs.record(message='Resized image',
                            category='furryapp', level='info')
