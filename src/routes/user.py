@@ -149,6 +149,10 @@ def change_username_post():
         flash('Incorrect password.')
         return redirect(url_for('user.change_username'))
 
+    if User.by_name_or_email(username):
+        flash('Username is already in use.')
+        return redirect(url_for('user.change_username'))
+
     g.user.username = username
     db.session.commit()
 
