@@ -89,7 +89,7 @@ def email_unsubscribe():
 @app.route('/email', methods=['GET'])
 @login_required
 def change_email():
-    return render_template('change_email.html', user=g.user)
+    return render_template('user/change_email.html', user=g.user)
 
 
 @app.route('/email', methods=['POST'])
@@ -129,10 +129,37 @@ def change_email_post():
     return redirect(url_for('user.settings'))
 
 
+@app.route('/username', methods=['GET'])
+@login_required
+def change_username():
+    return render_template('user/change_username.html', user=g.user)
+
+
+@app.route('/username', methods=['POST'])
+@login_required
+def change_username_post():
+    username = request.form.get('username')
+    password = request.form.get('password')
+
+    if not username or not password:
+        flash('Missing new username or password.')
+        return redirect(url_for('user.change_username'))
+
+    if not g.user.verify(password):
+        flash('Incorrect password.')
+        return redirect(url_for('user.change_username'))
+
+    g.user.username = username
+    db.session.commit()
+
+    flash('Username changed!')
+    return redirect(url_for('user.settings'))
+
+
 @app.route('/password', methods=['GET'])
 @login_required
 def change_password():
-    return render_template('change_password.html', user=g.user)
+    return render_template('user/change_password.html', user=g.user)
 
 
 @app.route('/password', methods=['POST'])
@@ -213,7 +240,7 @@ def settings():
                 'enabled': header and header.val == 'yes'
             })
 
-    return render_template('settings.html', user=g.user, sofurry=sofurry, furaffinity=furaffinity, tumblr=tumblr)
+    return render_template('user/settings.html', user=g.user, sofurry=sofurry, furaffinity=furaffinity, tumblr=tumblr)
 
 
 @app.route('/sofurry/remap', methods=['POST'])

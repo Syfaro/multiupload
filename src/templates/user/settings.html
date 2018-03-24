@@ -21,14 +21,18 @@
             <h2>Account</h2>
 
             <div>
+                <a href="{{ url_for('user.change_username') }}">Change username</a>
+            </div>
+
+            <div>
                 <a href="{{ url_for('user.change_password') }}">Change password</a>
             </div>
 
             <div>
-                <a href="{{ url_for('user.change_email') }}">Update email</a>
+                <a href="{{ url_for('user.change_email') }}">Update email</a>{% if not g.user.email %} (not yet set){% endif %}
             </div>
 
-            {% if g.user.email != '' and g.user.email is not none %}
+            {% if g.user.email %}
                 <div>
                     {% set sub = 'Unsubscribe' if g.user.email_subscribed else 'Subscribe' %}
                     <a href="{{ url_for('user.email_' + (sub|lower)) }}">{{ sub }} {{ 'from' if g.user.email_subscribed else 'to' }} the mailing list</a>
