@@ -189,6 +189,8 @@ def create_art_post():
                         flash(error)
                         continue
 
+                submission.image_bytes.seek(0)
+
                 try:
                     link = s.submit_artwork(submission, extra={
                         'twitter-links': twitter_links,

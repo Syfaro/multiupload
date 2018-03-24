@@ -58,8 +58,12 @@ class Submission(object):
             self.image_bytes = BytesIO(image.read())
             self.image_mimetype = image.mimetype
 
+        if self.image_bytes:
+            self.image_bytes.seek(0)
+
     def get_image(self) -> Tuple[str, BytesIO]:
         """Returns a tuple suitable for uploading."""
+        self.image_bytes.seek(0)
         return self.image_filename, self.image_bytes
 
     def image_res(self) -> Tuple[int, int]:
@@ -103,6 +107,7 @@ class Submission(object):
             return self._image_size
 
         self._image_size = len(self.image_bytes.getbuffer())
+        self.image_bytes.seek(0)
         return self._image_size
 
     @staticmethod
