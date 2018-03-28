@@ -85,7 +85,7 @@ class Inkbunny(Site):
             'submission_id': j['submission_id'],
             'title': submission.title,
             'desc': submission.description_for_site(self.SITE),
-            'keywords': submission.tags,
+            'keywords': self.tag_str(submission.tags),
             'visibility': 'yes',
         }
 

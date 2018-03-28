@@ -133,7 +133,7 @@ class DeviantArt(Site):
             'access_token': r['access_token'],
             'title': submission.title,
             'artist_comments': submission.description_for_site(self.SITE),
-            'tags': submission.tags,
+            'tags': self.tag_str(submission.tags),
         }, files={
             'image': submission.get_image(),
         }).json()
