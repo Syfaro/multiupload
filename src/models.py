@@ -5,6 +5,7 @@ from typing import List
 
 from bcrypt import gensalt
 from bcrypt import hashpw
+from flask import g
 from flask import session
 from flask_sqlalchemy import SQLAlchemy
 from simplecrypt import encrypt
@@ -126,7 +127,7 @@ class Notice(db.Model):
 
     @classmethod
     def find_active(cls):
-        return cls.query.filter_by(active=True).order_by(cls.id.desc())
+        return cls.query.filter_by(active=True).order_by(cls.id.asc())
 
 
 class NoticeViewed(db.Model):
@@ -155,7 +156,7 @@ class SavedSubmission(db.Model):
     account_ids = db.Column(db.String(1000), nullable=True)
     site_data = db.Column(db.Text, nullable=True)  # arbitrary data stored as JSON
 
-    submitted = db.Column(db.Boolean, default=False, nullable=False)
+    group_id = db.Column(db.Integer, db.ForeignKey('submission_group.id'), nullable=True)
 
     def __init__(self, user=None, title=None, description=None, tags=None, rating=None):
         if user:
@@ -193,6 +194,37 @@ class SavedSubmission(db.Model):
     def data(self) -> dict:
         return json.loads(self.site_data) if self.site_data else {}
 
+    @property
+    def has_all(self) -> bool:
+        return all(i is not None and i != '' for i in [self.title, self.description, self.tags, self.rating, self.account_ids, self.image_filename])
+
     @data.setter
     def data(self, value: dict) -> None:
         self.site_data = json.dumps(value)
+
+    @classmethod
+    def get_grouped(cls):
+        return cls.query.filter_by(user_id=g.user.id).group_by(cls.group_id).order_by(
+            cls.group_id.asc()).order_by(cls.id.asc()).all()
+
+
+class SubmissionGroup(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+
+    def __init__(self, user, name):
+        self.user_id = user.id
+        self.name = name
+
+    @classmethod
+    def get_groups(cls):
+        return cls.query.filter_by(user_id=g.user.id).all()
+
+    @staticmethod
+    def get_ungrouped_submissions():
+        return SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(group_id=None).all()
+
+    @property
+    def submissions(self):
+        return SavedSubmission.query.filter_by(group_id=self.id).all()

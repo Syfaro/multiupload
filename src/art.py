@@ -16,6 +16,7 @@ from routes.api import app as api_app
 from routes.home import app as home_app
 from routes.upload import app as upload_app
 from routes.user import app as user_app
+from routes.list import app as list_app
 from sentry import sentry
 
 app = Flask(__name__)
@@ -29,6 +30,7 @@ app.register_blueprint(home_app)
 app.register_blueprint(upload_app, url_prefix='/upload')
 app.register_blueprint(user_app, url_prefix='/user')
 app.register_blueprint(accounts_app, url_prefix='/account')
+app.register_blueprint(list_app, url_prefix='/list')
 app.register_blueprint(api_app, url_prefix='/api/v1')
 
 app.jinja_env.globals['git_version'] = app.config['SENTRY_RELEASE'][:7]

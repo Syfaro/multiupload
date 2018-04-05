@@ -126,7 +126,7 @@ def create_art_post():
         db.session.commit()
         i = saved.id
 
-        return redirect(url_for('upload.review', id=i))
+        return redirect(url_for('list.review', id=i))
 
     if saved_id and saved.image_filename != '':
         image_upload = saved
@@ -288,6 +288,8 @@ def parse_csv(f, known_files=None, base_files=None):
 
         account_ids = []
 
+        user_accounts: List[Account] = Account.query.filter_by(user_id=g.user.id).all()
+
         if accounts:
             accounts = accounts.split()
             for account in accounts:
@@ -297,14 +299,18 @@ def parse_csv(f, known_files=None, base_files=None):
                     if sitename.casefold() == site[1].casefold():
                         siteid = site[0]
 
-                        a = Account.query.filter_by(user_id=g.user.id).filter_by(
-                            site_id=siteid).filter(func.lower(Account.username) == func.lower(username)).first()
+                        i = None
 
-                        if not a:
+                        for a in user_accounts:
+                            if a.site_id == siteid and a.username.replace(' ', '_').casefold() == username.replace(' ', '_').casefold():
+                                i = a.id
+                                break
+
+                        if not i:
                             flash('Unknown account: {account}'.format(account=account))
                             break
 
-                        account_ids.append(str(a.id))
+                        account_ids.append(str(i))
 
                         break
 
@@ -343,7 +349,7 @@ def csv_post():
 
     parse_csv(file)
 
-    return redirect(url_for('upload.list'))
+    return redirect(url_for('list.index'))
 
 
 @app.route('/zip', methods=['GET'])
@@ -373,13 +379,13 @@ def zip_post():
                 flash('Rejecting {name} as it is larger than 10MB.'.format(name=info.filename))
                 continue
 
+            if info.filename.startswith('__MACOSX/'):
+                continue
+
             _, ext = os.path.splitext(info.filename)
             ext = ext.lower()
 
             z.extract(info.filename, folder)
-
-            if info.filename.startswith('__MACOSX/'):
-                continue
 
             if ext in ('.png', '.jpg', '.jpeg', '.gif'):
                 image_files.append(info.filename)
@@ -394,7 +400,7 @@ def zip_post():
         flash('No valid files found in ZIP!')
         shutil.rmtree(folder)
 
-        return redirect(url_for('upload.list'))
+        return redirect(url_for('list.index'))
 
     count = 0
 
@@ -404,85 +410,13 @@ def zip_post():
 
     flash('Added {count} submissions.'.format(count=count))
 
-    return redirect(url_for('upload.list'))
-
-
-@app.route('/list', methods=['GET'])
-@login_required
-def list():
-    submissions = SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(submitted=False).all()
-
-    return render_template('review/list.html', user=g.user, submissions=submissions)
-
-
-@app.route('/remove', methods=['POST'])
-@login_required
-def remove():
-    sub_id = request.form.get('id')
-
-    if not sub_id:
-        return redirect(url_for('upload.list'))
-
-    sub = SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(id=sub_id).first()
-
-    if not sub:
-        return redirect(url_for('upload.list'))
-
-    db.session.delete(sub)
-    db.session.commit()
-
-    flash('Removed submission.')
-
-    return redirect(url_for('upload.list'))
-
-
-@app.route('/save', methods=['POST'])
-@login_required
-def save():
-    title = request.form.get('title')
-    description = request.form.get('description')
-    tags = request.form.get('keywords')
-    rating = request.form.get('rating')
-    if rating:
-        rating = Rating(rating)
-    accounts = request.form.getlist('account')
-
-    sub: SavedSubmission = SavedSubmission.query.filter_by(
-        user_id=g.user.id).filter_by(id=request.form.get('id')).first()
-
-    if not sub:
-        sub = SavedSubmission(g.user, title, description, tags, rating)
-        db.session.add(sub)
-
-    sub.title = title
-    sub.description = description
-    sub.tags = tags
-    sub.rating = rating
-    sub.set_accounts(accounts)
-    sub.data = save_multi_dict(request.form)
-
-    image = request.files.get('image')
-    ext = safe_ext(image.filename) if image else None
-    if image and ext:
-        sub.original_filename = secure_filename(image.filename)
-
-        name = random_string(16) + '.' + ext
-
-        image.save(join(current_app.config['UPLOAD_FOLDER'], name))
-        sub.image_filename = name
-        sub.image_mimetype = image.mimetype
-
-    db.session.commit()
-
-    flash('Submission saved.')
-
-    return redirect(url_for('upload.list'))
+    return redirect(url_for('list.index'))
 
 
 @app.route('/review/<int:id>', methods=['GET'])
 @login_required
 def review(id=None):
-    q = SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(submitted=False)
+    q = SavedSubmission.query.filter_by(user_id=g.user.id)
     if id:
         q = q.filter_by(id=id)
     sub: SavedSubmission = q.first()
@@ -491,7 +425,7 @@ def review(id=None):
         return render_template('review/review.html', sub=sub, rating=Rating, user=g.user,
                                accounts=sub.all_selected_accounts(g.user), sites=known_list())
 
-    return redirect(url_for('upload.list'))
+    return redirect(url_for('list.index'))
 
 
 @app.route('/imagepreview/<path:filename>')
