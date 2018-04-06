@@ -87,12 +87,12 @@
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('home.home') }}">Furry Art Multiuploader</a>
 
-            {% if g.user %}
-                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarContent">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-                <div class="collapse navbar-collapse" id="navbarContent">
+            <div class="collapse navbar-collapse" id="navbarContent">
+                {% if g.user %}
                     <ul class="navbar-nav mr-auto">
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle {{ 'active' if page in ('upload', 'csv', 'review', 'zip') }}" href="#" data-toggle="dropdown">
@@ -110,6 +110,10 @@
                         <li class="nav-item {{ 'active' if page == 'accounts' }}">
                             <a class="nav-link" href="{{ url_for('accounts.manage') }}">Manage Accounts</a>
                         </li>
+
+                        <li class="nav-item {{ 'active' if page == 'features' }}">
+                            <a class="nav-link" href="{{ url_for('home.features') }}">Features</a>
+                        </li>
                     </ul>
 
                     <ul class="navbar-nav ml-auto">
@@ -124,8 +128,14 @@
                             </div>
                         </li>
                     </ul>
-                </div>
-            {% endif %}
+                {% else %}
+                    <ul class="navbar-nav mr-auto">
+                        <li class="nav-item {{ 'active' if page == 'features' }}">
+                            <a class="nav-link" href="{{ url_for('home.features') }}">Features</a>
+                        </li>
+                    </ul>
+                {% endif %}
+            </div>
         </div>
     </nav>
 

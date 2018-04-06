@@ -1,0 +1,115 @@
+{% extends '_main.html' %}
+
+{% set page = 'features' %}
+
+{% block extrahead %}
+    <style>
+    .features h1,
+    .features h2 {
+        text-align: center;
+    }
+
+    .features p {
+        text-align: justify;
+    }
+    </style>
+{% endblock %}
+
+{% block body %}
+	<div class="container features">
+		<div class="row">
+			<div class="col-sm-12 col-md-4 offset-md-4">
+				<div class="page-header">
+                    <h1>Features</h1>
+                </div>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-sm-12 col-md-4">
+				<h2>Upload To Multiple Sites At Once</h2>
+
+                <p>
+                    Just select which sites and accounts you want to upload to.
+                    Like splitting your art between accounts on a single site?
+                    Just add all the accounts and select which you want for each upload.
+                </p>
+			</div>
+
+            <div class="col-sm-12 col-md-4">
+                <h2>Automatically Convert Descriptions</h2>
+
+                <p>
+                    Handles converting Markdown into the format the site you're uploading to uses.
+                    You don't have to think about which site uses Markdown, BBCode, or HTML.
+                    Write the description once and it automatically converts it!
+                    It even handles user links so you can have it show profile pictures on FurAffinity while still working on other sites.
+                </p>
+            </div>
+
+            <div class="col-sm-12 col-md-4">
+                <h2>A Security First Approach</h2>
+
+                <p>
+                    All of your site credentials are fully encrypted using your own password.
+                    Even if the server was compromised, your information is safe.
+                </p>
+            </div>
+
+            <div class="col-sm-12 col-md-4">
+                <h2>Save Uploads For Later</h2>
+
+                <p>
+                    Want to get a bunch of submissions ready to go without submitting them yet?
+                    Upload them and save it for later. When you're ready, click submit.
+                </p>
+
+                <p>
+                    The ability to schedule posts is coming soon!
+                    It requires you to keep a program running on your computer so your credentials don't have to be stored unencrypted.
+                </p>
+            </div>
+
+            <div class="col-sm-12 col-md-4">
+                <h2>Submission Groups</h2>
+
+                <p>
+                    Sort your pending submissions into groups and post entire groups at once.
+                    Useful for managing many submissions you want to post.
+                </p>
+            </div>
+
+            <div class="col-sm-12 col-md-4">
+                <h2>Twitter Posts</h2>
+
+                <p>
+                    Create posts on Twitter with links to one or many of the submission on other sites.
+                    Great if you want to allow followers to use their preferred site.
+                </p>
+            </div>
+
+            <div class="col-sm-12 col-md-4">
+                <h2>ZIP Uploads</h2>
+
+                <p>
+                    Create a ZIP with your artwork and a spreadsheet of information to easily bulk upload your artwork.
+                    You can then go through the submissions, fix up anything that needs changing, and submit it all.
+                </p>
+            </div>
+
+            <div class="col-sm-12 col-md-4">
+                <h2>And more!</h2>
+
+                <p>
+                    New features are continually being added with input from artists already using the site.
+                    You can see some of the history of new features in the <a href="https://t.me/FurryUpload">Telegram channel</a>.
+                </p>
+
+                <p>
+                    Want to see your idea for a feature here? Send me an <a href="mailto:syfaro@huefox.com">email</a> or
+                    <a href="https://t.me/Syfaro">Telegram message</a> with your thoughts!
+                </p>
+            </div>
+        </div>
+	</div>
+{% endblock %}

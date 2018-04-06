@@ -34,6 +34,14 @@ def home():
     return render_template('home.html', text=text, notices=get_active_notices())
 
 
+@app.route('/features')
+def features():
+    if 'id' in session:
+        g.user = User.query.get(session['id'])
+
+    return render_template('features.html')
+
+
 @app.route('/upload')
 def upload_redir():
     return redirect(url_for('upload.create_art'))

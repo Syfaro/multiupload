@@ -29,21 +29,21 @@
 				<form method="POST" action="{{ url_for('home.register_post') }}">
                     <div class="row">
                         <div class="form-group col-sm-12 col-lg-6">
-                            <input type="text" class="form-control" name="username" placeholder="Username" maxlength="16">
+                            <input type="text" class="form-control" name="username" autocomplete="username" placeholder="Username" maxlength="16">
                         </div>
 
                         <div class="form-group col-sm-12 col-lg-6">
-                            <input type="text" class="form-control" name="email" placeholder="Email address (optional)" maxlength="254">
+                            <input type="text" class="form-control" name="email" autocomplete="email" placeholder="Email address (optional)" maxlength="254">
                         </div>
                     </div>
 
                     <div class="row">
                         <div class="form-group col-sm-12 col-lg-6">
-                            <input type="password" class="form-control" name="password" placeholder="Password" maxlength="72">
+                            <input type="password" class="form-control" name="password" autocomplete="new-password" placeholder="Password" maxlength="72">
                         </div>
 
                         <div class="form-group col-sm-12 col-lg-6">
-                            <input type="password" class="form-control" name="confirm_password" placeholder="Confirm password" maxlength="72">
+                            <input type="password" class="form-control" name="confirm_password" autocomplete="new-password" placeholder="Confirm password" maxlength="72">
                         </div>
                     </div>
 
@@ -58,11 +58,11 @@
 
 				<form method="POST" action="{{ url_for('home.login_post') }}">
 					<div class="form-group">
-						<input type="text" class="form-control" name="username" placeholder="Username" maxlength="254" value="{{ session.username if session.username else '' }}">
+						<input type="text" class="form-control" name="username" autocomplete="username" placeholder="Username" maxlength="254" value="{{ session.username if session.username else '' }}">
 					</div>
 
 					<div class="form-group">
-						<input type="password" class="form-control" name="password" placeholder="Password" maxlength="72">
+						<input type="password" class="form-control" name="password" autocomplete="current-password" placeholder="Password" maxlength="72">
 					</div>
 
 					<div class="form-group">
@@ -90,6 +90,10 @@
 					It also transparently handles converting links to profiles and other websites
 					to the correct format for each website.
 				</p>
+
+                <p>
+                    Check out the <a href="{{ url_for('home.features') }}">features page</a> to learn more about what it can do!
+                </p>
 			</div>
 
             <div class="col-sm-12 col-md-6">
