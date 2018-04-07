@@ -9,6 +9,7 @@ from flask import request
 from influxdb import InfluxDBClient
 from raven import fetch_git_sha
 from flask_migrate import Migrate
+from htmlmin.main import minify
 
 from models import db
 from routes.accounts import app as accounts_app
@@ -49,6 +50,9 @@ def start_influx():
 
 @app.after_request
 def record_stats(resp):
+    if resp.content_type == 'text/html; charset=utf-8':
+        resp.set_data(minify(resp.get_data(as_text=True)))
+
     influx = g.get('influx', None)
     start_time = g.get('start', None)
 

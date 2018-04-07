@@ -12,9 +12,10 @@ from flask import redirect
 from flask import render_template
 from flask import request
 from flask import url_for
+from sqlalchemy import func
 
 from constant import Sites
-from models import Account, User
+from models import Account, User, SavedSubmission
 from models import AccountConfig
 from models import NoticeViewed
 from models import db
@@ -207,6 +208,110 @@ def change_password_post():
 
     flash('Password changed.')
     return redirect(url_for('user.settings'))
+
+
+@app.route('/reset', methods=['GET'])
+def password_reset():
+    return render_template('user/reset.html')
+
+
+@app.route('/reset', methods=['POST'])
+def password_reset_post():
+    email = request.form.get('email')
+    if not email:
+        flash('Missing email address')
+        return redirect(url_for('user.password_reset'))
+
+    user: User = User.query.filter(func.lower(User.email) == func.lower(email)).first()
+
+    if not user:
+        flash('Unknown email address')
+        return redirect(url_for('user.password_reset'))
+
+    if not user.email_verified:
+        flash('Email was not verified')
+        return redirect(url_for('user.password_reset'))
+
+    user.email_reset_verifier = ''.join(SystemRandom().choice(ascii_letters) for _ in range(16))
+    db.session.commit()
+
+    with open('templates/user/reset.txt') as f:
+        email_body = f.read()
+
+    requests.post(current_app.config['MAILGUN_ENDPOINT'], auth=('api', current_app.config['MAILGUN_KEY']), data={
+        'from': current_app.config['MAILGUN_ADDRESS'],
+        'to': user.email,
+        'subject': 'Reset your Furry Art Multiuploader password',
+        'h:Reply-To': 'syfaro@huefox.com',
+        'text': email_body.format(username=user.username,
+                                  link=current_app.config['MAILGUN_RESET'].format(user.email_reset_verifier))
+    })
+
+    flash('An email was sent to reset your password!')
+    return redirect(url_for('user.password_reset'))
+
+
+@app.route('/reset/verify', methods=['GET'])
+def password_reset_verify():
+    if session.get('verifier'):
+        verifier = session.pop('verifier')
+    else:
+        verifier = request.args.get('verifier')
+
+    if not verifier:
+        return 'Missing verifier'
+
+    user: User = User.query.filter_by(email_reset_verifier=verifier).first()
+
+    if not user:
+        return 'Unknown verifier'
+
+    return render_template('user/reset_password.html', user=user)
+
+
+@app.route('/reset/verify', methods=['POST'])
+def password_reset_verify_post():
+    verifier = request.form.get('verifier')
+    password = request.form.get('password')
+    confirm_password = request.form.get('confirm-password')
+
+    if not verifier or not password or not confirm_password:
+        flash('Missing data')
+        session['verifier'] = verifier
+        return redirect(url_for('user.password_reset_verify'))
+
+    if password != confirm_password:
+        flash('Passwords do not match')
+        session['verifier'] = verifier
+        return redirect(url_for('user.password_reset_verify'))
+
+    user: User = User.query.filter_by(email_reset_verifier=verifier).first()
+
+    if not user:
+        return 'Unknown verifier'
+
+    for submission in SavedSubmission.query.filter_by(user_id=user.id).all():
+        db.session.delete(submission)
+    db.session.commit()
+
+    for account in user.accounts:
+        for config in AccountConfig.query.filter_by(account_id=account.id).all():
+            db.session.delete(config)
+        db.session.commit()
+
+        db.session.delete(account)
+    db.session.commit()
+
+    user.password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+    db.session.commit()
+
+    flash('Password was reset!')
+
+    session['id'] = user.id
+    session['password'] = password
+
+    return redirect(url_for('upload.create_art'))
 
 
 @app.route('/settings')

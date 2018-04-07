@@ -25,6 +25,7 @@ class User(db.Model):
     email_verifier = db.Column(db.String(16), unique=True)
     email_verified = db.Column(db.Boolean, default=False)
     email_subscribed = db.Column(db.Boolean, default=False, nullable=False)
+    email_reset_verifier = db.Column(db.String(16), unique=True)
 
     accounts = db.relationship('Account', backref='user', lazy='dynamic')
 
