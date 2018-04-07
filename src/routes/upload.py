@@ -126,7 +126,7 @@ def create_art_post():
         db.session.commit()
         i = saved.id
 
-        return redirect(url_for('list.review', id=i))
+        return redirect(url_for('upload.review', id=i))
 
     if saved_id and saved.image_filename != '':
         image_upload = saved
