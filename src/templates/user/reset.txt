@@ -1,10 +1,10 @@
 Hi {username},
 
-Here's a link to reset your password: {link}
-
 Please note that resetting your password will remove all the accounts attached to your account and any saved submissions.
 
 If you didn't request this, it's safe to ignore it.
+
+Here's a link to reset your password: {link}
 
 --
 Syfaro

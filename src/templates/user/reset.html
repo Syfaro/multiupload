@@ -16,6 +16,11 @@
 	<div class="container">
 		<div class="row">
 			<div class="col-sm-12 col-md-4 offset-md-4">
+				<p>
+					Please note that resetting your password will remove all your accounts and saved submissions.
+					As this data was encrypted with your password, it cannot be retrieved.
+				</p>
+
 				<form method="POST" action="{{ url_for('user.password_reset_post') }}">
                     <div class="form-group">
                         <label for="email">Email address</label>
@@ -23,7 +28,7 @@
                     </div>
 
                     <button type="submit" class="btn btn-primary">Reset password</button>
-                </form>
+				</form>
 			</div>
 		</div>
 	</div>

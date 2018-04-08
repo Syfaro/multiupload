@@ -303,10 +303,11 @@ def password_reset_verify_post():
     db.session.commit()
 
     user.password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    user.email_reset_verifier = ''
 
     db.session.commit()
 
-    flash('Password was reset!')
+    flash('Password was reset, welcome back {0}!'.format(user.username))
 
     session['id'] = user.id
     session['password'] = password
