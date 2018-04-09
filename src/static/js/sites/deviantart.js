@@ -2,11 +2,65 @@ const deviantArtAccounts = document.querySelectorAll('input[name="account"][data
 const deviantArtBox = document.querySelector('.deviantart-category');
 const deviantArtCategories = document.querySelector('.deviantart-categories');
 const deviantArtMature = document.querySelector('.deviantart-mature');
+const deviantArtFolders = document.querySelector('.deviantart-folders');
+const deviantArtFolderInput = document.querySelector('.da-folders');
 
 const loadingSpinner = document.querySelector('.spinner');
 const hasExisting = document.querySelector('input[name="deviantart-category"]').value;
 
 const ratings = document.querySelectorAll('input[name="rating"]');
+
+const selectChange = ev => {
+    const selected = ev.target.querySelectorAll('option:checked');
+    const account = ev.target.dataset.account;
+
+    const selections = {};
+
+    Array.from(selected).forEach(selection => {
+        if (!selections[account]) selections[account] = [];
+        selections[account].push(selection.value);
+    });
+
+    deviantArtFolderInput.value = JSON.stringify(selections);
+};
+
+const getFolders = () => {
+    const selected = deviantArtFolderInput.value.length > 0 ? JSON.parse(deviantArtFolderInput.value) : {};
+    const accounts = Array.from(document.querySelectorAll('input[name="account"][data-site="8"]:checked'));
+    deviantArtFolders.innerHTML = '';
+    accounts.forEach(async account => {
+        const accSel = selected[account.value] === undefined ? ['None'] : selected[account.value];
+        const div = document.createElement('div');
+        const name = document.createElement('label');
+        name.classList.add('mt-2');
+        name.innerHTML = `DeviantArt Folders — ${account.dataset.account}`;
+        div.appendChild(name);
+        deviantArtFolders.appendChild(div);
+        const data = await fetch(`/api/v1/deviantart/folders?account=${account.value}`, {
+            credentials: 'same-origin',
+        });
+        const folders = await data.json();
+        const select = document.createElement('select');
+        select.addEventListener('change', selectChange);
+        select.dataset.account = account.value;
+        select.multiple = true;
+        select.classList.add('form-control');
+
+        folders['folders'].unshift({ // add none option
+            'name': 'None',
+            'folderid': 'None',
+        });
+
+        folders['folders'].forEach(folder => {
+            const option = document.createElement('option');
+            option.innerHTML = folder['name'];
+            option.value = folder['folderid'];
+            if (accSel.includes(folder['folderid'])) option.selected = true;
+            select.appendChild(option);
+        });
+        div.appendChild(select);
+    });
+};
 
 const getCategories = selected => {
     const accountID = deviantArtAccounts[0].value;
@@ -115,10 +169,12 @@ const loadExisting = async () => {
 for (let i = 0; i < deviantArtAccounts.length; i++) {
     deviantArtAccounts[i].addEventListener('change', () => {
         updateDeviantArtBox();
+        getFolders();
     });
 }
 
 setTimeout(updateDeviantArtBox, 250);
+getFolders();
 
 ratings.forEach(rating => {
     rating.addEventListener('change', ev => {
@@ -132,3 +188,4 @@ ratings.forEach(rating => {
         }
     });
 });
+

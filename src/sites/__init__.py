@@ -5,6 +5,8 @@ from typing import Union
 from submission import Rating
 from submission import Submission
 
+from models import Account
+
 
 class BadCredentials(Exception):
     pass
@@ -35,7 +37,7 @@ class Site(object):
     def parse_add_form(self, form) -> Union[None, dict]:
         return None
 
-    def add_account(self, data: dict) -> None:
+    def add_account(self, data: dict) -> Union[Account, List[Account]]:
         raise NotImplementedError()
 
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
@@ -49,3 +51,6 @@ class Site(object):
 
     def tag_str(self, tags: List[str]) -> str:
         return ' '.join(tags)
+
+    def get_folders(self) -> Union[None, List[dict]]:
+        return None

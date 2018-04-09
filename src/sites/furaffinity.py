@@ -50,7 +50,7 @@ class FurAffinity(Site):
             'captcha': base64.b64encode(captcha.content).decode('utf-8')
         }
 
-    def add_account(self, data: dict) -> None:
+    def add_account(self, data: dict) -> Account:
         sess = cfscrape.create_scraper()
 
         if Account.lookup_username(self.SITE, g.user.id, data['username']):
@@ -93,6 +93,8 @@ class FurAffinity(Site):
 
         db.session.add(account)
         db.session.commit()
+
+        return account
 
     def parse_add_form(self, form) -> dict:
         return {

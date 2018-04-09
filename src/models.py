@@ -71,6 +71,7 @@ class Account(db.Model):
     _site = db.relationship('Site', backref=db.backref('account', lazy='dynamic'))
 
     config = db.relationship('AccountConfig', lazy='dynamic', cascade='delete')
+    data = db.relationship('AccountData', lazy='dynamic', cascade='delete')
 
     def __init__(self, site, user_id, username, credentials):
         if isinstance(site, Sites):
@@ -113,6 +114,34 @@ class AccountConfig(db.Model):
         self.account_id = account_id
         self.key = key
         self.val = val
+
+
+class AccountData(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    account_id = db.Column(db.Integer, db.ForeignKey('account.id'), nullable=False)
+
+    key = db.Column(db.String(120), nullable=False)
+    data = db.Column(db.Text, nullable=False)
+
+    account = db.relationship('Account', back_populates='data')
+
+    def __init__(self, account, key, data):
+        if isinstance(account, Account):
+            self.account_id = account.id
+        else:
+            self.account_id = account
+
+        self.key = key
+        self.data = json.dumps(data)
+
+    @property
+    def json(self):
+        return json.loads(self.data)
+
+    @json.setter
+    def json(self, data):
+        self.data = json.dumps(data)
 
 
 class Notice(db.Model):

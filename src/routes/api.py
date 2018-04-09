@@ -1,4 +1,5 @@
 import requests
+import simplecrypt
 from flask import Blueprint
 from flask import Response
 from flask import g
@@ -144,3 +145,19 @@ def get_deviantart_category():
     cache.set('deviantart-' + path, sub, timeout=60*60*24)  # keep cached for 24 hours
 
     return Response(sub, mimetype='application/json')
+
+
+@app.route('/deviantart/folders', methods=['GET'])
+@login_required
+def get_deviantart_folders():
+    account = request.args.get('account')
+    a: Account = Account.query.get(account)
+    if a.user_id != g.user.id:
+        return 'Bad.'
+
+    decrypted = simplecrypt.decrypt(session['password'], a.credentials)
+    da = DeviantArt(decrypted, a)
+
+    return jsonify({
+        'folders': da.get_folders(),
+    })

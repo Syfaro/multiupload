@@ -1,3 +1,4 @@
+import json
 from typing import Any
 from urllib.parse import urlencode
 
@@ -11,7 +12,7 @@ from flask import session
 
 from constant import HEADERS
 from constant import Sites
-from models import Account
+from models import Account, AccountData
 from models import db
 from sites import AccountExists
 from sites import BadCredentials
@@ -97,7 +98,7 @@ class DeviantArt(Site):
 
         return {}
 
-    def add_account(self, data: dict) -> None:
+    def add_account(self, data: dict) -> Account:
         da = self.get_da()
 
         r = da.refresh_token(session['da_refresh'])
@@ -118,6 +119,8 @@ class DeviantArt(Site):
 
         db.session.add(account)
         db.session.commit()
+
+        return account
 
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         da = self.get_da()
@@ -164,6 +167,18 @@ class DeviantArt(Site):
             'catpath': request.form.get('deviantart-category'),
         }
 
+        folders = extra.get('da-folders')
+        if folders:
+            try:
+                folders = json.loads(folders)
+                account = folders.get(str(self.account.id))
+
+                if account:
+                    if 'None' not in account:
+                        data['galleryids'] = self.tag_str(account)
+            except json.decoder.JSONDecodeError:
+                pass
+
         if mature_level:
             data['mature_level'] = mature_level
             data['mature_classification'] = request.form.getlist('da-content')
@@ -178,6 +193,52 @@ class DeviantArt(Site):
             raise SiteError(pub['error_description'])
 
         return pub['url']
+
+    def get_folders(self, update=False):
+        prev_folders: AccountData = self.account.data.filter_by(key='folders').first()
+        if prev_folders and not update:
+            return prev_folders.json
+
+        da = self.get_da()
+
+        r = da.refresh_token(self.credentials)
+        self.account.update_credentials(r['refresh_token'])
+        db.session.commit()
+
+        all_folders = []
+
+        while True:
+            data = {
+                'access_token': r['access_token'],
+                'limit': 50,
+            }
+
+            if all_folders:
+                data['next_offset'] = all_folders[-1].get('folderid')
+
+            try:
+                folders = requests.get(
+                    'https://www.deviantart.com/api/v1/oauth2/gallery/folders',
+                    headers=HEADERS,
+                    params=data,
+                ).json()
+            except json.decoder.JSONDecodeError:
+                raise SiteError('Unable to get data.')
+
+            all_folders.extend(folders['results'])
+
+            if not folders.get('has_more'):
+                break
+
+        if prev_folders:
+            prev_folders.json = all_folders
+        else:
+            prev_folders = AccountData(self.account, 'folders', all_folders)
+            db.session.add(prev_folders)
+
+        db.session.commit()
+
+        return all_folders
 
     @staticmethod
     def get_da():

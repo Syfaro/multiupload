@@ -1,6 +1,6 @@
 import json
 import re
-from typing import Any
+from typing import Any, List
 
 import cfscrape
 import simplecrypt
@@ -34,7 +34,7 @@ class FurryNetwork(Site):
             'password': form.get('password', ''),
         }
 
-    def add_account(self, data: dict) -> None:
+    def add_account(self, data: dict) -> List[Account]:
         sess = cfscrape.create_scraper()
 
         req = sess.post('https://beta.furrynetwork.com/api/oauth/token', data={
@@ -62,6 +62,8 @@ class FurryNetwork(Site):
         j = req.json()
 
         previous_accounts = Account.query.filter_by(user_id=g.user.id).filter_by(site_id=self.SITE.value).all()
+
+        accounts = []
 
         for character in j['characters']:
             character_exists = False
@@ -91,9 +93,13 @@ class FurryNetwork(Site):
                 json.dumps(creds)
             )
 
+            accounts.append(account)
+
             db.session.add(account)
 
         db.session.commit()
+
+        return accounts
 
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         sess = cfscrape.create_scraper()

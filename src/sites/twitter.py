@@ -85,7 +85,7 @@ class Twitter(Site):
             'me': me,
         }
 
-    def add_account(self, data: dict) -> None:
+    def add_account(self, data: dict) -> Account:
         auth = self._get_oauth_handler()
         auth.set_access_token(session['taccess'], session['tsecret'])
 
@@ -107,6 +107,8 @@ class Twitter(Site):
 
         db.session.add(account)
         db.session.commit()
+
+        return account
 
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         auth = self._get_oauth_handler()

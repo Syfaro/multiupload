@@ -1,6 +1,7 @@
 import time
 
-from flask import Blueprint
+import simplecrypt
+from flask import Blueprint, session
 from flask import flash
 from flask import g
 from flask import redirect
@@ -105,7 +106,17 @@ def add_post(site_id):
             if known_site.SITE == site:
                 s = known_site()
                 data = s.parse_add_form(request.form)
-                s.add_account(data)
+                accounts = s.add_account(data)
+                if isinstance(accounts, list):
+                    for account in accounts:
+                        decrypted = simplecrypt.decrypt(session['password'], account.credentials)
+
+                        s = known_site(decrypted, account)
+                        s.get_folders()
+                else:
+                    decrypted = simplecrypt.decrypt(session['password'], accounts.credentials)
+                    s = known_site(decrypted, accounts)
+                    s.get_folders()
 
     except BadCredentials:
         flash('Unable to authenticate')
@@ -166,4 +177,21 @@ def remove_post():
     db.session.commit()
 
     flash('Account removed.')
+    return redirect(url_for('accounts.manage'))
+
+
+@app.route('/refresh/folders', methods=['GET'])
+@login_required
+def refresh_folders():
+    accounts = g.user.accounts
+
+    for account in accounts:
+        decrypted = simplecrypt.decrypt(session['password'], account.credentials)
+
+        for known_site in KNOWN_SITES:
+            if known_site.SITE == account.site:
+                s = known_site(decrypted, account)
+                s.get_folders(update=True)
+
+    flash('Folders refreshed!')
     return redirect(url_for('accounts.manage'))

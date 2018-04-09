@@ -33,6 +33,8 @@ class Tumblr(Site):
         tumblr = tumblpy.Tumblpy(current_app.config['TUMBLR_KEY'], current_app.config['TUMBLR_SECRET'])
         auth_props = tumblr.get_authentication_tokens(current_app.config['TUMBLR_CALLBACK'])
 
+        print(auth_props)
+
         session['tumblr_token'] = auth_props['oauth_token_secret']
 
         return redirect(auth_props['auth_url'])
@@ -62,11 +64,13 @@ class Tumblr(Site):
         except tumblpy.TumblpyAuthError as ex:
             raise SiteError(ex.msg)
 
-    def add_account(self, data: dict) -> None:
+    def add_account(self, data: dict) -> List[Account]:
         t = tumblpy.Tumblpy(current_app.config['TUMBLR_KEY'], current_app.config['TUMBLR_SECRET'],
                             session['tumblr_token'], session['tumblr_secret'])
 
         resp = t.post('user/info')
+
+        accounts = []
 
         for blog in resp['user']['blogs']:
             url = tumblr_blog_name(blog['url'])
@@ -85,12 +89,16 @@ class Tumblr(Site):
                 })
             )
 
+            accounts.append(account)
+
             db.session.add(account)
 
         session.pop('tumblr_token')
         session.pop('tumblr_secret')
 
         db.session.commit()
+
+        return accounts
 
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         t = tumblpy.Tumblpy(current_app.config['TUMBLR_KEY'], current_app.config['TUMBLR_SECRET'],

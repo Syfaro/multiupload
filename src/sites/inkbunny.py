@@ -30,7 +30,7 @@ class Inkbunny(Site):
             'password': form.get('password', ''),
         }
 
-    def add_account(self, data: dict) -> None:
+    def add_account(self, data: dict) -> Account:
         sess = cfscrape.create_scraper()
 
         req = sess.post('https://inkbunny.net/api_login.php', params={
@@ -56,6 +56,8 @@ class Inkbunny(Site):
 
         db.session.add(account)
         db.session.commit()
+
+        return account
 
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         sess = cfscrape.create_scraper()

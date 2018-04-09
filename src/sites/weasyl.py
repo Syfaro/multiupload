@@ -32,7 +32,7 @@ class Weasyl(Site):
             'token': form.get('api_token', '').strip(),
         }
 
-    def add_account(self, data: dict) -> None:
+    def add_account(self, data: dict) -> Account:
         sess = cfscrape.create_scraper()
 
         auth_headers = HEADERS.copy()
@@ -58,6 +58,8 @@ class Weasyl(Site):
 
         db.session.add(account)
         db.session.commit()
+
+        return account
 
     def map_rating(self, rating: Rating) -> str:
         r = '40'
