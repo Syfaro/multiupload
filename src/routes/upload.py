@@ -21,7 +21,6 @@ from flask import send_from_directory
 from flask import session
 from flask import url_for
 from requests import HTTPError
-from sqlalchemy import func
 from werkzeug.utils import secure_filename
 
 from models import Account
@@ -63,6 +62,7 @@ def create_art_post():
     keywords = request.form.get('keywords')
     rating = request.form.get('rating')
     resize = request.form.get('resize')
+    upload = request.files.get('image', None)
 
     saved_id = request.form.get('id')
 
@@ -79,8 +79,6 @@ def create_art_post():
 
     saved.data = save_multi_dict(request.form)
     saved.set_accounts(request.form.getlist('account'))
-
-    upload = request.files.get('image', None)
 
     has_error = False
 
@@ -128,10 +126,10 @@ def create_art_post():
 
         return redirect(url_for('upload.review', id=i))
 
-    if saved_id and saved.image_filename != '':
-        image_upload = saved
-    else:
+    if upload:
         image_upload = upload
+    else:
+        image_upload = saved
 
     submission = Submission(title, description, keywords, rating, image_upload)
 

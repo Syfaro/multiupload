@@ -159,13 +159,17 @@ class FurryNetwork(Site):
 
         j = req.json()
 
-        req = sess.patch('https://beta.furrynetwork.com/api/artwork/{id}'.format(id=j['id']), data=json.dumps({
+        post_id = j.get('id')
+
+        req = sess.patch('https://beta.furrynetwork.com/api/artwork/{id}'.format(id=post_id), data=json.dumps({
             'rating': self.map_rating(submission.rating),
             'description': submission.description_for_site(self.SITE),
             'title': submission.title,
             'tags': submission.tags,
             'collections': [],
             'status': 'public',
+            'publish': True,
+            'community_tags_allowed': True,
         }), headers=auth_headers)
         req.raise_for_status()
 
@@ -173,8 +177,6 @@ class FurryNetwork(Site):
 
         if 'errors' in j:
             raise SiteError('Error applying data on FurryNetwork: {err}'.format(err=json.dumps(j['errors'])))
-
-        post_id = j.get('id')
 
         if not post_id:
             raise SiteError('An issue occurred when uploading')
