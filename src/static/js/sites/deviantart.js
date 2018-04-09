@@ -25,7 +25,7 @@ const selectChange = ev => {
 };
 
 const getFolders = () => {
-    const selected = deviantArtFolderInput.value && deviantArtFolderInput.value.length > 0 ? JSON.parse(deviantArtFolderInput.value) : {};
+    const selected = deviantArtFolderInput && deviantArtFolderInput.value.length > 0 ? JSON.parse(deviantArtFolderInput.value) : {};
     const accounts = Array.from(document.querySelectorAll('input[name="account"][data-site="8"]:checked'));
     deviantArtFolders.innerHTML = '';
     accounts.forEach(async account => {
