@@ -3,7 +3,7 @@ from typing import Any
 from urllib.parse import urlencode
 
 import requests
-from flask import Response
+from flask import Response, flash
 from flask import current_app
 from flask import g
 from flask import redirect
@@ -225,7 +225,12 @@ class DeviantArt(Site):
             except json.decoder.JSONDecodeError:
                 raise SiteError('Unable to get data.')
 
-            all_folders.extend(folders['results'])
+            results = folders.get('results')
+            if not results:
+                flash('Unable to get DeviantArt folders')
+                break
+
+            all_folders.extend(results)
 
             if not folders.get('has_more'):
                 break

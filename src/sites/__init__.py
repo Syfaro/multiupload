@@ -52,5 +52,5 @@ class Site(object):
     def tag_str(self, tags: List[str]) -> str:
         return ' '.join(tags)
 
-    def get_folders(self) -> Union[None, List[dict]]:
+    def get_folders(self, update=False) -> Union[None, List[dict]]:
         return None
