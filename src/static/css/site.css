@@ -28,6 +28,18 @@
     font-family: monospace;
 }
 
+.zip-upload .title {
+    min-width: 100px;
+}
+
+.zip-upload .description {
+    min-width: 250px;
+}
+
+.pending .title {
+    width: 30%;
+}
+
 .spinner {
     border: 5px solid #f3f3f3;
     border-color: var(--gray);
