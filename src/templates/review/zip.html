@@ -3,10 +3,10 @@
 {% set page = 'zip' %}
 
 {% block body %}
-	<div class="container">
-		<div class="row">
-			<div class="col-sm-12">
-				<div class="page-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="page-header">
                     <h1>ZIP or CSV Upload</h1>
                 </div>
             </div>
@@ -19,93 +19,123 @@
         <div class="row">
             <div class="col-sm-12 col-md-4">
                 <form method="POST" action="{{ url_for('upload.zip_post') }}" enctype="multipart/form-data">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
                     <div class="form-group">
                         <label for="file">ZIP or CSV File</label>
-                        <input type="file" class="form-control-file" id="file" name="file" accept="application/zip,text/csv">
+                        <input type="file" class="form-control-file" id="file" name="file"
+                               accept="application/zip,text/csv">
                     </div>
 
                     <div>
                         <button type="submit" class="btn btn-primary">Upload ZIP</button>
-                        <button type="submit" class="btn btn-secondary" formaction="{{ url_for('upload.csv_post') }}">Just CSV</button>
+                        <button type="submit" class="btn btn-secondary" formaction="{{ url_for('upload.csv_post') }}">
+                            Just CSV
+                        </button>
                     </div>
                 </form>
-			</div>
+            </div>
 
             <div class="col-sm-12 col-md-8">
                 <p>
-                    Upload a ZIP file containing a CSV file and your images in a single step. Great for getting a lot of content posted!
+                    Upload a ZIP file containing a CSV file and your images in a single step. Great for getting a lot of
+                    content posted!
                 </p>
 
                 <p>
-                    Your CSV can use the following fields. All the fields are optional, anything not included may be modified later.
-                    The ordering of columns is not important, but must remain consistent for each file. You can use multiple CSV files if preferred.
+                    Your CSV can use the following fields. All the fields are optional, anything not included may be
+                    modified later.
+                    The ordering of columns is not important, but must remain consistent for each file. You can use
+                    multiple CSV files if preferred.
                 </p>
 
                 <div class="table-responsive">
                     <table class="table">
                         <thead>
-                            <tr>
-                                <th style="min-width: 100px">Title</th>
-                                <th style="min-width: 250px">Description</th>
-                                <th>Example</th>
-                            </tr>
+                        <tr>
+                            <th style="min-width: 100px">Title</th>
+                            <th style="min-width: 250px">Description</th>
+                            <th>Example</th>
+                        </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <th>title</th>
-                                <td>The title of your submission.</td>
-                                <td><pre>color sketch</pre></td>
-                            </tr>
-                            <tr>
-                                <th>description</th>
-                                <td>
-                                    The description for the piece.
-                                    All formatting conversions will still happen so just use Markdown or name link formatting as usual.
-                                    The user link format is documented <a href="https://git.huefox.com/syfaro/multiupload/wiki/User+Link+Format">here</a>.
-                                </td>
-                                <td><pre>A simple color sketch piece for some person.
+                        <tr>
+                            <th>title</th>
+                            <td>The title of your submission.</td>
+                            <td>
+                                <pre>color sketch</pre>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>description</th>
+                            <td>
+                                The description for the piece.
+                                All formatting conversions will still happen so just use Markdown or name link
+                                formatting as usual.
+                                The user link format is documented <a
+                                    href="https://git.huefox.com/syfaro/multiupload/wiki/User+Link+Format">here</a>.
+                            </td>
+                            <td><pre>A simple color sketch piece for some person.
 
-[A link](https://www.google.com)</pre></td>
-                            </tr>
-                            <tr>
-                                <th>tags</th>
-                                <td>The tags for your submission separated by spaces. Hashtags will still only appear on Twitter.</td>
-                                <td><pre>color sketch artwork myname</pre></td>
-                            </tr>
-                            <tr>
-                                <th>rating</th>
-                                <td>The content rating, one of <code>general</code>, <code>mature</code>, or <code>explicit</code>.</td>
-                                <td><pre>general</pre></td>
-                            </tr>
-                            <tr>
-                                <th>file</th>
-                                <td>
-                                    The name of the associated image in the ZIP file.
-                                    It must be the full name including extension.
-                                    Folders are not currently supported, everything must be in the root of the ZIP file.</td>
-                                <td><pre>artwork.png</pre></td>
-                            </tr>
-                            <tr>
-                                <th>accounts</th>
-                                <td>
-                                    The accounts this submission should be uploaded to.
-                                    They must appear in the format <code>sitename.accountname</code> exactly as they appear on the site.
-                                    Capitalization is ignored. Multiple accounts should be separated by spaces or newlines.
-                                    Spaces in usernames should be replaced with an underscore.
-                                </td>
-                                <td><pre>furaffinity.syfaro
+[A link](https://www.google.com)</pre>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>tags</th>
+                            <td>The tags for your submission separated by spaces. Hashtags will still only appear on
+                                Twitter.
+                            </td>
+                            <td>
+                                <pre>color sketch artwork myname</pre>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>rating</th>
+                            <td>The content rating, one of <code>general</code>, <code>mature</code>, or
+                                <code>explicit</code>.
+                            </td>
+                            <td>
+                                <pre>general</pre>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>file</th>
+                            <td>
+                                The name of the associated image in the ZIP file.
+                                It must be the full name including extension.
+                                Folders are not currently supported, everything must be in the root of the ZIP file.
+                            </td>
+                            <td>
+                                <pre>artwork.png</pre>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>accounts</th>
+                            <td>
+                                The accounts this submission should be uploaded to.
+                                They must appear in the format <code>sitename.accountname</code> exactly as they appear
+                                on the site.
+                                Capitalization is ignored. Multiple accounts should be separated by spaces or newlines.
+                                Spaces in usernames should be replaced with an underscore.
+                            </td>
+                            <td><pre>furaffinity.syfaro
 weasyl.syfaro
 furrynetwork.syfaro
-tumblr.purplefox.tumblr.com</pre></td>
-                            </tr>
-                            <tr>
-                                <th>resize</th>
-                                <td>
-                                    Resolution to resize to for the upload. If the submission is under this value it is not modified.
-                                    If it is larger, it is resized to fit within this resolution preserving the aspect ratio and format.
-                                </td>
-                                <td><pre>1000*1000</pre></td>
-                            </tr>
+tumblr.purplefox.tumblr.com</pre>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>resize</th>
+                            <td>
+                                Resolution to resize to for the upload. If the submission is under this value it is not
+                                modified.
+                                If it is larger, it is resized to fit within this resolution preserving the aspect ratio
+                                and format.
+                            </td>
+                            <td>
+                                <pre>1000*1000</pre>
+                            </td>
+                        </tr>
                         </tbody>
                     </table>
                 </div>
@@ -122,6 +152,6 @@ Another submission,a second test,general,submission.png,furaffinity.syfaro weasy
 [My Homepage](https://syfaro.net) will convert to BBCode for sites that don't support Markdown automatically!"
                 </pre>
             </div>
-		</div>
-	</div>
+        </div>
+    </div>
 {% endblock %}

@@ -37,10 +37,11 @@ document.querySelector('.add-to-group').addEventListener('click', ev => {
 
     fetch('/list/group/add', {
         method: 'POST',
-        credentials:'same-origin',
+        credentials: 'same-origin',
         redirect: 'manual',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content,
         },
         body: JSON.stringify({
             'posts': inputs.filter(input => input.checked).map(input => parseInt(input.dataset.id, 10)),

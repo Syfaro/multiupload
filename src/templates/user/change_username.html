@@ -15,14 +15,18 @@
         <div class="row">
             <div class="col-sm-12 col-md-4 offset-md-4">
                 <form method="POST" action="{{ url_for('user.change_username_post') }}">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
                     <div class="form-group">
                         <label for="username">New username</label>
-                        <input type="text" class="form-control" name="username" id="username" placeholder="New username" value="{{ g.user.username }}">
+                        <input type="text" class="form-control" name="username" id="username" placeholder="New username"
+                               value="{{ g.user.username }}">
                     </div>
 
                     <div class="form-group">
                         <label for="password">Current password</label>
-                        <input type="password" class="form-control" name="password" id="password" placeholder="Current password">
+                        <input type="password" class="form-control" name="password" id="password"
+                               placeholder="Current password">
                     </div>
 
                     <div class="form-group">

@@ -1,12 +1,10 @@
 const submits = Array.from(document.querySelectorAll('.submit-submission'));
 
 const clickSubmit = ev => {
-    console.log('clicked');
-
     ev.preventDefault();
 
     if (ev.target.classList.contains('disabled')) return;
-    const id = ev.target.parentNode.querySelector('input[type="hidden"]').value;
+    const id = ev.target.parentNode.querySelector('input[name="id"]').value;
 
     ev.target.classList.add('disabled');
 

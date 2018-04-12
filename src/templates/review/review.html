@@ -8,16 +8,17 @@
     {% set name = rating.value|capitalize %}
     {% set lname = name|lower %}
     <div class="form-check">
-        <input class="form-check-input" type="radio" name="rating" id="rating-{{ lname }}" value="{{ lname }}" {{ 'checked' if sub.rating == rating }}>
+        <input class="form-check-input" type="radio" name="rating" id="rating-{{ lname }}"
+               value="{{ lname }}" {{ 'checked' if sub.rating == rating }}>
         <label class="form-check-label" for="rating-{{ lname }}">{{ name }}</label>
     </div>
 {%- endmacro %}
 
 {% block body %}
-	<div class="container">
-		<div class="row">
-			<div class="col-sm-12">
-				<div class="page-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="page-header">
                     <h1>{{ 'Review Submission' if sub.id else 'Upload New Art' }}</h1>
                 </div>
             </div>
@@ -28,32 +29,42 @@
 
     <div class="container">
         <form method="POST" action="{{ url_for('upload.create_art_post') }}" enctype="multipart/form-data">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="id" value="{{ sub.id or '' }}">
 
             <div class="row">
                 <div class="col-sm-12 col-md-4">
                     <div class="form-group">
                         <label for="title">Title</label>
-                        <input type="text" value="{{ sub.title if sub.title is not none }}" name="title" id="title" placeholder="Title" class="form-control">
+                        <input type="text" value="{{ sub.title if sub.title is not none }}" name="title" id="title"
+                               placeholder="Title" class="form-control">
                     </div>
 
                     <div class="form-group">
                         <label for="description">Description</label>
-                        <textarea class="form-control" name="description" id="description" placeholder="Description">{{ sub.description if sub.description is not none }}</textarea>
+                        <textarea class="form-control" name="description" id="description"
+                                  placeholder="Description">{{ sub.description if sub.description is not none }}</textarea>
 
                         <p class="form-text">
-                            <button type="button" class="btn btn-secondary btn-sm mb-1" data-toggle="modal" data-target=".add-user-modal">Add user link</button>
-                            <button type="button" class="btn btn-secondary btn-sm mb-1" data-toggle="modal" data-target=".description-preview-modal">Preview description</button>
+                            <button type="button" class="btn btn-secondary btn-sm mb-1" data-toggle="modal"
+                                    data-target=".add-user-modal">Add user link
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm mb-1" data-toggle="modal"
+                                    data-target=".description-preview-modal">Preview description
+                            </button>
                         </p>
 
                         <p class="form-text">
-                            In addition to site specific user links, the other Markdown conversions are documented <a href="https://git.huefox.com/syfaro/multiupload/wiki/Supported+Markdown+Conversions" target="_blank">here</a>.
+                            In addition to site specific user links, the other Markdown conversions are documented <a
+                                href="https://git.huefox.com/syfaro/multiupload/wiki/Supported+Markdown+Conversions"
+                                target="_blank">here</a>.
                         </p>
                     </div>
 
                     <div class="form-group">
                         <label for="keywords">Keywords</label>
-                        <textarea class="form-control" name="keywords" id="keywords" placeholder="Keywords">{{ sub.tags if sub.tags is not none }}</textarea>
+                        <textarea class="form-control" name="keywords" id="keywords"
+                                  placeholder="Keywords">{{ sub.tags if sub.tags is not none }}</textarea>
 
                         <p class="form-text twitter-hashtag d-none">
                             Keywords beginning with a hashtag will only appear on submissions to Twitter.
@@ -64,7 +75,8 @@
 
                     <div class="form-group">
                         <label for="resize">Max Resolution</label>
-                        <input type="text" name="resize" id="resize" placeholder="Height x Width" class="form-control" value="{{ sub.data.resize if sub.data.resize is not none }}">
+                        <input type="text" name="resize" id="resize" placeholder="Height x Width" class="form-control"
+                               value="{{ sub.data.resize if sub.data.resize is not none }}">
                     </div>
 
                     {% for r in rating %}
@@ -88,13 +100,20 @@
 
                     {% set ac = namespace(accounts=false) %}
 
-					{% for account in accounts %}
+                    {% for account in accounts %}
                         {% set ac.accounts = true %}
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="account" value="{{ account.account.id }}" id="account{{ account.account.id }}" {{ 'checked' if account.selected }} data-site="{{ account.account.site_id }}" data-site-name="{{ account.account.site.name }}" data-account="{{ account.account.username }}">
-                            <label class="form-check-label" for="account{{ account.account.id }}">{{ account.account.site.name }} - {{ account.account.username }}</label>
+                            <input class="form-check-input" type="checkbox" name="account"
+                                   value="{{ account.account.id }}"
+                                   id="account{{ account.account.id }}" {{ 'checked' if account.selected }}
+                                   data-site="{{ account.account.site_id }}"
+                                   data-site-name="{{ account.account.site.name }}"
+                                   data-account="{{ account.account.username }}">
+                            <label class="form-check-label"
+                                   for="account{{ account.account.id }}">{{ account.account.site.name }}
+                                - {{ account.account.username }}</label>
                         </div>
-					{% endfor %}
+                    {% endfor %}
 
                     {% if not ac.accounts %}
                         <div>
@@ -103,32 +122,36 @@
                     {% endif %}
 
                     {{ getSiteTemplates('right_sidebar') }}
-				</div>
+                </div>
             </div>
 
             <div class="row mt-3">
                 <div class="col-sm-12 col-md-4 offset-md-4 text-center">
                     <div>
-                        <button type="submit" class="btn btn-secondary btn-lg" formaction="{{ url_for('list.save') }}">Save For Later</button>
+                        <button type="submit" class="btn btn-secondary btn-lg" formaction="{{ url_for('list.save') }}">
+                            Save For Later
+                        </button>
                         <button type="submit" class="btn btn-primary btn-lg">Upload</button>
                     </div>
 
                     {% if sub.id %}
                         <div class="mt-1">
-                            <button type="submit" class="btn btn-danger btn-sm" formaction="{{ url_for('list.remove') }}">Remove</button>
+                            <button type="submit" class="btn btn-danger btn-sm"
+                                    formaction="{{ url_for('list.remove') }}">Remove
+                            </button>
                         </div>
                     {% endif %}
                 </div>
             </div>
         </form>
-	</div>
+    </div>
 
     {{ userLinkModal(sites) }}
     {{ descriptionPreviewModal() }}
 
-    <script src="{{ url_for('static', filename='js/upload/review.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/upload/userlink.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/upload/preview.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/upload/review.js') }}" nonce="{{ nonce() }}"></script>
+    <script src="{{ url_for('static', filename='js/upload/userlink.js') }}" nonce="{{ nonce() }}"></script>
+    <script src="{{ url_for('static', filename='js/upload/preview.js') }}" nonce="{{ nonce() }}"></script>
 
     {{ getSiteScripts() }}
 {% endblock %}

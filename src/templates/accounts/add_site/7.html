@@ -4,33 +4,35 @@
 {% set page='accounts' %}
 
 {% block body %}
-	<div class="container">
-		<div class="row">
-			<div class="col-sm-12 col-md-4 offset-md-4">
-				<div class="page-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12 col-md-4 offset-md-4">
+                <div class="page-header">
                     <h1>Log into {{ site.name }}</h1>
                 </div>
-			</div>
-		</div>
-	</div>
+            </div>
+        </div>
+    </div>
 
-	{{ flashes('col-md-4 offset-md-4') }}
+    {{ flashes('col-md-4 offset-md-4') }}
 
-	<div class="container">
-		<div class="row">
-			<div class="col-sm-12 col-md-4 offset-md-4">
-				<form method="POST" action="{{ url_for('accounts.add_post', site_id=site.value) }}">
-					<ul>
-						{% for blog in extra_data.user.user.blogs %}
-							<li>{{ blog.name }} — <a href="{{ blog.url }}">{{ blog.url }}</a></li>
-						{% endfor %}
-					</ul>
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12 col-md-4 offset-md-4">
+                <form method="POST" action="{{ url_for('accounts.add_post', site_id=site.value) }}">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 
-					<div class="form-group">
-						<button type="submit" class="btn btn-primary form-control">Add</button>
-					</div>
-				</form>
-			</div>
-		</div>
-	</div>
+                    <ul>
+                        {% for blog in extra_data.user.user.blogs %}
+                            <li>{{ blog.name }} — <a href="{{ blog.url }}">{{ blog.url }}</a></li>
+                        {% endfor %}
+                    </ul>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary form-control">Add</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 {% endblock %}

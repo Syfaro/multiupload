@@ -2,7 +2,8 @@
     {% set lname = name|lower %}
     {% set content = sub.data.get('da-content') %}
     <div class="form-check">
-        <input class="form-check-input" type="checkbox" name="da-content" value="{{ lname }}" id="da-{{ lname }}" {{ 'checked' if content and lname in content }}>
+        <input class="form-check-input" type="checkbox" name="da-content" value="{{ lname }}"
+               id="da-{{ lname }}" {{ 'checked' if content and lname in content }}>
         <label class="form-check-label" for="da-{{ lname }}">{{ name }}</label>
     </div>
 {%- endmacro %}

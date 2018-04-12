@@ -1,30 +1,30 @@
 {% extends '_main.html' %}
 
 {% block body %}
-	<div class="container">
-		<div class="row">
-			<div class="col-sm-12 col-md-4 offset-md-4">
-				<div class="page-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12 col-md-4 offset-md-4">
+                <div class="page-header">
                     <h1>Post uploaded</h1>
                 </div>
-			</div>
-		</div>
-	</div>
+            </div>
+        </div>
+    </div>
 
-	{{ flashes('col-md-4 offset-md-4') }}
+    {{ flashes('col-md-4 offset-md-4') }}
 
-	<div class="container">
-		<div class="row">
-			<div class="col-sm-12 col-md-4 offset-md-4">
-				<ul>
-					{% for upload in uploads %}
-						<li><a href="{{ upload.link }}">{{ upload.name }}</a></li>
-					{% endfor %}
-				</ul>
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12 col-md-4 offset-md-4">
+                <ul>
+                    {% for upload in uploads %}
+                        <li><a href="{{ upload.link }}">{{ upload.name }}</a></li>
+                    {% endfor %}
+                </ul>
 
-				<a href="{{ url_for('upload.create_art') }}" class="btn btn-primary">Upload another?</a>
+                <a href="{{ url_for('upload.create_art') }}" class="btn btn-primary">Upload another?</a>
                 <a href="{{ url_for('list.index') }}" class="btn btn-secondary">Review pending</a>
-			</div>
-		</div>
-	</div>
+            </div>
+        </div>
+    </div>
 {% endblock %}

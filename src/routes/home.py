@@ -13,9 +13,8 @@ from sqlalchemy import func
 from models import User
 from models import db
 from sites.known import known_names
-from utils import english_series
+from utils import english_series, random_string
 from utils import get_active_notices
-from utils import login_required
 from utils import send_to_influx
 
 app = Blueprint('home', __name__)
@@ -165,10 +164,3 @@ def register_post():
         flash('A link was sent to you to verify your email address.')
 
     return redirect(url_for('upload.create_art'))
-
-
-@app.route('/beta', methods=['GET'])
-@app.route('/beta/<path:p>', methods=['GET'])
-@login_required
-def beta(p=None):
-    return render_template('app.html', user=g.user)

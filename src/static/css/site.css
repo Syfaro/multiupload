@@ -15,6 +15,19 @@
     white-space: pre-wrap;
 }
 
+.features h1,
+.features h2 {
+    text-align: center;
+}
+
+.features p {
+    text-align: justify;
+}
+
+.revision a {
+    font-family: monospace;
+}
+
 .spinner {
     border: 5px solid #f3f3f3;
     border-color: var(--gray);
@@ -49,7 +62,7 @@
     }
 }
 
-@media(max-width: 576px) {
+@media (max-width: 576px) {
     .page-header + h1 {
         margin: -2rem 0 2rem;
     }

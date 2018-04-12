@@ -6,47 +6,50 @@
     <div class="table-responsive">
         <table class="table">
             <thead>
-                <tr>
-                    <th>Select</th>
-                    <th style="width: 30%">Title</th>
-                    <th>Description</th>
-                    <th>Keywords</th>
-                    <th>Rating</th>
-                    <th>Sites</th>
-                    <th>Image</th>
-                    <th></th>
-                </tr>
+            <tr>
+                <th>Select</th>
+                <th style="width: 30%">Title</th>
+                <th>Description</th>
+                <th>Keywords</th>
+                <th>Rating</th>
+                <th>Sites</th>
+                <th>Image</th>
+                <th></th>
+            </tr>
             </thead>
             <tbody>
-                {% for sub in submissions %}
-                    <tr>
-                        <td><input type="checkbox" data-id="{{ sub.id }}"></td>
-                        <th>{{ sub.title }}</th>
-                        <td>{{ sub.description|has_text }}</td>
-                        <td>{{ sub.tags|has_text }}</td>
-                        <td>{{ sub.rating|has_text }}</td>
-                        <td>{{ sub.account_ids|has_text }}</td>
-                        <td>{{ sub.image_filename|has_text }}</td>
-                        <td>
-                            <form action="{{ url_for('list.remove') }}" method="POST">
-                                <input type="hidden" name="id" value="{{ sub.id }}">
-                                <a class="btn btn-primary btn-sm submit-submission {{ 'disabled' if not sub.has_all else '' }}" href="#">Submit</a>
-                                <a href="{{ url_for('upload.review', id=sub.id) }}" class="btn btn-sm btn-secondary">Review</a>
-                                <button type="submit" class="btn btn-danger btn-sm">Remove</button>
-                            </form>
-                        </td>
-                    </tr>
-                {% endfor %}
+            {% for sub in submissions %}
+                <tr>
+                    <td><input type="checkbox" data-id="{{ sub.id }}"></td>
+                    <th>{{ sub.title }}</th>
+                    <td>{{ sub.description|has_text }}</td>
+                    <td>{{ sub.tags|has_text }}</td>
+                    <td>{{ sub.rating|has_text }}</td>
+                    <td>{{ sub.account_ids|has_text }}</td>
+                    <td>{{ sub.image_filename|has_text }}</td>
+                    <td>
+                        <form action="{{ url_for('list.remove') }}" method="POST">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="id" value="{{ sub.id }}">
+                            <a class="btn btn-primary btn-sm submit-submission {{ 'disabled' if not sub.has_all else '' }}"
+                               href="#">Submit</a>
+                            <a href="{{ url_for('upload.review', id=sub.id) }}"
+                               class="btn btn-sm btn-secondary">Review</a>
+                            <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
             </tbody>
         </table>
     </div>
 {%- endmacro %}
 
 {% block body %}
-	<div class="container">
-		<div class="row">
-			<div class="col-sm-12">
-				<div class="page-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="page-header">
                     <h1>Submissions Pending Review</h1>
                 </div>
             </div>
@@ -71,9 +74,14 @@
                     <h2>{{ group.name }}</h2>
 
                     <form method="POST" class="form-inline">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="group_id" value="{{ group.id }}">
-                        <button class="btn btn-sm btn-warning mr-sm-2 mb-2" formaction="{{ url_for('list.group_remove_post') }}">Remove group</button>
-                        <button class="btn btn-sm btn-danger mr-sm-2 mb-2" formaction="{{ url_for('list.group_delete_post') }}">Delete items in group</button>
+                        <button class="btn btn-sm btn-warning mr-sm-2 mb-2"
+                                formaction="{{ url_for('list.group_remove_post') }}">Remove group
+                        </button>
+                        <button class="btn btn-sm btn-danger mr-sm-2 mb-2"
+                                formaction="{{ url_for('list.group_delete_post') }}">Delete items in group
+                        </button>
                     </form>
 
                     {{ groupTable(group.submissions) }}
@@ -84,13 +92,15 @@
         {% if not ungrouped and not groups %}
             <div class="row">
                 <div class="col-sm-12">
-                    Try the <a href="{{ url_for('upload.zip') }}">ZIP uploader</a> or <a href="{{ url_for('upload.create_art') }}">regular uploader</a> before coming here!
+                    Try the <a href="{{ url_for('upload.zip') }}">ZIP uploader</a> or <a
+                        href="{{ url_for('upload.create_art') }}">regular uploader</a> before coming here!
                 </div>
             </div>
         {% else %}
             <div class="row">
                 <div class="col-sm-12">
-                    <a href="#" class="btn btn-primary select-action disabled" data-action="add" data-toggle="modal" data-target="#addGroupModal">Add selected to group</a>
+                    <a href="#" class="btn btn-primary select-action disabled" data-action="add" data-toggle="modal"
+                       data-target="#addGroupModal">Add selected to group</a>
                     <a href="#" class="btn btn-danger select-action disabled" data-action="delete">Delete selected</a>
                 </div>
             </div>
@@ -116,7 +126,8 @@
                     </div>
                     <div class="form-group new-group-name">
                         <label for="newgroup">Group name</label>
-                        <input type="text" name="group-name" class="form-control" id="newgroup" placeholder="Group name">
+                        <input type="text" name="group-name" class="form-control" id="newgroup"
+                               placeholder="Group name">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -127,6 +138,6 @@
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='js/list/group.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/list/upload.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/list/group.js') }}" nonce="{{ nonce() }}"></script>
+    <script src="{{ url_for('static', filename='js/list/upload.js') }}" nonce="{{ nonce() }}"></script>
 {% endblock %}

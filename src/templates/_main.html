@@ -1,34 +1,36 @@
 {% macro flashes(width='col-sm-12') -%}
-	{% with messages = get_flashed_messages() %}
-		{% if messages %}
-			<div class="container">
-				<div class="row">
-					<div class="{{ width }}">
-						{% for message in messages %}
-							<div class="alert alert-info">{{ message | safe }}</div>
-						{% endfor %}
-					</div>
-				</div>
-			</div>
-		{% endif %}
-	{% endwith %}
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="container">
+                <div class="row">
+                    <div class="{{ width }}">
+                        {% for message in messages %}
+                            <div class="alert alert-info">{{ message | safe }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    {% endwith %}
 {%- endmacro %}
 
 {% macro showNotices() -%}
-	{% if notices %}
-		<div class="container">
-			<div class="row">
-				<div class="col-sm-12 col-md-6 offset-md-3">
-					{% for notice in notices %}
-						<div class="alert alert-info alert-dismissible">
-							{% if user is defined %}<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true" data-id="{{ notice.id }}">&times;</span></button>{% endif %}
-							{{ notice.text | safe }}
-						</div>
-					{% endfor %}
-				</div>
-			</div>
-		</div>
-	{% endif %}
+    {% if notices %}
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-12 col-md-6 offset-md-3">
+                    {% for notice in notices %}
+                        <div class="alert alert-info alert-dismissible">
+                            {% if user is defined %}
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span
+                                        aria-hidden="true" data-id="{{ notice.id }}">&times;</span></button>{% endif %}
+                            {{ notice.text | safe }}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
 {%- endmacro %}
 
 {% set siteTemplatesToLoad = ['deviantart', 'inkbunny', 'twitter'] %} {# TODO: this needs to be dynamic #}
@@ -41,7 +43,7 @@
 
 {% macro getSiteScripts() -%}
     {% for site in siteTemplatesToLoad %}
-        <script src="{{ url_for('static', filename='js/sites/' + site + '.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/sites/' + site + '.js') }}" nonce="{{ nonce() }}"></script>
     {% endfor %}
 {%- endmacro %}
 
@@ -70,104 +72,116 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
 
-	<title>Furry Art Multiuploader</title>
+    <title>Furry Art Multiuploader</title>
 
-	<link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon" type="image/x-icon">
+    <link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon" type="image/x-icon">
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pulse.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/site.css') }}">
 
-    {% block extrahead %}{% endblock %}
+    {% if g.user %}
+        <meta name="user-id" content="{{ g.user.id }}">
+        <meta name="user-email" content="{{ g.user.email }}">
+    {% endif %}
+
+    <meta name="release" content="{{ git_version }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body>
-    <nav class="navbar navbar-expand-md navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('home.home') }}">Furry Art Multiuploader</a>
+<nav class="navbar navbar-expand-md navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="{{ url_for('home.home') }}">Furry Art Multiuploader</a>
 
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarContent">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarContent">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
-            <div class="collapse navbar-collapse" id="navbarContent">
-                {% if g.user %}
-                    <ul class="navbar-nav mr-auto">
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {{ 'active' if page in ('upload', 'csv', 'review', 'zip') }}" href="#" data-toggle="dropdown">
-                                Upload
-                            </a>
-                            <div class="dropdown-menu">
-                                <a class="dropdown-item {{ 'active' if page == 'upload' }}" href="{{ url_for('upload.create_art') }}">Simple Upload</a>
-                                <a class="dropdown-item {{ 'active' if page in ('zip', 'csv') }}" href="{{ url_for('upload.zip') }}">ZIP or CSV Upload</a>
-                                <a class="dropdown-item" href="{{ url_for('home.beta') }}">Beta Interface</a>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item {{ 'active' if page == 'review' }}" href="{{ url_for('list.index') }}">Pending Review</a>
-                            </div>
-                        </li>
+        <div class="collapse navbar-collapse" id="navbarContent">
+            {% if g.user %}
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {{ 'active' if page in ('upload', 'csv', 'review', 'zip') }}"
+                           href="#" data-toggle="dropdown">
+                            Upload
+                        </a>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item{{ ' active' if page == 'upload' }}"
+                               href="{{ url_for('upload.create_art') }}">Simple Upload</a>
+                            <a class="dropdown-item{{ ' active' if page in ('zip', 'csv') }}"
+                               href="{{ url_for('upload.zip') }}">ZIP or CSV Upload</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item{{ ' active' if page == 'review' }}"
+                               href="{{ url_for('list.index') }}">Pending Review</a>
+                        </div>
+                    </li>
 
-                        <li class="nav-item {{ 'active' if page == 'accounts' }}">
-                            <a class="nav-link" href="{{ url_for('accounts.manage') }}">Manage Accounts</a>
-                        </li>
+                    <li class="nav-item{{ ' active' if page == 'accounts' }}">
+                        <a class="nav-link" href="{{ url_for('accounts.manage') }}">Manage Accounts</a>
+                    </li>
 
-                        <li class="nav-item {{ 'active' if page == 'features' }}">
-                            <a class="nav-link" href="{{ url_for('home.features') }}">Features</a>
-                        </li>
-                    </ul>
+                    <li class="nav-item{{ ' active' if page == 'features' }}">
+                        <a class="nav-link" href="{{ url_for('home.features') }}">Features</a>
+                    </li>
+                </ul>
 
-                    <ul class="navbar-nav ml-auto">
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {{ 'active' if page in ('settings') }}" href="#" data-toggle="dropdown">
-                                {{ g.user.username }}
-                            </a>
-                            <div class="dropdown-menu">
-                                <a class="dropdown-item {{ 'active' if page == 'settings' }}" href="{{ url_for('user.settings') }}">Settings</a>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="{{ url_for('home.logout') }}">Sign Out</a>
-                            </div>
-                        </li>
-                    </ul>
-                {% else %}
-                    <ul class="navbar-nav mr-auto">
-                        <li class="nav-item {{ 'active' if page == 'features' }}">
-                            <a class="nav-link" href="{{ url_for('home.features') }}">Features</a>
-                        </li>
-                    </ul>
-                {% endif %}
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle{{ ' active' if page in ('settings') }}" href="#"
+                           data-toggle="dropdown">
+                            {{ g.user.username }}
+                        </a>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item{{ ' active' if page == 'settings' }}"
+                               href="{{ url_for('user.settings') }}">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="{{ url_for('home.logout') }}">Sign Out</a>
+                        </div>
+                    </li>
+                </ul>
+            {% else %}
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item{{ ' active' if page == 'features' }}">
+                        <a class="nav-link" href="{{ url_for('home.features') }}">Features</a>
+                    </li>
+                </ul>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<script src="{{ url_for('static', filename='js/raven.min.js') }}" nonce="{{ nonce() }}"></script>
+<script src="{{ url_for('static', filename='js/sentry.js') }}" nonce="{{ nonce() }}"></script>
+
+<script src="{{ url_for('static', filename='js/jquery-3.3.1.min.js') }}" nonce="{{ nonce() }}"></script>
+<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}" nonce="{{ nonce() }}"></script>
+
+{% block body %}{% endblock %}
+
+<div class="container mt-2 mb-2 text-center">
+    <footer class="footer">
+        <div class="row">
+            <div class="col-sm-12 text-muted">
+                <div>
+                    <a href="mailto:Syfaro<syfaro@huefox.com>?subject=Multiuploader">Bug? Suggestion?</a>
+                </div>
+
+                <div>
+                    <a title="Donate" href="https://ko-fi.com/syfaro" target="_blank">Donate &hearts;</a>
+                </div>
+
+                <div class="d-none revision">
+                    <a title="Current revision"
+                       href="https://git.huefox.com/syfaro/multiupload/commit/{{ git_version }}">{{ git_version[:7] }}</a>
+                </div>
             </div>
         </div>
-    </nav>
+    </footer>
+</div>
 
-    <script src="https://cdn.ravenjs.com/3.18.1/raven.min.js" crossorigin="anonymous"></script>
-	<script src="{{ url_for('static', filename='js/raven.js') }}"></script>
-
-	<script src="{{ url_for('static', filename='js/jquery-2.2.4.min.js') }}"></script>
-	<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
-
-	{% block body %}{% endblock %}
-
-	<div class="container mt-2 mb-2 text-center">
-		<footer class="footer">
-			<div class="row">
-				<div class="col-sm-12 text-muted">
-                    <div>
-                        <a href="mailto:Syfaro<syfaro@huefox.com>?subject=Multiuploader">Bug? Suggestion?</a>
-                    </div>
-
-                    <div>
-					    <a title="Donate" href="https://ko-fi.com/syfaro" target="_blank">Donate &hearts;</a>
-					</div>
-
-					<div>
-						<a title="Current revision" style="color: #{{ git_version[1:7] }}; font-family: monospace" href="https://git.huefox.com/syfaro/multiupload/commit/{{ git_version }}">{{ git_version }}</a>
-					</div>
-				</div>
-			</div>
-		</footer>
-	</div>
-
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/fetch/2.0.3/fetch.min.js"></script>
-	<script src="{{ url_for('static', filename='js/notices.js') }}"></script>
+<script src="{{ url_for('static', filename='js/fetch.min.js') }}" nonce="{{ nonce() }}"></script>
+<script src="{{ url_for('static', filename='js/notices.js') }}" nonce="{{ nonce() }}"></script>
 </body>
 </html>

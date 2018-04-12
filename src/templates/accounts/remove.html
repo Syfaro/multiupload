@@ -3,25 +3,27 @@
 {% set page='accounts' %}
 
 {% block body %}
-	<div class="container">
-		<div class="row">
-			<div class="col-sm-12">
-				<div class="page-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="page-header">
                     <h1>Remove account</h1>
                 </div>
 
-				<p>
-                    Are you sure you wish to remove account <strong>{{ account.username }}</strong> on <strong>{{ account.site.name }}</strong>?
-				</p>
+                <p>
+                    Are you sure you wish to remove account <strong>{{ account.username }}</strong> on
+                    <strong>{{ account.site.name }}</strong>?
+                </p>
 
-				<p>
-					<form method="POST" action="{{ url_for('accounts.remove_post') }}">
-						<input type="hidden" name="id" value="{{ account.id }}">
-						<button type="submit" class="btn btn-danger">Yes</button>
-						<a href="{{ url_for('accounts.manage') }}" class="btn btn-secondary">No</a>
-					</form>
-				</p>
-			</div>
-		</div>
-	</div>
+                <div>
+                    <form method="POST" action="{{ url_for('accounts.remove_post') }}">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="id" value="{{ account.id }}">
+                        <button type="submit" class="btn btn-danger">Yes</button>
+                        <a href="{{ url_for('accounts.manage') }}" class="btn btn-secondary">No</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}

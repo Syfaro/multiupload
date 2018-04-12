@@ -3,10 +3,10 @@
 {% set page='accounts' %}
 
 {% block body %}
-	<div class="container settings">
-		<div class="row">
-			<div class="col-sm-12">
-				<div class="page-header">
+    <div class="container settings">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="page-header">
                     <h1>Manage Accounts</h1>
                 </div>
             </div>
@@ -20,10 +20,11 @@
             <div class="col-sm-12">
                 <h1>Add Account</h1>
 
-				{% for site in sites %}
-					<a href="{{ url_for('accounts.add', site_id=site[0]) }}" class="btn btn-primary mb-1">{{ site[1] }}</a>
-				{% endfor %}
-			</div>
+                {% for site in sites %}
+                    <a href="{{ url_for('accounts.add', site_id=site[0]) }}"
+                       class="btn btn-primary mb-1">{{ site[1] }}</a>
+                {% endfor %}
+            </div>
         </div>
 
         {% if user.accounts.count() > 0 %}
@@ -32,7 +33,9 @@
                     <h1>Remove Account</h1>
 
                     {% for account in user.accounts %}
-                        <a class="btn btn-danger mb-1" href="{{ url_for('accounts.remove', account_id=account.id) }}">{{ account.site.name }} - {{ account.username }}</a>
+                        <a class="btn btn-danger mb-1"
+                           href="{{ url_for('accounts.remove', account_id=account.id) }}">{{ account.site.name }}
+                            - {{ account.username }}</a>
                     {% endfor %}
                 </div>
             </div>
@@ -45,5 +48,5 @@
                 <a href="{{ url_for('accounts.refresh_folders') }}" class="btn btn-primary">Refresh Folders</a>
             </div>
         </div>
-	</div>
+    </div>
 {% endblock %}

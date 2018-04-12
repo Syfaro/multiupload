@@ -1,30 +1,33 @@
 (function () {
-	'use strict';
+    'use strict';
 
-	var items = document.querySelectorAll('button.close');
+    var items = document.querySelectorAll('button.close');
 
-	if (!items) {
-		return;
-	}
+    if (!items) {
+        return;
+    }
 
-	Array.from(items).forEach(function (item) {
-		item.addEventListener('click', function (ev) {
-			var alert = ev.target.parentNode.parentNode;
-			var span = alert.querySelector('span[data-id]');
+    Array.from(items).forEach(function (item) {
+        item.addEventListener('click', function (ev) {
+            var alert = ev.target.parentNode.parentNode;
+            var span = alert.querySelector('span[data-id]');
 
-			if (!span) {
-				return;
-			}
+            if (!span) {
+                return;
+            }
 
-			var id = span.dataset.id;
+            var id = span.dataset.id;
 
-			fetch('/dismiss/' + id, {
-				method: 'POST',
-				credentials: 'include',
-				headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-			}).then(function (res) {
-				alert.classList.add('hidden');
-			});
-		});
-	});
+            fetch('/dismiss/' + id, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content,
+                }
+            }).then(function (res) {
+                alert.classList.add('hidden');
+            });
+        });
+    });
 }());

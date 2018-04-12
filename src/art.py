@@ -19,6 +19,8 @@ from routes.upload import app as upload_app
 from routes.user import app as user_app
 from routes.list import app as list_app
 from sentry import sentry
+from csrf import csrf
+from utils import random_string
 
 app = Flask(__name__)
 
@@ -34,7 +36,7 @@ app.register_blueprint(accounts_app, url_prefix='/account')
 app.register_blueprint(list_app, url_prefix='/list')
 app.register_blueprint(api_app, url_prefix='/api/v1')
 
-app.jinja_env.globals['git_version'] = app.config['SENTRY_RELEASE'][:7]
+app.jinja_env.globals['git_version'] = app.config['SENTRY_RELEASE']
 
 migrate = Migrate(app, db, render_as_batch=True)
 
@@ -48,10 +50,30 @@ def start_influx():
     g.start = time.time()
 
 
+@app.template_global('nonce')
+def nonce():
+    n = g.get('nonce')
+    if n:
+        return n
+    g.nonce = random_string(24)
+    return g.nonce
+
+
 @app.after_request
 def record_stats(resp):
     if resp.content_type == 'text/html; charset=utf-8':
         resp.set_data(minify(resp.get_data(as_text=True)))
+
+    resp.headers['Content-Security-Policy'] = "default-src 'none';" \
+                                              "script-src 'self' 'unsafe-inline' https: 'nonce-{1}' 'strict-dynamic';" \
+                                              "object-src 'none';" \
+                                              "style-src 'self' 'unsafe-inline' fonts.googleapis.com;" \
+                                              "img-src 'self' blob: data:;" \
+                                              "media-src 'none';" \
+                                              "frame-src 'self';" \
+                                              "font-src 'self' fonts.gstatic.com;" \
+                                              "connect-src 'self' sentry.io;" \
+                                              "report-uri {0}".format(app.config['SENTRY_REPORT'], nonce())
 
     influx = g.get('influx', None)
     start_time = g.get('start', None)
@@ -85,9 +107,15 @@ def internal_server_error(error):
     return render_template('500.html', event_id=event, public_dsn=dsn), 500
 
 
+@app.errorhandler(403)
+def forbidden_error(error):
+    return render_template('403.html'), 403
+
+
 if __name__ == '__main__':
     with app.app_context():
         sentry.init_app(app)
+        csrf.init_app(app)
 
         db.init_app(app)
         db.create_all()

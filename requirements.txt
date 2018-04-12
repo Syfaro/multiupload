@@ -17,3 +17,5 @@ requests==2.18.4
 simple-crypt==4.1.7
 tweepy==3.5.0
 flask_migrate==2.1.1
+htmlmin
+flask-seasurf

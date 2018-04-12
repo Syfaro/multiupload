@@ -1,35 +1,38 @@
 {% extends '_main.html' %}
 
 {% block body %}
-	<div class="container">
-		<div class="row">
-			<div class="col-sm-12 col-md-4 offset-md-4">
-				<div class="page-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12 col-md-4 offset-md-4">
+                <div class="page-header">
                     <h1>Reset Password</h1>
                 </div>
-			</div>
-		</div>
-	</div>
+            </div>
+        </div>
+    </div>
 
-	{{ flashes('col-md-4 offset-md-4') }}
+    {{ flashes('col-md-4 offset-md-4') }}
 
-	<div class="container">
-		<div class="row">
-			<div class="col-sm-12 col-md-4 offset-md-4">
-				<p>
-					Please note that resetting your password will remove all your accounts and saved submissions.
-					As this data was encrypted with your password, it cannot be retrieved.
-				</p>
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12 col-md-4 offset-md-4">
+                <p>
+                    Please note that resetting your password will remove all your accounts and saved submissions.
+                    As this data was encrypted with your password, it cannot be retrieved.
+                </p>
 
-				<form method="POST" action="{{ url_for('user.password_reset_post') }}">
+                <form method="POST" action="{{ url_for('user.password_reset_post') }}">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
                     <div class="form-group">
                         <label for="email">Email address</label>
-                        <input type="email" name="email" class="form-control" id="email" placeholder="Email address" value="{{ session.get('email', '') }}">
+                        <input type="email" name="email" class="form-control" id="email" placeholder="Email address"
+                               value="{{ session.get('email', '') }}">
                     </div>
 
                     <button type="submit" class="btn btn-primary">Reset password</button>
-				</form>
-			</div>
-		</div>
-	</div>
+                </form>
+            </div>
+        </div>
+    </div>
 {% endblock %}

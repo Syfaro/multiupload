@@ -3,35 +3,41 @@
 {% set page='accounts' %}
 
 {% block body %}
-	<div class="container">
-		<div class="row">
-			<div class="col-sm-12 col-md-4 offset-md-4">
-				<div class="page-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12 col-md-4 offset-md-4">
+                <div class="page-header">
                     <h1>Log into {{ site.name }}</h1>
                 </div>
-			</div>
-		</div>
-	</div>
+            </div>
+        </div>
+    </div>
 
-	{{ flashes('col-md-4 offset-md-4') }}
+    {{ flashes('col-md-4 offset-md-4') }}
 
-	<div class="container">
-		<div class="row">
-			<div class="col-sm-12 col-md-4 offset-md-4">
-				<p>
-					Please visit <a href="https://www.weasyl.com/control/apikeys" target="_blank">this page</a> to get your Weasyl authentication token. It should be a long string. You may need to click "New API Key" to generate one. We suggest generating a new one and setting a description so if you need to revoke one in the future, you can remember which one is which.
-				</p>
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12 col-md-4 offset-md-4">
+                <p>
+                    Please visit <a href="https://www.weasyl.com/control/apikeys" target="_blank">this page</a> to get
+                    your Weasyl authentication token. It should be a long string. You may need to click "New API Key" to
+                    generate one. We suggest generating a new one and setting a description so if you need to revoke one
+                    in the future, you can remember which one is which.
+                </p>
 
-				<form method="POST" action="{{ url_for('accounts.add_post', site_id=site.value) }}">
-					<div class="form-group">
-						<input type="text" class="form-control" name="api_token" placeholder="API Token" autocomplete="off">
-					</div>
+                <form method="POST" action="{{ url_for('accounts.add_post', site_id=site.value) }}">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 
-					<div class="form-group">
-						<button type="submit" class="btn btn-primary form-control">Login</button>
-					</div>
-				</form>
-			</div>
-		</div>
-	</div>
+                    <div class="form-group">
+                        <input type="text" class="form-control" name="api_token" placeholder="API Token"
+                               autocomplete="off">
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary form-control">Login</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 {% endblock %}
