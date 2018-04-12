@@ -112,23 +112,23 @@ def forbidden_error(error):
     return render_template('403.html'), 403
 
 
+with app.app_context():
+    sentry.init_app(app)
+    csrf.init_app(app)
+
+    db.init_app(app)
+    db.create_all()
+
+    from models import Site
+    from sites.known import known_list
+    for site in known_list():
+        s = Site.query.get(site[0])
+        if not s:
+            s = Site(site[1])
+            s.id = site[0]
+
+            db.session.add(s)
+    db.session.commit()
+
 if __name__ == '__main__':
-    with app.app_context():
-        sentry.init_app(app)
-        csrf.init_app(app)
-
-        db.init_app(app)
-        db.create_all()
-
-        from models import Site
-        from sites.known import known_list
-        for site in known_list():
-            s = Site.query.get(site[0])
-            if not s:
-                s = Site(site[1])
-                s.id = site[0]
-
-                db.session.add(s)
-        db.session.commit()
-
     app.run()
