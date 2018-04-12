@@ -73,6 +73,7 @@ def record_stats(resp):
                                               "frame-src 'self';" \
                                               "font-src 'self' fonts.gstatic.com;" \
                                               "connect-src 'self' sentry.io;" \
+                                              "base-uri 'none';" \
                                               "report-uri {0}".format(app.config['SENTRY_REPORT'], nonce())
 
     influx = g.get('influx', None)
