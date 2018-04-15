@@ -18,7 +18,7 @@
 
             var id = span.dataset.id;
 
-            fetch('/dismiss/' + id, {
+            fetch('/user/dismiss/' + id, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
