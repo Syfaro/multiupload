@@ -1,16 +1,16 @@
+import json
 import os
 import shutil
 import time
 from csv import DictReader
 from io import StringIO
-from os.path import join
-from typing import List
+from typing import List, Tuple
 from zipfile import ZipFile
 
 import magic
 import simplecrypt
 from chardet import UniversalDetector
-from flask import Blueprint
+from flask import Blueprint, Response, stream_with_context
 from flask import current_app
 from flask import flash
 from flask import g
@@ -20,14 +20,15 @@ from flask import request
 from flask import send_from_directory
 from flask import session
 from flask import url_for
+from os.path import join
 from requests import HTTPError
 from werkzeug.utils import secure_filename
 
+from constant import Sites
 from models import Account
 from models import SavedSubmission
 from models import db
-from sites import BadCredentials
-from sites import SiteError
+from sites import BadCredentials, SiteError
 from sites.known import KNOWN_SITES
 from sites.known import known_list
 from submission import Rating
@@ -50,6 +51,132 @@ def create_art():
 
     return render_template('review/review.html', user=g.user, accounts=accounts, sites=known_list(),
                            notices=get_active_notices(for_user=g.user.id), sub=SavedSubmission(), rating=Rating)
+
+
+def submit_art(submission, account, saved=None, twitter_links=None) -> dict:
+    """Upload an art submission to an account.
+    :param submission: the Submission object to upload
+    :param account: the Account to upload to
+    :param saved: if there is an associated SavedSubmission, that
+    :param twitter_links: links to use for Twitter
+    :return: dict containing a link and name to display
+    """
+    start_time = time.time()
+    decrypted = simplecrypt.decrypt(session['password'], account.credentials)
+
+    for site in KNOWN_SITES:
+        if site.SITE == account.site:
+            s = site(decrypted, account)
+
+            errors = s.validate_submission(submission)
+            if errors:
+                for error in errors:
+                    flash(error)
+                    continue
+
+            submission.image_bytes.seek(0)
+
+            extra = {}
+
+            if saved:
+                extra = saved.data
+
+            if twitter_links:
+                extra['twitter-links'] = twitter_links
+
+            link = s.submit_artwork(submission, extra=extra)
+
+            write_upload_time(start_time, account.site.value)
+
+            return {
+                'link': link,
+                'name': '{site} - {account}'.format(site=site.SITE.name, account=account.username)
+            }
+
+
+def upload_and_send(submission, accounts, password, saved, twitter_account_ids):
+    twitter_links: List[Tuple[Sites, str]] = []
+    upload_accounts: List[Account] = []
+    upload_error = False
+
+    yield 'event: count\ndata: {count}\n\n'.format(count=len(accounts))
+
+    for account in accounts:
+        try:
+            result = submit_art(submission, account, password, saved, twitter_links)
+            yield 'event: upload\ndata: {res}\n\n'.format(res=json.dumps(result))
+
+            if account.id in twitter_account_ids:
+                twitter_links.append((account.site, result['link'],))
+        except BadCredentials:
+            yield 'event: badcreds\ndata: {info}\n\n'.format(
+                info=json.dumps({'site': account.site.value, 'account': account.username}))
+            upload_error = True
+        except SiteError as ex:
+            yield 'event: siteerror\ndata: {msg}\n\n'.format(msg=json.dumps({
+                'msg': ex.message,
+                'site': account.site.value,
+                'account': account.username,
+            }))
+            upload_error = True
+        except HTTPError as ex:
+            yield 'event: httperror\ndata: {info}\n\n'.format(info=json.dumps({
+                'site': account.site.value,
+                'account': account.username,
+                'code': ex.response.status_code,
+            }))
+            upload_error = True
+
+    if upload_error:
+        needs_upload = [account for account in accounts if account not in upload_accounts]
+        saved.set_accounts(needs_upload)  # remove accounts already uploaded to
+    else:
+        db.session.delete(saved)
+        db.session.commit()
+
+    yield 'event: done\ndata: completed\n\n'
+
+
+@app.route('/art/saved', methods=['GET'])
+@login_required
+def create_art_post_saved():
+    saved_id = request.args.get('id')
+    saved: SavedSubmission = SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(id=saved_id).first()
+
+    if not saved:
+        flash('Unknown item.')
+        return redirect(url_for('list.index'))
+
+    submission = Submission(saved.title, saved.description, saved.tags, saved.rating.value, saved)
+
+    for account in Account.query.filter_by(user_id=g.user.id).all():
+        account.used_last = 0
+
+    accounts: List[Account] = []
+    for account in saved.accounts:
+        if not account or account.user_id != g.user.id:
+            print('bad account')
+            flash('Account does not exist or does not belong to current user.')
+            return redirect(url_for('upload.create_art'))
+
+        account.used_last = 1
+        accounts.append(account)
+    db.session.commit()  # save currently used accounts
+
+    accounts: List[Account] = sorted(accounts, key=lambda x: x.site_id)
+
+    twitter_account = saved.data.get('twitter-account')
+    twitter_account_ids = []
+    if twitter_account is not None:
+        try:
+            for i in twitter_account.split(' '):
+                twitter_account_ids.append(int(i))
+        except ValueError:
+            pass
+
+    return Response(
+        stream_with_context(upload_and_send(submission, accounts, session['password'], saved, twitter_account_ids)),
+        mimetype='text/event-stream')
 
 
 @app.route('/art', methods=['POST'])
@@ -112,7 +239,7 @@ def create_art_post():
 
         if upload:
             ext = safe_ext(upload.filename)
-            if upload and ext:
+            if ext:
                 saved.original_filename = secure_filename(upload.filename)
 
                 name = random_string(16) + '.' + ext
@@ -167,70 +294,43 @@ def create_art_post():
                 twitter_account_ids.append(int(i))
         except ValueError:
             pass
-    twitter_links = []
 
     upload_error = False
 
     uploads: List[dict] = []
+    uploaded_accounts: List[Account] = []
+    twitter_links: List[Tuple[Sites, str]] = []
     for account in accounts:
-        start_time = time.time()
+        try:
+            result = submit_art(submission, account, saved, twitter_links)
+            uploads.append(result)
+            uploaded_accounts.append(account)
 
-        decrypted = simplecrypt.decrypt(session['password'], account.credentials)
-
-        for site in KNOWN_SITES:
-            if site.SITE == account.site:
-                s = site(decrypted, account)
-
-                errors = s.validate_submission(submission)
-                if errors:
-                    for error in errors:
-                        flash(error)
-                        continue
-
-                submission.image_bytes.seek(0)
-
-                try:
-                    link = s.submit_artwork(submission, extra={
-                        'twitter-links': twitter_links,
-                        **saved.data,
-                    })
-
-                except BadCredentials:
-                    flash('Unable to upload on {site} to account {account}, you may need to log in again.'.format(
-                        site=account.site.name, account=account.username))
-                    upload_error = True
-                    continue
-
-                except SiteError as ex:
-                    flash('Unable to upload on {site} to account {account}: {msg}'.format(
-                        site=account.site.name, account=account.username, msg=ex.message
-                    ))
-                    upload_error = True
-                    continue
-
-                except HTTPError:
-                    flash('Unable to upload on {site} to account {account} due to a site issue.'.format(
-                        site=account.site.name, account=account.username
-                    ))
-                    upload_error = True
-                    continue
-
-                uploads.append({
-                    'link': link,
-                    'name': '{site} - {account}'.format(site=site.SITE.name, account=account.username)
-                })
-
-                if account.id in twitter_account_ids:
-                    twitter_links.append((site.SITE, link,))
-
-        write_upload_time(start_time, account.site.value)
+            if account.id in twitter_account_ids:
+                twitter_links.append((account.site, result['link'],))
+        except BadCredentials:
+            flash('Unable to upload on {site} to account {account}, you may need to log in again.'.format(
+                site=account.site.name, account=account.username))
+            upload_error = True
+        except SiteError as ex:
+            flash('Unable to upload on {site} to account {account}: {msg}'.format(site=account.site.name,
+                                                                                  account=account.username,
+                                                                                  msg=ex.message))
+            upload_error = True
+        except HTTPError:
+            flash('Unable to upload on {site} to account {account} due to a site issue.'.format(site=account.site.name,
+                                                                                                account=account.username))
+            upload_error = True
 
     if upload_error:
         flash('As an error occured, the submission has not been removed from the pending review list.')
 
+        needs_upload = [a for a in uploaded_accounts if a not in uploaded_accounts]
+        saved.set_accounts(needs_upload)  # remove accounts already uploaded to
+
         if upload:
             ext = safe_ext(upload.filename)
-            if upload and ext:
+            if ext:
                 saved.original_filename = secure_filename(upload.filename)
 
                 name = random_string(16) + '.' + ext
@@ -300,7 +400,8 @@ def parse_csv(f, known_files=None, base_files=None):
                         i = None
 
                         for a in user_accounts:
-                            if a.site_id == siteid and a.username.replace(' ', '_').casefold() == username.replace(' ', '_').casefold():
+                            if a.site_id == siteid and a.username.replace(' ', '_').casefold() == username.replace(' ',
+                                                                                                                   '_').casefold():
                                 i = a.id
                                 break
 
@@ -334,7 +435,7 @@ def parse_csv(f, known_files=None, base_files=None):
 @app.route('/csv', methods=['GET'])
 @login_required
 def csv():
-    return render_template('review/csv.html')
+    return redirect(url_for('upload.zip'))
 
 
 @app.route('/csv', methods=['POST'])

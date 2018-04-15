@@ -17,6 +17,7 @@ from sites import Site
 from sites import SiteError
 from submission import Rating
 from submission import Submission
+from utils import write_site_response
 
 
 class FurryNetwork(Site):
@@ -44,6 +45,7 @@ class FurryNetwork(Site):
             'client_id': '123',
             'client_secret': '',
         }, headers=HEADERS)
+        write_site_response(self.SITE.value, req)
 
         j = req.json()
 
@@ -57,6 +59,7 @@ class FurryNetwork(Site):
         req = sess.get('https://beta.furrynetwork.com/api/user', data={
             'user_id': j['user_id'],
         }, headers=auth_headers)
+        write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
         j = req.json()
@@ -111,6 +114,7 @@ class FurryNetwork(Site):
             'client_id': '123',
             'refresh_token': self.credentials['refresh'],
         }, headers=HEADERS)
+        write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
         j = req.json()
@@ -125,6 +129,7 @@ class FurryNetwork(Site):
         req = sess.get('https://beta.furrynetwork.com/api/user', data={
             'user_id': j['user_id'],
         }, headers=auth_headers)
+        write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
         j = req.json()
@@ -151,10 +156,12 @@ class FurryNetwork(Site):
 
         req = sess.get('https://beta.furrynetwork.com/api/submission/{username}/artwork/upload'.format(
             username=username), headers=auth_headers, params=params)
+        write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
         req = sess.post('https://beta.furrynetwork.com/api/submission/{username}/artwork/upload'.format(
             username=username), headers=auth_headers, params=params, data=submission.image_bytes)
+        write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
         j = req.json()
@@ -171,6 +178,7 @@ class FurryNetwork(Site):
             'publish': True,
             'community_tags_allowed': True,
         }), headers=auth_headers)
+        write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
         j = req.json()

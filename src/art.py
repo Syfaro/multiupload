@@ -65,10 +65,11 @@ def record_stats(resp):
         if resp.content_type == 'text/html; charset=utf-8':
             resp.set_data(minify(resp.get_data(as_text=True)))
 
+    # sentry error reporter requires inline styles
     resp.headers['Content-Security-Policy'] = "default-src 'none';" \
                                               "script-src 'self' 'unsafe-inline' https: 'nonce-{1}' 'strict-dynamic';" \
                                               "object-src 'none';" \
-                                              "style-src 'self' fonts.googleapis.com;" \
+                                              "style-src 'self' 'unsafe-inline' fonts.googleapis.com;" \
                                               "img-src 'self' blob: data:;" \
                                               "media-src 'none';" \
                                               "frame-src 'self';" \

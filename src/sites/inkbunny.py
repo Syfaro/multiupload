@@ -13,6 +13,7 @@ from sites import Site
 from sites import SiteError
 from submission import Rating
 from submission import Submission
+from utils import write_site_response
 
 
 class Inkbunny(Site):
@@ -37,6 +38,7 @@ class Inkbunny(Site):
             'username': data['username'],
             'password': data['password'],
         }, headers=HEADERS)
+        write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
         j = req.json()
@@ -75,6 +77,7 @@ class Inkbunny(Site):
         }, files={
             'uploadedfile[]': submission.get_image(),
         }, headers=HEADERS)
+        write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
         j = req.json()
@@ -97,6 +100,7 @@ class Inkbunny(Site):
             data['tag[4]'] = 'yes'
 
         req = sess.post('https://inkbunny.net/api_editsubmission.php', data=data, headers=HEADERS)
+        write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
         j = req.json()

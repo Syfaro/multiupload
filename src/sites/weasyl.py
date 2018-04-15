@@ -17,6 +17,7 @@ from sites import Site
 from sites import SiteError
 from submission import Rating
 from submission import Submission
+from utils import write_site_response
 
 AUTH_HEADER = 'X-Weasyl-API-Key'
 
@@ -39,6 +40,7 @@ class Weasyl(Site):
         auth_headers[AUTH_HEADER] = data['token']
 
         req = sess.get(WHOAMI, headers=auth_headers)
+        write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
         j = req.json()
@@ -78,6 +80,7 @@ class Weasyl(Site):
         sess = cfscrape.create_scraper()
 
         req = sess.get('https://www.weasyl.com/submit/visual', headers=auth_headers)
+        write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
         soup = BeautifulSoup(req.content, 'html.parser')
@@ -95,6 +98,7 @@ class Weasyl(Site):
         }, files={
             'submitfile': submission.get_image(),
         }, headers=auth_headers)
+        write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
         return req.url

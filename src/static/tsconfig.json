@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "sourceMap": true,
+    "outDir": "./js",
+    "rootDir": "ts/",
+    "lib": ["dom", "es6"]
+  },
+  "include": [
+    "ts/**/*"
+  ]
+}

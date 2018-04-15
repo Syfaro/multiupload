@@ -23,6 +23,7 @@ from sites import Site
 from sites import SiteError
 from submission import Rating
 from submission import Submission
+from utils import write_site_response
 
 
 class FurAffinity(Site):
@@ -38,6 +39,7 @@ class FurAffinity(Site):
         sess = cfscrape.create_scraper()
 
         req = sess.get('https://www.furaffinity.net/login/?mode=imagecaptcha', headers=HEADERS)
+        write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
         session['fa_cookie_b'] = req.cookies['b']
@@ -59,6 +61,7 @@ class FurAffinity(Site):
         req = sess.get('https://www.furaffinity.net/login/?mode=imagecaptcha', cookies={
             'b': session['fa_cookie_b'],
         }, headers=HEADERS)
+        write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
         req = sess.post('https://www.furaffinity.net/login/', cookies={
@@ -70,6 +73,7 @@ class FurAffinity(Site):
             'captcha': data['captcha'],
             'use_old_captcha': '1',
         }, allow_redirects=False, headers=HEADERS)
+        write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
         a = req.cookies.get('a', None)
@@ -110,12 +114,14 @@ class FurAffinity(Site):
         needs_resize = height > 1280 or width > 1280
 
         req = sess.get('https://www.furaffinity.net/submit/', cookies=self.credentials, headers=HEADERS)
+        write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
         req = sess.post('https://www.furaffinity.net/submit/', data={
             'part': '2',
             'submission_type': 'submission',
         }, cookies=self.credentials, headers=HEADERS)
+        write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
         try:
@@ -135,6 +141,7 @@ class FurAffinity(Site):
         }, files={
             'submission': image,
         }, cookies=self.credentials, headers=HEADERS)
+        write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
         page = BeautifulSoup(req.content, 'html.parser')
@@ -161,6 +168,7 @@ class FurAffinity(Site):
             'keywords': self.tag_str(submission.tags),
             'rating': self.map_rating(submission.rating),
         }, cookies=self.credentials, headers=HEADERS)
+        write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
         link = req.url
@@ -180,6 +188,7 @@ class FurAffinity(Site):
             }, files={
                 'newsubmission': submission.get_image(),
             }, cookies=self.credentials, headers=HEADERS)
+            write_site_response(self.SITE.value, req)
 
             try:
                 req.raise_for_status()

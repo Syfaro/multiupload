@@ -125,6 +125,22 @@ def write_upload_time(start_time, site=None, measurement='upload_time'):
     send_to_influx(point)
 
 
+def write_site_response(site, req):
+    point = {
+        'measurement': 'site_response',
+        'fields': {
+            'duration': req.elapsed.total_seconds(),
+        },
+        'tags': {
+            'site': site,
+            'method': req.request.method,
+            'status_code': req.status_code,
+        },
+    }
+
+    send_to_influx(point)
+
+
 def parse_resize(s: str) -> Union[None, Tuple[int, int]]:
     match = RESIZE_EXP.match(s.strip())
     if not match:

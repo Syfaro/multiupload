@@ -205,4 +205,22 @@ def parse_description(description, uploading_to):
 
             match = url.search(description)
 
+        if uploading_to == 8:
+            description = re.sub(r'([*_]{2})(.+)\1', r'<strong>\2</strong>', description)  # strong
+            description = re.sub(r'([*_])(.+)\1', r'<em>\2</em>', description)  # italic
+            description = re.sub(r'(~{2})(.+)\1', r'<strike>\2</strike>', description)  # strikethrough
+            description = re.sub(r'`(.+)`', r'\1', description)  # inline code block
+        else:
+            description = re.sub(r'([*_]{2})(.+)\1', r'[b]\2[/b]', description)  # strong
+            description = re.sub(r'([*_])(.+)\1', r'[i]\2[/i]', description)  # italic
+            description = re.sub(r'(~{2})(.+)\1', r'[s]\2[/s]', description)  # strikethrough
+            description = re.sub(r'`(.+)`', r'[code]\1[/code]', description)  # inline code block
+
+        if uploading_to == 1:
+            description = re.sub(r'\n-{5,}', r'\n[hr]', description)  # horizontal rule, FA style
+        elif uploading_to == 5:
+            description = re.sub(r'\n-{5,}', r'\n[rule]', description)  # horizontal rule, SF style
+        else:
+            description = re.sub(r'\n-{5,}', '', description)  # remove horizontal rule on other sites
+
     return description

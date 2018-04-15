@@ -31,8 +31,11 @@
                         <form action="{{ url_for('list.remove') }}" method="POST">
                             <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="id" value="{{ sub.id }}">
-                            <a class="btn btn-primary btn-sm submit-submission {{ 'disabled' if not sub.has_all else '' }}"
-                               href="#">Submit</a>
+                            <button formaction="{{ url_for('upload.create_art_post_saved') }}"
+                                    class="btn btn-primary btn-sm submit-submission{{ ' disabled' if not sub.has_all else '' }}"
+                                    data-toggle="modal" data-target="#uploadModal">
+                                Submit
+                            </button>
                             <a href="{{ url_for('upload.review', id=sub.id) }}"
                                class="btn btn-sm btn-secondary">Review</a>
                             <button type="submit" class="btn btn-danger btn-sm">Remove</button>
@@ -105,6 +108,22 @@
                 </div>
             </div>
         {% endif %}
+    </div>
+
+    <div class="modal fade" id="uploadModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Uploading</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Starting upload...</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" disabled data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="modal fade" id="addGroupModal">

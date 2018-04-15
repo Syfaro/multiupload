@@ -3,11 +3,15 @@ $('.description-preview-modal').on('show.bs.modal', function () {
     body.innerHTML = 'Loading&hellip;';
 
     $.ajax({
-        type: 'GET',
         url: '/api/v1/preview/description',
         data: $('input[name="account"], #description').serialize()
     }).always(function (data) {
         body.innerHTML = '';
+
+        if (data === undefined) {
+            alert('Unable to get preview, please try again later');
+            return;
+        }
 
         for (let i = 0; i < data.descriptions.length; i++) {
             const description = data.descriptions[i];

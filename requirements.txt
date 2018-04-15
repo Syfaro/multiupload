@@ -2,7 +2,7 @@ bcrypt==3.1.4
 blinker==1.4
 beautifulsoup4==4.6.0
 chardet
-cfscrape==1.9.1
+cfscrape==1.9.5
 Flask==0.12.2
 Flask-Bootstrap==3.3.7.1
 Flask-SQLAlchemy==2.3.2

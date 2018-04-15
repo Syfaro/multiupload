@@ -16,6 +16,7 @@ from sites import Site
 from sites import SiteError
 from submission import Rating
 from submission import Submission
+from utils import write_site_response
 
 
 class SoFurry(Site):
@@ -39,6 +40,7 @@ class SoFurry(Site):
             'LoginForm[sfLoginUsername]': data['username'],
             'LoginForm[sfLoginPassword]': data['password'],
         }, headers=HEADERS, allow_redirects=False)
+        write_site_response(self.SITE.value, req)
 
         if 'sfuser' not in req.cookies:
             raise BadCredentials()
@@ -65,11 +67,13 @@ class SoFurry(Site):
             'LoginForm[sfLoginUsername]': self.credentials['username'],
             'LoginForm[sfLoginPassword]': self.credentials['password'],
         }, headers=HEADERS, allow_redirects=False)
+        write_site_response(self.SITE.value, req)
 
         if 'sfuser' not in req.cookies:
             raise BadCredentials()
 
         req = sess.get('https://www.sofurry.com/upload/details?contentType=1', headers=HEADERS)
+        write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
         soup = BeautifulSoup(req.content, 'html.parser')
@@ -89,6 +93,7 @@ class SoFurry(Site):
         }, files={
             'UploadForm[binarycontent]': submission.get_image(),
         }, headers=HEADERS)
+        write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
         return req.url

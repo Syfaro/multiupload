@@ -33,8 +33,6 @@ class Tumblr(Site):
         tumblr = tumblpy.Tumblpy(current_app.config['TUMBLR_KEY'], current_app.config['TUMBLR_SECRET'])
         auth_props = tumblr.get_authentication_tokens(current_app.config['TUMBLR_CALLBACK'])
 
-        print(auth_props)
-
         session['tumblr_token'] = auth_props['oauth_token_secret']
 
         return redirect(auth_props['auth_url'])

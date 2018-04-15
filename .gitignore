@@ -12,3 +12,4 @@ config.py
 *.ini
 *.sql
 package-lock.json
+*.map
