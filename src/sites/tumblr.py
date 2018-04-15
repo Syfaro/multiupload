@@ -11,7 +11,7 @@ from flask import request
 from flask import session
 
 from constant import Sites
-from models import Account
+from models import Account, AccountData
 from models import db
 from sites import BadCredentials
 from sites import Site
@@ -86,15 +86,16 @@ class Tumblr(Site):
                     'secret': session['tumblr_secret'],
                 })
             )
-
             accounts.append(account)
-
             db.session.add(account)
+            db.session.commit()
+
+            u = AccountData(account, 'url', blog['url'])
+            db.session.add(u)
+            db.session.commit()
 
         session.pop('tumblr_token')
         session.pop('tumblr_secret')
-
-        db.session.commit()
 
         return accounts
 
@@ -122,7 +123,13 @@ class Tumblr(Site):
         if not post_id:
             raise BadCredentials()
 
-        return 'https://{url}/post/{id}'.format(url=self.account.username, id=post_id)
+        url = 'http://' + self.account.username + '/'
+
+        data: AccountData = self.account.data.filter_by(key='url').first()
+        if data:
+            url = data.json
+
+        return '{url}post/{id}'.format(url=url, id=post_id)
 
     def tag_str(self, tags: List[str]) -> str:
         return ' ,'.join(tags)
