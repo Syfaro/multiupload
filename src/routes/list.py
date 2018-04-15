@@ -1,5 +1,3 @@
-from os.path import join
-
 from flask import Blueprint
 from flask import current_app
 from flask import flash
@@ -8,6 +6,7 @@ from flask import redirect
 from flask import render_template
 from flask import request
 from flask import url_for
+from os.path import join
 from werkzeug.utils import secure_filename
 
 from models import SavedSubmission
@@ -133,7 +132,7 @@ def group_add_post():
             db.session.delete(group)
 
     db.session.commit()
-    flash('Added posts to groups!')
+    flash('Added posts to group!')
 
     return redirect(url_for('list.index'))
 

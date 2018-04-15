@@ -3,7 +3,9 @@
     "sourceMap": true,
     "outDir": "./js",
     "rootDir": "ts/",
-    "lib": ["dom", "es6"]
+    "lib": ["dom", "es6"],
+    "target": "es2017",
+    "strictNullChecks": true
   },
   "include": [
     "ts/**/*"

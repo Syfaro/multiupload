@@ -16,7 +16,7 @@
 
 {% macro showNotices() -%}
     {% if notices %}
-        <div class="container">
+        <div class="container notices">
             <div class="row">
                 <div class="col-sm-12 col-md-6 offset-md-3">
                     {% for notice in notices %}
@@ -87,8 +87,24 @@
         <meta name="user-email" content="{{ g.user.email }}">
     {% endif %}
 
-    <meta name="release" content="{{ git_version }}">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <script nonce="{{ nonce() }}">
+        const Multiupload = {
+            release: '{{ git_version }}',
+            csrf: '{{ csrf_token() }}',
+            sentry: '{{ config.SENTRY_PUBLIC }}',
+            endpoints: {
+                review: {
+                    description: '{{ url_for('api.preview') }}',
+                },
+                group: {
+                    add: '{{ url_for('list.group_add_post') }}',
+                },
+                notice: {
+                    dismiss: '{{ url_for('user.dismiss_notice') }}',
+                },
+            },
+        };
+    </script>
 </head>
 <body>
 <nav class="navbar navbar-expand-md navbar-dark bg-primary">
@@ -182,6 +198,6 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/fetch.min.js') }}" nonce="{{ nonce() }}"></script>
-<script src="{{ url_for('static', filename='js/notices.js') }}" nonce="{{ nonce() }}"></script>
+<script src="{{ url_for('static', filename='js/notice.js') }}" nonce="{{ nonce() }}"></script>
 </body>
 </html>

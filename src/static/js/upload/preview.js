@@ -3,12 +3,14 @@ $('.description-preview-modal').on('show.bs.modal', function () {
     body.innerHTML = 'Loading&hellip;';
 
     $.ajax({
-        url: '/api/v1/preview/description',
-        data: $('input[name="account"], #description').serialize()
+        method: 'POST',
+        url: Multiupload.endpoints.review.description,
+        data: $('input[name="account"], #description').serialize(),
+        beforeSend: xhr => xhr.setRequestHeader('X-CSRFToken', Multiupload.csrf),
     }).always(function (data) {
         body.innerHTML = '';
 
-        if (data === undefined) {
+        if (!data || !data.descriptions) {
             alert('Unable to get preview, please try again later');
             return;
         }

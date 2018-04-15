@@ -5,7 +5,7 @@ import bcrypt
 import passwordmeter
 import requests
 import simplecrypt
-from flask import Blueprint, session, current_app
+from flask import Blueprint, current_app, session
 from flask import flash
 from flask import g
 from flask import redirect
@@ -15,7 +15,7 @@ from flask import url_for
 from sqlalchemy import func
 
 from constant import Sites
-from models import Account, User, SavedSubmission
+from models import Account, SavedSubmission, User
 from models import AccountConfig
 from models import NoticeViewed
 from models import db
@@ -24,9 +24,11 @@ from utils import login_required
 app = Blueprint('user', __name__)
 
 
-@app.route('/dismiss/<int:alert>', methods=['POST'])
+@app.route('/dismiss', methods=['POST'])
 @login_required
-def dismiss_notice(alert):
+def dismiss_notice():
+    alert = request.form.get('id')
+
     viewed = NoticeViewed(alert, g.user.id)
 
     db.session.add(viewed)

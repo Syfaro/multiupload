@@ -93,11 +93,11 @@ def description():
     })
 
 
-@app.route('/preview/description')
+@app.route('/preview/description', methods=['POST'])
 @login_required
 def preview():
-    accounts = request.args.getlist('account')
-    description = request.args.get('description', '')
+    accounts = request.form.getlist('account')
+    description = request.form.get('description', '')
 
     descriptions = []
     sites_done = []
@@ -105,7 +105,7 @@ def preview():
     for site in accounts:
         account = Account.query.filter_by(user_id=session['id']).filter_by(id=int(site)).first()
 
-        if account.site.value in sites_done or account.site == Sites.Twitter:
+        if not account or account.site.value in sites_done or account.site == Sites.Twitter:
             continue
 
         descriptions.append({
@@ -142,7 +142,7 @@ def get_deviantart_category():
         'catpath': path,
     }).content
 
-    cache.set('deviantart-' + path, sub, timeout=60*60*24)  # keep cached for 24 hours
+    cache.set('deviantart-' + path, sub, timeout=60 * 60 * 24)  # keep cached for 24 hours
 
     return Response(sub, mimetype='application/json')
 

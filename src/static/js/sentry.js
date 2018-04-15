@@ -1,14 +1,11 @@
-Raven.config('https://2af2d6d7acf04c6fb581e25a8601c15e@sentry.io/1187790').install();
+Raven.config(Multiupload.sentry).install();
 
-const release = document.querySelector('meta[name="release"]');
-if (release) {
-    const content = release.content;
-
-    Raven.setRelease(content);
+if (Multiupload.release) {
+    Raven.setRelease(Multiupload.release);
 
     window.addEventListener('load', () => {
         document.querySelector('.revision').classList.remove('d-none');
-        document.querySelector('.revision a').style.color = '#' + content.slice(-6);
+        document.querySelector('.revision a').style.color = '#' + Multiupload.release.slice(-6);
     });
 }
 
