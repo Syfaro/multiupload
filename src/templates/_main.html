@@ -82,28 +82,30 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pulse.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/site.css') }}">
 
-    {% if g.user %}
-        <meta name="user-id" content="{{ g.user.id }}">
-        <meta name="user-email" content="{{ g.user.email }}">
-    {% endif %}
-
     <script nonce="{{ nonce() }}">
         const Multiupload = {
-            release: '{{ git_version }}',
-            csrf: '{{ csrf_token() }}',
-            sentry: '{{ config.SENTRY_PUBLIC }}',
+            release: {{ git_version | tojson }},
+            csrf: {{ csrf_token() | tojson }},
+            sentry: {{ (config.SENTRY_PUBLIC if config.SENTRY_PUBLIC else None) | tojson }},
             endpoints: {
                 review: {
-                    description: '{{ url_for('api.preview') }}',
+                    description: {{ url_for('api.preview') | tojson }},
                 },
                 group: {
-                    add: '{{ url_for('list.group_add_post') }}',
+                    add: {{ url_for('list.group_add_post') | tojson }},
                 },
                 notice: {
-                    dismiss: '{{ url_for('user.dismiss_notice') }}',
+                    dismiss: {{ url_for('user.dismiss_notice') | tojson }},
                 },
             },
         };
+
+        {% if g.user %}
+            Multiupload.user = {
+                id: {{ g.user.id | tojson }},
+                email: {{ g.user.email | tojson }},
+            };
+        {% endif %}
     </script>
 </head>
 <body>
