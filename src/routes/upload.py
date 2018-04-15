@@ -94,7 +94,7 @@ def submit_art(submission, account, saved=None, twitter_links=None) -> dict:
             }
 
 
-def upload_and_send(submission, accounts, password, saved, twitter_account_ids):
+def upload_and_send(submission, accounts, saved, twitter_account_ids):
     twitter_links: List[Tuple[Sites, str]] = []
     upload_accounts: List[Account] = []
     upload_error = False
@@ -103,7 +103,7 @@ def upload_and_send(submission, accounts, password, saved, twitter_account_ids):
 
     for account in accounts:
         try:
-            result = submit_art(submission, account, password, saved, twitter_links)
+            result = submit_art(submission, account, saved, twitter_links)
             yield 'event: upload\ndata: {res}\n\n'.format(res=json.dumps(result))
 
             if account.id in twitter_account_ids:
@@ -155,7 +155,6 @@ def create_art_post_saved():
     accounts: List[Account] = []
     for account in saved.accounts:
         if not account or account.user_id != g.user.id:
-            print('bad account')
             flash('Account does not exist or does not belong to current user.')
             return redirect(url_for('upload.create_art'))
 
@@ -175,7 +174,7 @@ def create_art_post_saved():
             pass
 
     return Response(
-        stream_with_context(upload_and_send(submission, accounts, session['password'], saved, twitter_account_ids)),
+        stream_with_context(upload_and_send(submission, accounts, saved, twitter_account_ids)),
         mimetype='text/event-stream')
 
 
@@ -400,8 +399,8 @@ def parse_csv(f, known_files=None, base_files=None):
                         i = None
 
                         for a in user_accounts:
-                            if a.site_id == siteid and a.username.replace(' ', '_').casefold() == username.replace(' ',
-                                                                                                                   '_').casefold():
+                            folded = a.username.replace(' ', '_').casefold() == username.replace(' ', '_').casefold()
+                            if a.site_id == siteid and folded:
                                 i = a.id
                                 break
 
