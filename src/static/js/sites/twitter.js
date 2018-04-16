@@ -26,7 +26,7 @@ const updateTwitterLinks = () => {
 
     let otherSitesSelected = [];
 
-    if (format.value === 'single') {
+    if (format.value !== 'multi') {
         otherSitesSelected.push({
             site: null,
         });

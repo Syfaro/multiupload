@@ -11,7 +11,7 @@ from flask import request
 from flask import session
 
 from constant import Sites
-from models import Account, AccountData
+from models import Account, AccountData, SubmissionGroup
 from models import db
 from sites import BadCredentials
 from sites import Site
@@ -133,3 +133,52 @@ class Tumblr(Site):
 
     def tag_str(self, tags: List[str]) -> str:
         return ' ,'.join(tags)
+
+    def upload_group(self, group: SubmissionGroup) -> str:
+        t = tumblpy.Tumblpy(current_app.config['TUMBLR_KEY'], current_app.config['TUMBLR_SECRET'],
+                            self.credentials['token'], self.credentials['secret'])
+
+        master = group.master
+        s = master.submission
+        submissions = group.submissions
+
+        images = self.collect_images(submissions)
+
+        image_bytes = [image['bytes'] for image in images]
+
+        if self.account['tumblr_title'] and self.account['tumblr_title'].val == 'yes':
+            master.description = '## ' + master.title + '\n\n' + master.description
+
+        params = {
+            'type': 'photo',
+            'caption': s.description_for_site(self.SITE),
+            'data': image_bytes,
+            'state': 'published',
+            'format': 'markdown',
+            'tags': self.tag_str(s.tags),
+        }
+
+        for idx, image in enumerate(image_bytes):
+            params['data[{0}]'.format(idx)] = image
+
+        try:
+            res = t.post('post', blog_url=self.account.username, params=params)
+        except tumblpy.TumblpyError as ex:
+            raise SiteError(ex.msg)
+
+        post_id = res.get('id', None)
+
+        if not post_id:
+            raise BadCredentials()
+
+        url = 'http://' + self.account.username + '/'
+
+        data: AccountData = self.account.data.filter_by(key='url').first()
+        if data:
+            url = data.json
+
+        return '{url}post/{id}'.format(url=url, id=post_id)
+
+    @staticmethod
+    def supports_group() -> bool:
+        return True

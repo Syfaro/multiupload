@@ -10,7 +10,7 @@ from flask import request
 from flask import session
 
 from constant import Sites
-from models import Account
+from models import Account, SubmissionGroup
 from models import db
 from sentry import sentry
 from sites import AccountExists
@@ -19,7 +19,6 @@ from sites import Site
 from sites import SiteError
 from submission import Rating
 from submission import Submission
-
 
 SHORT_NAMES = {
     Sites.FurAffinity: 'FA',
@@ -130,7 +129,7 @@ class Twitter(Site):
 
         if links:
             if format == 'single' or format == '':
-                    status = status + ' ' + links[0][1]
+                status = status + ' ' + links[0][1]
             elif format == 'multi':
                 status += '\n'
 
@@ -146,3 +145,57 @@ class Twitter(Site):
             raise SiteError(ex.reason)
 
         return 'https://twitter.com/{username}/status/{id}'.format(username=tweet.user.screen_name, id=tweet.id_str)
+
+    def upload_group(self, group: SubmissionGroup):
+        master = group.master
+        s = master.submission
+        submissions = group.submissions
+
+        images = list(self.collect_images(submissions))
+
+        auth = self._get_oauth_handler()
+        auth.set_access_token(self.credentials['token'], self.credentials['secret'])
+
+        api = tweepy.API(auth)
+
+        extra = master.data
+
+        use_custom_text = extra.get('twitter-custom', 'n')
+        custom_text = extra.get('twitter-custom-text')
+
+        format: str = extra.get('twitter-format', '')
+        links: list = extra.get('twitter-links')
+
+        if use_custom_text == 'y':
+            status = custom_text.strip()
+        else:
+            status = '{title} {hashtags}'.format(title=master.title,
+                                                 hashtags=self.tag_str(s.hashtags)).strip()
+
+        if links:
+            if format == 'single' or format == '':
+                status = status + ' ' + links[0][1]
+            elif format == 'multi':
+                status += '\n'
+
+                for link in links:
+                    name = SHORT_NAMES[link[0]]
+                    status += '\n{name}: {link}'.format(name=name, link=link[1])
+
+        try:
+            media_ids = []
+            for image in images:
+                res = api.media_upload(filename=image['original_filename'], file=image['bytes'])
+                media_ids.append(res.media_id)
+
+            tweet = api.update_status(status=status, media_ids=media_ids,
+                                      possibly_sensitive=False if s.rating == Rating.general else True)
+
+        except tweepy.TweepError as ex:
+            raise SiteError(ex.reason)
+
+        return 'https://twitter.com/{username}/status/{id}'.format(username=tweet.user.screen_name, id=tweet.id_str)
+
+    @staticmethod
+    def supports_group() -> bool:
+        return True

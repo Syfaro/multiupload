@@ -1,6 +1,6 @@
 {% macro matureBox(name) -%}
     {% set lname = name|lower %}
-    {% set content = sub.data.get('da-content') %}
+    {% set content = sub.data.get('da-content') if sub else None %}
     <div class="form-check">
         <input class="form-check-input" type="checkbox" name="da-content" value="{{ lname }}"
                id="da-{{ lname }}" {{ 'checked' if content and lname in content }}>
@@ -21,12 +21,12 @@
 
     <label class="mt-2">DeviantArt Category</label>
 
-    <input type="hidden" name="deviantart-category" value="{{ sub.data.get('deviantart-category') or '' }}">
+    <input type="hidden" name="deviantart-category" value="{{ sub.data.get('deviantart-category') or '' if sub else '' }}">
 
     <div class="deviantart-categories"></div>
 
     <div class="spinner d-none"></div>
 </div>
 
-<input type="hidden" name="da-folders" class="da-folders" value="{{ sub.data.get('da-folders') or '' }}">
+<input type="hidden" name="da-folders" class="da-folders" value="{{ sub.data.get('da-folders') or '' if sub else '' }}">
 <div class="deviantart-folders"></div>

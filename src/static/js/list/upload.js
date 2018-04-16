@@ -62,6 +62,7 @@ function uploadWithEvents(id) {
     source.addEventListener('error', ev => {
         setError('A site error occured, please try again later.');
         Raven.captureException(ev);
+        source.close();
     });
     source.addEventListener('done', () => {
         source.close();

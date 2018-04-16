@@ -1,0 +1,159 @@
+{% extends '_main.html' %}
+
+{% set page = 'group' %}
+
+{% from 'modals.html' import userLinkModal, descriptionPreviewModal %}
+
+{% macro ratingCheckbox(rating) -%}
+    {% set name = rating.value|capitalize %}
+    {% set lname = name|lower %}
+    <div class="form-check">
+        <input class="form-check-input" type="radio" name="rating" id="rating-{{ lname }}" value="{{ lname }}">
+        <label class="form-check-label" for="rating-{{ lname }}">{{ name }}</label>
+    </div>
+{%- endmacro %}
+
+{% macro imageUpload(num) -%}
+    <div class="col-md-6">
+        <div class="form-group">
+            <label for="image">Image #{{ num }}</label>
+            <input type="file" class="form-control upload-image" id="image-{{ num }}" name="image-{{ num }}"
+                   accept="image/*" data-image="{{ num }}">
+        </div>
+
+        <img class="img-fluid block-center preview-image image-{{ num }}" data-image="{{ num }}">
+    </div>
+{%- endmacro %}
+
+{% block body %}
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="page-header">
+                    <h1>{{ 'Upload Art Group' }}</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{ showNotices() }}
+
+    {{ flashes() }}
+
+    <div class="container-fluid">
+        <form method="POST" action="{{ url_for('upload.create_group_post') }}" enctype="multipart/form-data">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
+            <div class="row">
+                <div class="col-sm-12 col-md-4 col-lg-3">
+                    <div class="form-group">
+                        <label for="title">Title</label>
+                        <input type="text" name="title" id="title" placeholder="Title" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea class="form-control" name="description" id="description"
+                                  placeholder="Description"></textarea>
+
+                        <p class="form-text">
+                            <button type="button" class="btn btn-secondary btn-sm mb-1" data-toggle="modal"
+                                    data-target=".add-user-modal">Add user link
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm mb-1" data-toggle="modal"
+                                    data-target=".description-preview-modal">Preview description
+                            </button>
+                        </p>
+
+                        <p class="form-text">
+                            In addition to site specific user links, the other Markdown conversions are documented <a
+                                href="https://git.huefox.com/syfaro/multiupload/wiki/Supported+Markdown+Conversions"
+                                target="_blank">here</a>.
+                        </p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="keywords">Keywords</label>
+                        <textarea class="form-control" name="keywords" id="keywords" placeholder="Keywords"></textarea>
+
+                        <p class="form-text twitter-hashtag d-none">
+                            Keywords beginning with a hashtag will only appear on submissions to Twitter.
+                        </p>
+
+                        {{ getSiteTemplates('keywords') }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="resize">Max Resolution</label>
+                        <input type="text" name="resize" id="resize" placeholder="Height x Width" class="form-control">
+                    </div>
+
+                    {% for r in rating %}
+                        {{ ratingCheckbox(r) }}
+                    {% endfor %}
+
+                    {{ getSiteTemplates('left_sidebar') }}
+                </div>
+
+                <div class="col-sm-12 col-md-4 col-lg-6">
+                    <div class="row">
+                        {{ imageUpload(1) }}
+                        {{ imageUpload(2) }}
+                    </div>
+
+                    <div class="row mt-2">
+                        {{ imageUpload(3) }}
+                        {{ imageUpload(4) }}
+                    </div>
+                </div>
+
+                <div class="col-sm-12 col-md-4 col-lg-3">
+                    <label>Upload to</label>
+
+                    {% set ac = namespace(accounts=false) %}
+
+                    {% for account in accounts %}
+                        {% set ac.accounts = true %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="account"
+                                   value="{{ account.account.id }}"
+                                   id="account{{ account.account.id }}" {{ 'checked' if account.selected }}
+                                   data-site="{{ account.account.site_id }}"
+                                   data-site-name="{{ account.account.site.name }}"
+                                   data-account="{{ account.account.username }}">
+                            <label class="form-check-label"
+                                   for="account{{ account.account.id }}">{{ account.account.site.name }}
+                                - {{ account.account.username }}</label>
+                        </div>
+                    {% endfor %}
+
+                    {% if not ac.accounts %}
+                        <div>
+                            <a class="btn btn-primary" href="{{ url_for('accounts.manage') }}">Add Accounts</a>
+                        </div>
+                    {% endif %}
+
+                    {{ getSiteTemplates('right_sidebar') }}
+                </div>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-sm-12 col-md-4 offset-md-4 text-center">
+                    <div>
+                        <button type="submit" class="btn btn-primary btn-lg">Save Group and Review</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    {{ userLinkModal(sites) }}
+    {{ descriptionPreviewModal() }}
+
+    <script src="{{ url_for('static', filename='js/upload/group.js') }}" nonce="{{ nonce() }}"></script>
+    <script src="{{ url_for('static', filename='js/upload/resize.js') }}" nonce="{{ nonce() }}"></script>
+    <script src="{{ url_for('static', filename='js/upload/userlink.js') }}" nonce="{{ nonce() }}"></script>
+    <script src="{{ url_for('static', filename='js/upload/preview.js') }}" nonce="{{ nonce() }}"></script>
+
+    {{ getSiteScripts() }}
+{% endblock %}

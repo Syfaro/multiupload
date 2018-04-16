@@ -1,11 +1,14 @@
+from io import BytesIO
 from typing import Any
 from typing import List
 from typing import Union
 
+from flask import current_app
+from os.path import join
+
+from models import Account, SavedSubmission, SubmissionGroup
 from submission import Rating
 from submission import Submission
-
-from models import Account
 
 
 class BadCredentials(Exception):
@@ -54,3 +57,23 @@ class Site(object):
 
     def get_folders(self, update=False) -> Union[None, List[dict]]:
         return None
+
+    def upload_group(self, group: SubmissionGroup):
+        raise NotImplementedError()
+
+    @staticmethod
+    def supports_group() -> bool:
+        return False
+
+    @staticmethod
+    def collect_images(submissions: List[SavedSubmission]):
+        for sub in submissions:
+            with open(join(current_app.config['UPLOAD_FOLDER'], sub.image_filename), 'rb') as f:
+                image_bytes = BytesIO(f.read())
+
+            yield {
+                'filename': sub.image_filename,
+                'original_filename': sub.original_filename,
+                'mimetype': sub.image_mimetype,
+                'bytes': image_bytes,
+            }

@@ -2,7 +2,7 @@
 
 {% set page='review' %}
 
-{% macro groupTable(submissions) -%}
+{% macro groupTable(submissions, group=None) -%}
     <div class="table-responsive">
         <table class="table pending">
             <thead>
@@ -12,7 +12,7 @@
                 <th>Description</th>
                 <th>Keywords</th>
                 <th>Rating</th>
-                <th>Sites</th>
+                {% if not group.grouped %}<th>Sites</th>{% endif %}
                 <th>Image</th>
                 <th></th>
             </tr>
@@ -25,17 +25,19 @@
                     <td>{{ sub.description|has_text }}</td>
                     <td>{{ sub.tags|has_text }}</td>
                     <td>{{ sub.rating|has_text }}</td>
-                    <td>{{ sub.account_ids|has_text }}</td>
+                    {% if not group.grouped %}<td>{{ sub.account_ids|has_text }}</td>{% endif %}
                     <td>{{ sub.image_filename|has_text }}</td>
                     <td>
                         <form action="{{ url_for('list.remove') }}" method="POST">
                             <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="id" value="{{ sub.id }}">
-                            <button formaction="{{ url_for('upload.create_art_post_saved') }}"
-                                    class="btn btn-primary btn-sm submit-submission{{ ' disabled' if not sub.has_all else '' }}"
-                                    data-toggle="modal" data-target="#uploadModal">
-                                Submit
-                            </button>
+                            {% if not sub.group.grouped %}
+                                <button formaction="{{ url_for('upload.create_art_post_saved') }}"
+                                        class="btn btn-primary btn-sm submit-submission{{ ' disabled' if not sub.has_all else '' }}"
+                                        data-toggle="modal" data-target="#uploadModal">
+                                    Submit
+                                </button>
+                            {% endif %}
                             <a href="{{ url_for('upload.review', id=sub.id) }}"
                                class="btn btn-sm btn-secondary">Review</a>
                             <button type="submit" class="btn btn-danger btn-sm">Remove</button>
@@ -74,20 +76,31 @@
         {% for group in groups %}
             <div class="row">
                 <div class="col-sm-12">
-                    <h2>{{ group.name }}</h2>
+                    <h2>{{ group.name }}{% if group.grouped %}
+                        <span class="badge badge-light">Linked Group</span>{% endif %}</h2>
 
                     <form method="POST" class="form-inline">
                         <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="group_id" value="{{ group.id }}">
-                        <button class="btn btn-sm btn-warning mr-sm-2 mb-2"
-                                formaction="{{ url_for('list.group_remove_post') }}">Remove group
-                        </button>
+                        {% if not group.grouped %}
+                            <button class="btn btn-sm btn-warning mr-sm-2 mb-2"
+                                    formaction="{{ url_for('list.group_remove_post') }}">Remove group
+                            </button>
+                        {% else %}
+                            <button class="btn btn-sm btn-primary mr-sm-2 mb-2"
+                                    formaction="{{ url_for('upload.upload_group_post') }}" {{ 'disabled' if not group.submittable }}>
+                                Submit group
+                            </button>
+
+                            <a href="{{ url_for('upload.update_master', id=group.master.id) }}"
+                               class="btn btn-sm btn-secondary mr-sm-2 mb-2">Update master</a>
+                        {% endif %}
                         <button class="btn btn-sm btn-danger mr-sm-2 mb-2"
                                 formaction="{{ url_for('list.group_delete_post') }}">Delete items in group
                         </button>
                     </form>
 
-                    {{ groupTable(group.submissions) }}
+                    {{ groupTable(group.submissions, group) }}
                 </div>
             </div>
         {% endfor %}

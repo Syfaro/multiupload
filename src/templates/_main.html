@@ -121,13 +121,15 @@
             {% if g.user %}
                 <ul class="navbar-nav mr-auto">
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle {{ 'active' if page in ('upload', 'csv', 'review', 'zip') }}"
+                        <a class="nav-link dropdown-toggle {{ 'active' if page in ('upload', 'group', 'review', 'zip') }}"
                            href="#" data-toggle="dropdown">
                             Upload
                         </a>
                         <div class="dropdown-menu">
                             <a class="dropdown-item{{ ' active' if page == 'upload' }}"
                                href="{{ url_for('upload.create_art') }}">Simple Upload</a>
+                            <a class="dropdown-item{{ ' active' if page == 'group' }}"
+                               href="{{ url_for('upload.create_group') }}">Group Upload</a>
                             <a class="dropdown-item{{ ' active' if page in ('zip', 'csv') }}"
                                href="{{ url_for('upload.zip') }}">ZIP or CSV Upload</a>
                             <div class="dropdown-divider"></div>

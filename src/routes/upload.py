@@ -10,7 +10,7 @@ from zipfile import ZipFile
 import magic
 import simplecrypt
 from chardet import UniversalDetector
-from flask import Blueprint, Response, stream_with_context
+from flask import Blueprint, Response, jsonify, stream_with_context
 from flask import current_app
 from flask import flash
 from flask import g
@@ -25,7 +25,7 @@ from requests import HTTPError
 from werkzeug.utils import secure_filename
 
 from constant import Sites
-from models import Account
+from models import Account, SubmissionGroup
 from models import SavedSubmission
 from models import db
 from sites import BadCredentials, SiteError
@@ -534,3 +534,170 @@ def image(filename):
 @app.app_template_filter('has_text')
 def has_text(s):
     return '✗' if not s else '✓'
+
+
+@app.route('/group/create', methods=['GET'])
+@login_required
+def create_group():
+    accounts = map(lambda account: {'account': account, 'selected': account.used_last}, g.user.accounts)
+
+    return render_template('review/group.html', accounts=accounts, rating=Rating)
+
+
+@app.route('/group/create', methods=['POST'])
+@login_required
+def create_group_post():
+    title = request.form.get('title')
+    description = request.form.get('description')
+    keywords = request.form.get('keywords')
+    rating = request.form.get('rating')
+    images = []
+    for i in range(4):
+        image = request.files.get('image-' + str(i + 1))
+        if not image or image.filename == '':
+            continue
+        images.append(image)
+    data = save_multi_dict(request.form)
+    accounts = request.form.getlist('account')
+
+    group = SubmissionGroup(g.user, title, grouped=True)
+    db.session.add(group)
+    db.session.commit()
+
+    master = SavedSubmission(g.user, title, description, keywords, rating)
+    master.master = True
+    master.data = data
+    master.set_accounts(accounts)
+    master.group_id = group.id
+    db.session.add(master)
+
+    for image in images:
+        saved = SavedSubmission(g.user, title, description, keywords, rating)
+        saved.data = data
+        saved.set_accounts(accounts)
+        saved.group_id = group.id
+
+        ext = safe_ext(image.filename)
+        if ext:
+            saved.original_filename = secure_filename(image.filename)
+
+            name = random_string(16) + '.' + ext
+
+            image.save(join(current_app.config['UPLOAD_FOLDER'], name))
+            saved.image_filename = name
+            saved.image_mimetype = image.mimetype
+        else:
+            flash('{0} has a bad file extension'.format(image.filename))
+            continue
+
+        db.session.add(saved)
+
+    db.session.commit()
+
+    return redirect(url_for('list.index'))
+
+
+@app.route('/master/<int:id>', methods=['GET'])
+@login_required
+def update_master(id):
+    sub = SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(id=id).first()
+
+    return render_template('review/master.html', sub=sub, accounts=sub.all_selected_accounts(g.user), rating=Rating)
+
+
+@app.route('/master', methods=['POST'])
+@login_required
+def update_master_post():
+    sub_id = request.form.get('id')
+    title = request.form.get('title')
+    description = request.form.get('description')
+    keywords = request.form.get('keywords')
+    rating = request.form.get('rating')
+
+    sub: SavedSubmission = SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(id=sub_id).first()
+    sub.title = title
+    sub.description = description
+    sub.tags = keywords
+    sub.rating = Rating(rating)
+    sub.data = save_multi_dict(request.form)
+
+    sub.group.name = title
+
+    db.session.commit()
+
+    flash('Updated master!')
+
+    return redirect(url_for('list.index'))
+
+
+@app.route('/group', methods=['POST'])
+@login_required
+def upload_group_post():
+    group_id = request.form.get('group_id')
+
+    group: SubmissionGroup = SubmissionGroup.query.filter_by(user_id=g.user.id).filter_by(id=group_id).first()
+    master = group.master
+
+    links = []
+
+    had_error = False
+    err_messages = []
+
+    for account in master.accounts:
+        decrypted = simplecrypt.decrypt(session['password'], account.credentials)
+
+        for site in KNOWN_SITES:
+            if site.SITE == account.site:
+                s = site(decrypted, account)
+
+                if s.supports_group():
+                    errors = s.validate_submission(master)
+                    if errors:
+                        for error in errors:
+                            flash(error)
+                            continue
+
+                    try:
+                        link = s.upload_group(group)
+                    except SiteError as ex:
+                        had_error = True
+                        err_messages.append(ex.message)
+                        flash('Site error: {0}'.format(ex.message))
+                        continue
+
+                    links.append({
+                        'link': link,
+                        'name': '{site} - {account}'.format(site=site.SITE.name, account=account.username)
+                    })
+                else:
+                    for sub in group.submissions:
+                        errors = s.validate_submission(sub)
+                        if errors:
+                            for error in errors:
+                                flash(error)
+                                continue
+
+                        try:
+                            link = s.submit_artwork(sub.submission, master.data)
+                        except SiteError as ex:
+                            had_error = True
+                            err_messages.append(ex.message)
+                            flash('Site error: {0}'.format(ex.message))
+                            continue
+
+                        links.append({
+                            'link': link,
+                            'name': '{site} - {account}'.format(site=site.SITE.name, account=account.username)
+                        })
+
+    if not had_error:
+        db.session.delete(master)
+        for sub in group.submissions:
+            db.session.delete(sub)
+        db.session.delete(group)
+        db.session.commit()
+
+    return jsonify({
+        'links': links,
+        'errors': err_messages,
+    })

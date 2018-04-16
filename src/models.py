@@ -12,7 +12,7 @@ from simplecrypt import encrypt
 from sqlalchemy import func
 
 from constant import Sites
-from submission import Rating
+from submission import Rating, Submission
 
 db = SQLAlchemy()
 
@@ -187,6 +187,7 @@ class SavedSubmission(db.Model):
     site_data = db.Column(db.Text, nullable=True)  # arbitrary data stored as JSON
 
     group_id = db.Column(db.Integer, db.ForeignKey('submission_group.id'), nullable=True)
+    master = db.Column(db.Boolean, default=False)
 
     def __init__(self, user=None, title=None, description=None, tags=None, rating=None):
         if user:
@@ -198,6 +199,10 @@ class SavedSubmission(db.Model):
 
     def set_accounts(self, ids):
         self.account_ids = ' '.join(ids)
+
+    @property
+    def group(self):
+        return SubmissionGroup.query.filter_by(user_id=g.user.id).filter_by(id=self.group_id).first()
 
     @property
     def accounts(self):
@@ -221,12 +226,17 @@ class SavedSubmission(db.Model):
         return result
 
     @property
+    def submission(self) -> Submission:
+        return Submission(self.title, self.description, self.tags, self.rating.value, self)
+
+    @property
     def data(self) -> dict:
         return json.loads(self.site_data) if self.site_data else {}
 
-    @property
-    def has_all(self) -> bool:
-        return all(i is not None and i != '' for i in [self.title, self.description, self.tags, self.rating, self.account_ids, self.image_filename])
+    def has_all(self, ignore_sites=False) -> bool:
+        return all(i is not None and i != '' for i in
+                   [self.title, self.description, self.tags, self.rating,
+                    self.account_ids if not ignore_sites else 'hi', self.image_filename])
 
     @data.setter
     def data(self, value: dict) -> None:
@@ -234,7 +244,7 @@ class SavedSubmission(db.Model):
 
     @classmethod
     def get_grouped(cls):
-        return cls.query.filter_by(user_id=g.user.id).group_by(cls.group_id).order_by(
+        return cls.query.filter_by(user_id=g.user.id).filter_by(master=False).group_by(cls.group_id).order_by(
             cls.group_id.asc()).order_by(cls.id.asc()).all()
 
 
@@ -242,10 +252,12 @@ class SubmissionGroup(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     name = db.Column(db.String(255), nullable=False)
+    grouped = db.Column(db.Boolean, default=False)
 
-    def __init__(self, user, name):
+    def __init__(self, user, name, grouped=False):
         self.user_id = user.id
         self.name = name
+        self.grouped = grouped
 
     @classmethod
     def get_groups(cls):
@@ -256,5 +268,13 @@ class SubmissionGroup(db.Model):
         return SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(group_id=None).all()
 
     @property
+    def submittable(self):
+        return all([sub.has_all(ignore_sites=True) for sub in self.submissions])
+
+    @property
     def submissions(self):
-        return SavedSubmission.query.filter_by(group_id=self.id).all()
+        return SavedSubmission.query.filter_by(group_id=self.id).filter_by(master=False).all()
+
+    @property
+    def master(self):
+        return SavedSubmission.query.filter_by(group_id=self.id).filter_by(master=True).first()

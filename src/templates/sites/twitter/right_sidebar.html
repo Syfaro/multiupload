@@ -1,25 +1,27 @@
 {% macro twitterFormat(name, id) -%}
+    {% set isFormat = sub and sub.data.get('twitter-format') == id %}
+    {% set isSingle = sub and sub.data.get('twitter-format') is none and id == 'single' %}
     <div class="form-check">
         <input class="form-check-input" type="radio" name="twitter-fmt" value="{{ id }}"
-               id="twfm-{{ id }}" {{ 'checked' if sub.data.get('twitter-format') == id or (sub.data.get('twitter-format') is none and id == 'single') }}>
+               id="twfm-{{ id }}" {{ 'checked' if isFormat or isSingle or (not sub and id == 'single') }}>
         <label class="form-check-label" for="twfm-{{ id }}">{{ name }}</label>
     </div>
 {%- endmacro %}
 
 <div class="d-none twitter-link mt-2">
-    <input type="hidden" name="twitter-account" value="{{ sub.data.get('twitter-account') or '' }}">
-    <input type="hidden" name="twitter-format" value="{{ sub.data.get('twitter-format') or 'single' }}">
+    <input type="hidden" name="twitter-account" value="{{ sub.data.get('twitter-account') or '' if sub else '' }}">
+    <input type="hidden" name="twitter-format" value="{{ sub.data.get('twitter-format') or 'single' if sub else 'single' }}">
 
     <div class="form-check">
         <input class="form-check-input" type="checkbox" id="twitter-custom" name="twitter-custom"
-               value="y" {{ 'checked' if sub.data.get('twitter-custom') == 'y' or '' }}>
+               value="y" {{ 'checked' if sub and sub.data.get('twitter-custom') == 'y' or '' }}>
         <label class="form-check-label" for="twitter-custom">Use Custom Text On Twitter</label>
     </div>
 
     <div class="form-group d-none twitter-custom mt-2">
         <label for="twitter-custom-text">Twitter Custom Text</label>
         <textarea id="twitter-custom-text" name="twitter-custom-text" class="form-control" maxlength="200"
-                  placeholder="Custom Text — Your links will still be appened">{{ sub.data.get('twitter-custom-text') or '' }}</textarea>
+                  placeholder="Custom Text — Your links will still be appened">{{ sub.data.get('twitter-custom-text') or '' if sub else '' }}</textarea>
     </div>
 
     <label class="mt-2">Twitter Format</label>

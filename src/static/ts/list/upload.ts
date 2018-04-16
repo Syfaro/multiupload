@@ -88,6 +88,8 @@ function uploadWithEvents(id: number) {
         setError('A site error occured, please try again later.');
 
         Raven.captureException(ev);
+
+        source.close();
     });
 
     source.addEventListener('done', () => {
