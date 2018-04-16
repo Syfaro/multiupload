@@ -187,7 +187,7 @@ class SavedSubmission(db.Model):
     site_data = db.Column(db.Text, nullable=True)  # arbitrary data stored as JSON
 
     group_id = db.Column(db.Integer, db.ForeignKey('submission_group.id'), nullable=True)
-    master = db.Column(db.Boolean, default=False)
+    master = db.Column(db.Boolean, default=False, nullable=False)
 
     def __init__(self, user=None, title=None, description=None, tags=None, rating=None):
         if user:
