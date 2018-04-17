@@ -218,7 +218,9 @@ class SavedSubmission(db.Model):
         if self.account_ids is None:
             return []
 
-        return [Account.find(int(account)) for account in self.account_ids.split(' ')]
+        account_ids = self.account_ids.split(' ')
+
+        return [Account.find(int(account)) for account in filter(None, account_ids)]
 
     def all_selected_accounts(self, user):
         accounts = self.accounts
