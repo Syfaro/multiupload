@@ -6,7 +6,7 @@ from flask import session
 
 from constant import HEADERS
 from constant import Sites
-from models import Account
+from models import Account, SubmissionGroup
 from models import db
 from sites import BadCredentials
 from sites import Site
@@ -109,3 +109,61 @@ class Inkbunny(Site):
             raise SiteError(j['error_message'])
 
         return 'https://inkbunny.net/submissionview.php?id={id}'.format(id=j['submission_id'])
+
+    def upload_group(self, group: SubmissionGroup, extra: Any = None):
+        sess = cfscrape.create_scraper()
+
+        req = sess.post('https://inkbunny.net/api_login.php', data=self.credentials, headers=HEADERS)
+        req.raise_for_status()
+
+        j = req.json()
+
+        if 'error_message' in j:
+            raise SiteError(j['error_message'])
+
+        master = group.master
+        s = master.submission
+        submissions = group.submissions
+
+        images = [('uploadedfile[]', (image['original_filename'], image['bytes'], image['mimetype'])) for image in
+                  self.collect_images(submissions)]
+
+        req = sess.post('https://inkbunny.net/api_upload.php', data={
+            'sid': j['sid'],
+        }, files=images, headers=HEADERS)
+        write_site_response(self.SITE.value, req)
+        req.raise_for_status()
+
+        j = req.json()
+
+        if 'submission_id' not in j:
+            raise SiteError('Unable to upload')
+
+        data = {
+            'sid': j['sid'],
+            'submission_id': j['submission_id'],
+            'title': master.title,
+            'desc': s.description_for_site(self.SITE),
+            'keywords': self.tag_str(master.tags),
+            'visibility': 'yes',
+        }
+
+        if master.rating == Rating.mature:
+            data['tag[2]'] = 'yes'
+        elif master.rating == Rating.explicit:
+            data['tag[4]'] = 'yes'
+
+        req = sess.post('https://inkbunny.net/api_editsubmission.php', data=data, headers=HEADERS)
+        write_site_response(self.SITE.value, req)
+        req.raise_for_status()
+
+        j = req.json()
+
+        if 'error_message' in j:
+            raise SiteError(j['error_message'])
+
+        return 'https://inkbunny.net/submissionview.php?id={id}'.format(id=j['submission_id'])
+
+    @staticmethod
+    def supports_group():
+        return True
