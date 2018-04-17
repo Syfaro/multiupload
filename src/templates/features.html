@@ -42,6 +42,10 @@
                     All of your site credentials are fully encrypted using your own password.
                     Even if the server was compromised, your information is safe.
                 </p>
+
+                <p>
+                    There are no ads or tracking scripts.
+                </p>
             </div>
 
             <div class="col-sm-12 col-md-4">
@@ -66,8 +70,8 @@
                 <h2>Linked Groups</h2>
 
                 <p>
-                    Upload up to 4 images that are posted as a single submission on Tumblr and Twitter but create 4
-                    submissions on other sites.
+                    Upload up to 4 images that are posted as a single submission on Inkbunny, Tumblr, and Twitter but
+                    create 4 submissions on other sites.
                 </p>
             </div>
 
@@ -112,22 +116,22 @@
                 <div class="table-responsive">
                     <table class="table">
                         <thead>
-                            <tr>
-                                <th>Site Name</th>
-                                <th>Image Uploads</th>
-                                <th>Linked Groups</th>
-                                <th>Folders</th>
-                            </tr>
+                        <tr>
+                            <th>Site Name</th>
+                            <th>Image Uploads</th>
+                            <th>Linked Groups</th>
+                            <th>Folders</th>
+                        </tr>
                         </thead>
                         <tbody>
-                            {% for site in sites %}
-                                <tr>
-                                    <th>{{ site.SITE.name }}</th>
-                                    <th>✓</th>
-                                    <th>{{ site.supports_group() | has_text }}</th>
-                                    <th>{{ site.supports_folder() | has_text }}</th>
-                                </tr>
-                            {% endfor %}
+                        {% for site in sites %}
+                            <tr>
+                                <th>{{ site.SITE.name }}</th>
+                                <th>✓</th>
+                                <th>{{ site.supports_group() | has_text }}</th>
+                                <th>{{ site.supports_folder() | has_text }}</th>
+                            </tr>
+                        {% endfor %}
                         </tbody>
                     </table>
                 </div>
