@@ -103,7 +103,7 @@
                         <input type="text" name="resize" id="resize" placeholder="Height x Width" class="form-control">
                     </div>
 
-                    {% for r in rating %}
+                    {% for r in rating() %}
                         {{ ratingCheckbox(r) }}
                     {% endfor %}
 
@@ -162,7 +162,7 @@
         </form>
     </div>
 
-    {{ userLinkModal(sites) }}
+    {{ userLinkModal() }}
     {{ descriptionPreviewModal() }}
 
     <script src="{{ url_for('static', filename='js/upload/group.js') }}" nonce="{{ nonce() }}"></script>

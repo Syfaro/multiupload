@@ -45,12 +45,10 @@
 }
 
 .spinner {
-    border: 5px solid #f3f3f3;
-    border-color: var(--gray);
     -webkit-animation: spin 1s linear infinite;
     -o-animation: spin 1s linear infinite;
     animation: spin 1s linear infinite;
-    border-top: 5px solid #555;
+    border: 10px solid var(--gray);
     border-top-color: var(--primary);
     -webkit-border-radius: 50%;
     -moz-border-radius: 50%;
@@ -81,5 +79,9 @@
 @media (max-width: 576px) {
     .page-header + h1 {
         margin: -2rem 0 2rem;
+    }
+
+    .features table {
+        table-layout: auto;
     }
 }

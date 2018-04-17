@@ -1,4 +1,4 @@
-{% macro userLinkModal(sites) -%}
+{% macro userLinkModal() -%}
     <div class="modal add-user-modal fade">
 		<div class="modal-dialog">
 			<div class="modal-content">
@@ -20,7 +20,7 @@
 								Please select which site this user is on.
 							</label>
 
-							{% for id, name in sites %}
+							{% for id, name in known_sites() %}
 								<div class="form-check">
                                     <input class="form-check-input" type="radio" name="site_name" value="{{ id }}" id="site{{ id }}">
                                     <label class="form-check-label" for="site{{ id }}">{{ name }}</label>

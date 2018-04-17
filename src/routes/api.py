@@ -1,3 +1,5 @@
+from typing import List
+
 import requests
 import simplecrypt
 from flask import Blueprint
@@ -50,8 +52,8 @@ def whoami():
 @app.route('/accounts')
 @login_required
 def accounts():
-    accts = []
-    for account in Account.query.filter_by(user_id=g.user.id):
+    accts: List[dict] = []
+    for account in Account.all():
         accts.append({
             'id': account.id,
             'site_id': account.site_id,
@@ -72,13 +74,18 @@ def description():
     accts = data.get('accounts')
     desc = data.get('description')
 
+    if not accts or not desc:
+        return jsonify({
+            'error': 'missing data'
+        })
+
     descriptions = []
     done = []
 
     for site in accts.split(','):
         s = Sites(int(site))
 
-        if s.value in done or s == Sites.Twitter:
+        if s.value in done or s == Sites.Twitter:  # each site only needs to be done once, twitter doesn't get a preview
             continue
 
         descriptions.append({
@@ -96,21 +103,24 @@ def description():
 @app.route('/preview/description', methods=['POST'])
 @login_required
 def preview():
-    accounts = request.form.getlist('account')
-    description = request.form.get('description', '')
+    accountlist: List[str] = request.form.getlist('account')
+    orig_description: str = request.form.get('description', '')
 
     descriptions = []
     sites_done = []
 
-    for site in accounts:
-        account = Account.query.filter_by(user_id=session['id']).filter_by(id=int(site)).first()
+    for site in accountlist:
+        try:
+            account = Account.find(int(site))
+        except ValueError:
+            continue
 
         if not account or account.site.value in sites_done or account.site == Sites.Twitter:
             continue
 
         descriptions.append({
             'site': account.site.name,
-            'description': parse_description(description, account.site.value),
+            'description': parse_description(orig_description, account.site.value),
         })
 
         sites_done.append(account.site.value)
@@ -128,13 +138,17 @@ def get_deviantart_category():
     if cached:
         return Response(cached, mimetype='application/json')
 
-    account = request.args.get('account')
-
-    a: Account = Account.query.get(account)
+    account_id = request.args.get('account')
+    try:
+        account: Account = Account.find(int(account_id))
+    except ValueError:
+        return jsonify({
+            'error': 'bad account'
+        })
 
     da = DeviantArt.get_da()
-    r = da.refresh_token(decrypt(session['password'], a.credentials))
-    a.update_credentials(r['refresh_token'])
+    r = da.refresh_token(decrypt(session['password'], account.credentials))
+    account.update_credentials(r['refresh_token'])
     db.session.commit()
 
     sub = requests.get('https://www.deviantart.com/api/v1/oauth2/stash/publish/categorytree', headers=HEADERS, params={
@@ -150,13 +164,17 @@ def get_deviantart_category():
 @app.route('/deviantart/folders', methods=['GET'])
 @login_required
 def get_deviantart_folders():
-    account = request.args.get('account')
-    a: Account = Account.query.get(account)
-    if a.user_id != g.user.id:
-        return 'Bad.'
+    account_id = request.args.get('account')
 
-    decrypted = simplecrypt.decrypt(session['password'], a.credentials)
-    da = DeviantArt(decrypted, a)
+    try:
+        account: Account = Account.find(int(account_id))
+    except ValueError:
+        return jsonify({
+            'error': 'bad account'
+        })
+
+    decrypted = simplecrypt.decrypt(session['password'], account.credentials)
+    da = DeviantArt(decrypted, account)
 
     return jsonify({
         'folders': da.get_folders(),

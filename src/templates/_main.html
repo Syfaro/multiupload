@@ -19,7 +19,7 @@
         <div class="container notices">
             <div class="row">
                 <div class="col-sm-12 col-md-6 offset-md-3">
-                    {% for notice in notices %}
+                    {% for notice in notices() %}
                         <div class="alert alert-info alert-dismissible">
                             {% if user is defined %}
                                 <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span

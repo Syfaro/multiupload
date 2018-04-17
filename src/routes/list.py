@@ -1,3 +1,5 @@
+from typing import List
+
 from flask import Blueprint
 from flask import current_app
 from flask import flash
@@ -7,6 +9,7 @@ from flask import render_template
 from flask import request
 from flask import url_for
 from os.path import join
+from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
 from models import SavedSubmission
@@ -24,8 +27,8 @@ app = Blueprint('list', __name__)
 @app.route('/index', methods=['GET'])
 @login_required
 def index():
-    groups = SubmissionGroup.get_groups()
-    ungrouped = SubmissionGroup.get_ungrouped_submissions()
+    groups: List[SubmissionGroup] = SubmissionGroup.get_groups()
+    ungrouped: List[SavedSubmission] = SubmissionGroup.get_ungrouped_submissions()
 
     return render_template('review/list.html', user=g.user, groups=groups, ungrouped=ungrouped)
 
@@ -33,12 +36,16 @@ def index():
 @app.route('/remove', methods=['POST'])
 @login_required
 def remove():
-    sub_id = request.form.get('id')
+    sub_id: str = request.form.get('id')
 
     if not sub_id:
         return redirect(url_for('list.index'))
 
-    sub = SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(id=sub_id).first()
+    try:
+        sub = SavedSubmission.find(int(sub_id))
+    except ValueError:
+        flash('Invalid submission ID.')
+        return redirect(url_for('list.index'))
 
     if not sub:
         return redirect(url_for('list.index'))
@@ -47,23 +54,26 @@ def remove():
     db.session.commit()
 
     flash('Removed submission.')
-
     return redirect(url_for('list.index'))
 
 
 @app.route('/save', methods=['POST'])
 @login_required
 def save():
-    title = request.form.get('title')
-    description = request.form.get('description')
-    tags = request.form.get('keywords')
-    rating = request.form.get('rating')
+    sub_id: str = request.form.get('id')
+    title: [None, str] = request.form.get('title')
+    description: [None, str] = request.form.get('description')
+    tags: [None, str] = request.form.get('keywords')
+    rating: [None, str] = request.form.get('rating')
     if rating:
         rating = Rating(rating)
-    accounts = request.form.getlist('account')
+    accounts: List[str] = request.form.getlist('account')
+    image: FileStorage = request.files.get('image')
 
-    sub: SavedSubmission = SavedSubmission.query.filter_by(
-        user_id=g.user.id).filter_by(id=request.form.get('id')).first()
+    try:
+        sub: SavedSubmission = SavedSubmission.find(int(sub_id))
+    except ValueError:
+        sub = None
 
     if not sub:
         sub = SavedSubmission(g.user, title, description, tags, rating)
@@ -76,9 +86,8 @@ def save():
     sub.set_accounts(accounts)
     sub.data = save_multi_dict(request.form)
 
-    image = request.files.get('image')
     ext = safe_ext(image.filename) if image else None
-    if image and ext:
+    if ext:
         sub.original_filename = secure_filename(image.filename)
 
         name = random_string(16) + '.' + ext
@@ -90,7 +99,6 @@ def save():
     db.session.commit()
 
     flash('Submission saved.')
-
     return redirect(url_for('list.index'))
 
 
@@ -99,9 +107,9 @@ def save():
 def group_add_post():
     j = request.get_json()
 
-    posts = j.get('posts')
-    group_id = j.get('group_id')
-    group_name = j.get('group_name')
+    posts: str = j.get('posts')
+    group_id: str = j.get('group_id')
+    group_name: str = j.get('group_name')
 
     if not posts:
         flash('No posts selected.')
@@ -112,42 +120,68 @@ def group_add_post():
         db.session.add(group)
         db.session.commit()
     else:
-        group = SubmissionGroup.query.filter_by(user_id=g.user.id).filter_by(id=group_id).first()
+        try:
+            group: SubmissionGroup = SubmissionGroup.find(int(group_id))
+        except ValueError:
+            flash('Invalid group ID.')
+            return redirect(url_for('list.index'))
 
     touched_groups = set()
 
     for post_id in posts:
-        post: SavedSubmission = SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(id=post_id).first()
+        try:
+            post: SavedSubmission = SavedSubmission.find(int(post_id))
+        except ValueError:
+            flash('Invalid post ID.')
+            return redirect(url_for('list.index'))
+
         if not post:
             continue
+
         if post.group_id:
             touched_groups.add(post.group_id)
+
         post.group_id = group.id
 
-    for group in touched_groups:
-        group: SubmissionGroup = SubmissionGroup.query.filter_by(user_id=g.user.id).filter_by(id=group).first()
+    for group_id in touched_groups:
+        try:
+            group: SubmissionGroup = SubmissionGroup.find(int(group_id))
+        except ValueError:
+            flash('Invalid group ID.')
+            return redirect(url_for('list.index'))
+
         if not group:
             continue
-        if not group.submissions:
+
+        if not group.submissions and not group.master:
             db.session.delete(group)
 
     db.session.commit()
-    flash('Added posts to group!')
 
+    flash('Added posts to group!')
     return redirect(url_for('list.index'))
 
 
 @app.route('/group/remove', methods=['POST'])
 @login_required
 def group_remove_post():
-    group_id = request.form.get('group_id')
+    group_id: str = request.form.get('group_id')
     if not group_id:
         return redirect(url_for('list.index'))
 
-    group: SubmissionGroup = SubmissionGroup.query.filter_by(user_id=g.user.id).filter_by(id=group_id).first()
+    try:
+        group: SubmissionGroup = SubmissionGroup.find(int(group_id))
+    except ValueError:
+        flash('Bad group ID.')
+        return redirect(url_for('list.index'))
 
     for sub in group.submissions:
         sub.group_id = None
+
+    master = group.master
+    if master:
+        db.session.delete(master)
+        db.session.commit()
 
     db.session.delete(group)
     db.session.commit()
@@ -159,11 +193,15 @@ def group_remove_post():
 @app.route('/group/delete', methods=['POST'])
 @login_required
 def group_delete_post():
-    group_id = request.form.get('group_id')
+    group_id: str = request.form.get('group_id')
     if not group_id:
         return redirect(url_for('list.index'))
 
-    group: SubmissionGroup = SubmissionGroup.query.filter_by(user_id=g.user.id).filter_by(id=group_id).first()
+    try:
+        group: SubmissionGroup = SubmissionGroup.find(int(group_id))
+    except ValueError:
+        flash('Bad group ID.')
+        return redirect(url_for('list.index'))
 
     for sub in group.submissions:
         db.session.delete(sub)
@@ -178,9 +216,3 @@ def group_delete_post():
 
     flash('Removed group and deleted items.')
     return redirect(url_for('list.index'))
-
-
-@app.route('/group/time', methods=['POST'])
-@login_required
-def group_time_post():
-    pass

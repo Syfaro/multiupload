@@ -42,21 +42,21 @@ def email_verify():
     verifier = request.args.get('verifier')
 
     if not verifier:
-        return 'Missing verifier.'
+        flash('Missing verifier.')
+        return redirect(url_for('home.home'))
 
     user: User = User.query.filter_by(email_verifier=verifier).first()
 
     if user.email_verified:
-        return 'Already verified.'
+        flash('Email was already verified!')
+        return redirect(url_for('home.home'))
 
     user.email_verified = True
-
     db.session.commit()
-
-    flash('Email verified!')
 
     session['username'] = user.username
 
+    flash('Email verified!')
     return redirect(url_for('home.home'))
 
 
@@ -92,7 +92,7 @@ def email_unsubscribe():
 @app.route('/email', methods=['GET'])
 @login_required
 def change_email():
-    return render_template('user/change_email.html', user=g.user)
+    return render_template('user/change_email.html')
 
 
 @app.route('/email', methods=['POST'])
@@ -135,7 +135,7 @@ def change_email_post():
 @app.route('/username', methods=['GET'])
 @login_required
 def change_username():
-    return render_template('user/change_username.html', user=g.user)
+    return render_template('user/change_username.html')
 
 
 @app.route('/username', methods=['POST'])
@@ -166,7 +166,7 @@ def change_username_post():
 @app.route('/password', methods=['GET'])
 @login_required
 def change_password():
-    return render_template('user/change_password.html', user=g.user)
+    return render_template('user/change_password.html')
 
 
 @app.route('/password', methods=['POST'])
@@ -268,7 +268,7 @@ def password_reset_verify():
     if not user:
         return 'Unknown verifier'
 
-    return render_template('user/reset_password.html', user=user)
+    return render_template('user/reset_password.html')
 
 
 @app.route('/reset/verify', methods=['POST'])
@@ -352,7 +352,7 @@ def settings():
                 'enabled': header and header.val == 'yes'
             })
 
-    return render_template('user/settings.html', user=g.user, sofurry=sofurry, furaffinity=furaffinity, tumblr=tumblr)
+    return render_template('user/settings.html', sofurry=sofurry, furaffinity=furaffinity, tumblr=tumblr)
 
 
 @app.route('/sofurry/remap', methods=['POST'])

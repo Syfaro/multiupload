@@ -1,4 +1,5 @@
 import time
+from typing import List
 
 import simplecrypt
 from flask import Blueprint, session
@@ -82,8 +83,6 @@ def add_callback(site_id):
             if callback is not None:
                 if isinstance(callback, dict):
                     extra_data = callback
-                elif isinstance(callback, str):
-                    return callback
                 else:
                     return callback
 
@@ -142,14 +141,10 @@ def add_post(site_id):
 @app.route('/remove/<int:account_id>')
 @login_required
 def remove(account_id):
-    account = Account.query.get(account_id)
+    account = Account.find(account_id)
 
     if not account:
         flash('Account does not exist.')
-        return redirect(url_for('accounts.manage'))
-
-    if account.user_id != g.user.id:
-        flash('Account does not belong to you.')
         return redirect(url_for('accounts.manage'))
 
     return render_template('accounts/remove.html', account=account, user=g.user)
@@ -163,14 +158,10 @@ def remove_post():
         flash('Missing account ID.')
         return redirect(url_for('accounts.manage'))
 
-    account = Account.query.get(account_id)
+    account = Account.find(account_id)
 
     if not account:
         flash('Account does not exist.')
-        return redirect(url_for('accounts.manage'))
-
-    if account.user_id != g.user.id:
-        flash('Account does not belong to you.')
         return redirect(url_for('accounts.manage'))
 
     db.session.delete(account)
@@ -183,7 +174,7 @@ def remove_post():
 @app.route('/refresh/folders', methods=['GET'])
 @login_required
 def refresh_folders():
-    accounts = g.user.accounts
+    accounts: List[Account] = g.user.accounts
 
     for account in accounts:
         decrypted = simplecrypt.decrypt(session['password'], account.credentials)

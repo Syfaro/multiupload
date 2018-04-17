@@ -10,7 +10,7 @@ from flask import session
 from flask import url_for
 from sqlalchemy import func
 
-from models import User
+from models import User, Notice
 from models import db
 from sites.known import known_names, KNOWN_SITES
 from utils import english_series
@@ -22,15 +22,12 @@ app = Blueprint('home', __name__)
 
 @app.route('/')
 def home():
-    if 'id' in session:
-        user = User.query.get(session['id'])
-
-        if user:
-            return redirect(url_for('upload.create_art'))
+    if 'id' in session and User.query.get(session['id']):
+        return redirect(url_for('upload.create_art'))
 
     text = english_series(known_names())
 
-    return render_template('home.html', text=text, notices=get_active_notices())
+    return render_template('home.html', text=text)
 
 
 @app.route('/features')
@@ -55,8 +52,8 @@ def logout():
 
 @app.route('/login', methods=['POST'])
 def login_post():
-    username = request.form.get('username')
-    password = request.form.get('password')
+    username: str = request.form.get('username')
+    password: str = request.form.get('password')
 
     if not username:
         flash('Missing username.')
@@ -66,7 +63,7 @@ def login_post():
         flash('Missing password.')
         return redirect(url_for('home.home'))
 
-    user = User.by_name_or_email(username)
+    user: User = User.by_name_or_email(username)
 
     if not user or not user.verify(password):
         flash('Invalid username or password.')
@@ -84,10 +81,10 @@ def login_post():
 
 @app.route('/register', methods=['POST'])
 def register_post():
-    username = request.form.get('username')
-    password = request.form.get('password')
-    confirm_password = request.form.get('confirm_password')
-    email = request.form.get('email')
+    username: str = request.form.get('username')
+    password: str = request.form.get('password')
+    confirm_password: str = request.form.get('confirm_password')
+    email: str = request.form.get('email')
 
     if not username:
         flash('Missing username.')
@@ -105,14 +102,17 @@ def register_post():
         flash('Username is too long.')
         return redirect(url_for('home.home'))
 
+    if password != confirm_password:
+        flash('Password does not match confirmation.')
+        return redirect(url_for('home.home'))
+
     if email:
         if '@' not in email:
             flash('Invalid email.')
             return redirect(url_for('home.home'))
 
-        user = User.query.filter(func.lower(User.email) == func.lower(email)).first()
-
-        if user:
+        # Ensure email is not in use
+        if User.query.filter(func.lower(User.email) == func.lower(email)).first():
             flash('Email already in use.')
             return redirect(url_for('home.home'))
 
@@ -130,14 +130,9 @@ def register_post():
               ('</li><li>'.join(improvements.values())))
         return redirect(url_for('home.home'))
 
-    by_username = User.query.filter(func.lower(User.username) == func.lower(username)).first()
-
-    if by_username is not None:
+    # Ensure username is not in use
+    if User.query.filter(func.lower(User.username) == func.lower(username)).first() is not None:
         flash('Username is already in use.')
-        return redirect(url_for('home.home'))
-
-    if password != confirm_password:
-        flash('Password does not match confirmation.')
         return redirect(url_for('home.home'))
 
     user = User(username, password, email)
@@ -164,3 +159,11 @@ def register_post():
         flash('A link was sent to you to verify your email address.')
 
     return redirect(url_for('upload.create_art'))
+
+
+@app.app_template_global('notices')
+def global_notices():
+    if hasattr(g, 'user'):
+        return get_active_notices(g.user.id)
+    else:
+        return Notice.find_active()

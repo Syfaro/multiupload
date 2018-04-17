@@ -81,7 +81,7 @@
                                value="{{ sub.data.resize if sub.data.resize is not none }}">
                     </div>
 
-                    {% for r in rating %}
+                    {% for r in rating() %}
                         {{ ratingCheckbox(r) }}
                     {% endfor %}
 
@@ -170,7 +170,7 @@
         </form>
     </div>
 
-    {{ userLinkModal(sites) }}
+    {{ userLinkModal() }}
     {{ descriptionPreviewModal() }}
 
     <script src="{{ url_for('static', filename='js/upload/review.js') }}" nonce="{{ nonce() }}"></script>

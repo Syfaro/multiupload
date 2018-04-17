@@ -1,19 +1,20 @@
+import re
 import time
 from functools import wraps
 from random import SystemRandom
 from string import ascii_lowercase
 from subprocess import PIPE
 from subprocess import Popen
-from typing import Tuple
+from typing import List, Tuple
 from typing import Union
 
-import re
 import requests
 from flask import current_app
 from flask import g
 from flask import redirect
 from flask import session
 from flask import url_for
+from werkzeug.datastructures import MultiDict
 
 from models import Notice
 from models import User
@@ -24,37 +25,37 @@ rng = SystemRandom()
 RESIZE_EXP = re.compile(r'(?P<height>\d+).+?(?P<width>\d+)')
 
 
-def random_string(length):
+def random_string(length) -> str:
     return ''.join(rng.choice(ascii_lowercase) for _ in range(length))
 
 
-def git_version():
+def git_version() -> str:
     gitproc = Popen(['git', 'rev-parse', 'HEAD'], stdout=PIPE)
     (stdout, _) = gitproc.communicate()
     return stdout.strip().decode('utf-8')
 
 
-def english_series(items):
+def english_series(items) -> str:
     items = tuple(items)
     if len(items) <= 1:
-        return "".join(items)
-    return ", ".join(x for x in items[:-1]) + ', and ' + items[-1]
+        return ''.join(items)
+    return ', '.join(x for x in items[:-1]) + ', and ' + items[-1]
 
 
 def tumblr_blog_name(url):
-    return url.split("//")[-1].split("/")[0]
+    return url.split('//')[-1].split('/')[0]
 
 
-def get_active_notices(for_user=None):
-    notices = Notice.find_active().all()
+def get_active_notices(user: Union[int, None] = None):
+    notices: List[Notice] = Notice.find_active().all()
 
-    if for_user:
-        notices = filter(lambda notice: not notice.was_viewed_by(for_user), notices)
+    if user:
+        notices = filter(lambda notice: not notice.was_viewed_by(user), notices)
 
     return notices
 
 
-def send_to_influx(point):
+def send_to_influx(point: dict) -> None:
     influx = g.get('influx', None)
 
     if not influx:
@@ -72,7 +73,7 @@ def login_required(f):
         if 'id' not in session:
             return redirect(url_for('home.home'))
 
-        user = User.query.get(session['id'])
+        user: User = User.query.get(session['id'])
 
         if not user:
             session.pop('id')
@@ -85,7 +86,7 @@ def login_required(f):
     return decorated_function
 
 
-def save_multi_dict(d):
+def save_multi_dict(d: MultiDict) -> dict:
     n = {}
 
     for k, v in d.items():
@@ -98,7 +99,7 @@ def save_multi_dict(d):
     return n
 
 
-def safe_ext(name: str):
+def safe_ext(name: str) -> Union[bool, str]:
     if '.' not in name:
         return False
 
@@ -109,7 +110,7 @@ def safe_ext(name: str):
     return split
 
 
-def write_upload_time(start_time, site=None, measurement='upload_time'):
+def write_upload_time(start_time, site: int = None, measurement: str = 'upload_time') -> None:
     duration = time.time() - start_time
 
     point = {
@@ -125,7 +126,7 @@ def write_upload_time(start_time, site=None, measurement='upload_time'):
     send_to_influx(point)
 
 
-def write_site_response(site, req):
+def write_site_response(site: int, req: requests.Response) -> None:
     point = {
         'measurement': 'site_response',
         'fields': {

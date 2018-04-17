@@ -33,7 +33,6 @@ from sites.known import KNOWN_SITES
 from sites.known import known_list
 from submission import Rating
 from submission import Submission
-from utils import get_active_notices
 from utils import login_required
 from utils import parse_resize
 from utils import random_string
@@ -47,10 +46,12 @@ app = Blueprint('upload', __name__)
 @app.route('/art', methods=['GET'])
 @login_required
 def create_art():
-    accounts = map(lambda account: {'account': account, 'selected': account.used_last}, g.user.accounts)
+    accounts = map(lambda account: {
+        'account': account,
+        'selected': account.used_last,
+    }, g.user.accounts)
 
-    return render_template('review/review.html', user=g.user, accounts=accounts, sites=known_list(),
-                           notices=get_active_notices(for_user=g.user.id), sub=SavedSubmission(), rating=Rating)
+    return render_template('review/review.html', accounts=accounts, sub=SavedSubmission())
 
 
 def submit_art(submission, account, saved=None, twitter_links=None) -> dict:
@@ -94,7 +95,16 @@ def submit_art(submission, account, saved=None, twitter_links=None) -> dict:
             }
 
 
-def upload_and_send(submission, accounts, saved, twitter_account_ids):
+def upload_and_send(submission: SavedSubmission, accounts: List[Account], saved: SavedSubmission):
+    twitter_account = saved.data.get('twitter-account')
+    twitter_account_ids = []
+    if twitter_account is not None:
+        try:
+            for i in twitter_account.split(' '):
+                twitter_account_ids.append(int(i))
+        except ValueError:
+            pass
+
     twitter_links: List[Tuple[Sites, str]] = []
     upload_accounts: List[Account] = []
     upload_error = False
@@ -108,6 +118,8 @@ def upload_and_send(submission, accounts, saved, twitter_account_ids):
 
             if account.id in twitter_account_ids:
                 twitter_links.append((account.site, result['link'],))
+
+            upload_accounts.append(account)
         except BadCredentials:
             yield 'event: badcreds\ndata: {info}\n\n'.format(
                 info=json.dumps({'site': account.site.value, 'account': account.username}))
@@ -128,7 +140,7 @@ def upload_and_send(submission, accounts, saved, twitter_account_ids):
             upload_error = True
 
     if upload_error:
-        needs_upload = [account for account in accounts if account not in upload_accounts]
+        needs_upload = [account.id for account in accounts if account.id not in upload_accounts]
         saved.set_accounts(needs_upload)  # remove accounts already uploaded to
     else:
         db.session.delete(saved)
@@ -141,7 +153,7 @@ def upload_and_send(submission, accounts, saved, twitter_account_ids):
 @login_required
 def create_art_post_saved():
     saved_id = request.args.get('id')
-    saved: SavedSubmission = SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(id=saved_id).first()
+    saved: SavedSubmission = SavedSubmission.find(saved_id)
 
     if not saved:
         flash('Unknown item.')
@@ -149,7 +161,7 @@ def create_art_post_saved():
 
     submission = Submission(saved.title, saved.description, saved.tags, saved.rating.value, saved)
 
-    for account in Account.query.filter_by(user_id=g.user.id).all():
+    for account in Account.all():
         account.used_last = 0
 
     accounts: List[Account] = []
@@ -164,18 +176,7 @@ def create_art_post_saved():
 
     accounts: List[Account] = sorted(accounts, key=lambda x: x.site_id)
 
-    twitter_account = saved.data.get('twitter-account')
-    twitter_account_ids = []
-    if twitter_account is not None:
-        try:
-            for i in twitter_account.split(' '):
-                twitter_account_ids.append(int(i))
-        except ValueError:
-            pass
-
-    return Response(
-        stream_with_context(upload_and_send(submission, accounts, saved, twitter_account_ids)),
-        mimetype='text/event-stream')
+    return Response(stream_with_context(upload_and_send(submission, accounts, saved)), mimetype='text/event-stream')
 
 
 @app.route('/art', methods=['POST'])
@@ -259,16 +260,15 @@ def create_art_post():
 
     submission = Submission(title, description, keywords, rating, image_upload)
 
-    for account in Account.query.filter_by(user_id=g.user.id).all():
+    for account in Account.all():
         account.used_last = 0
 
     accounts: List[Account] = []
-    for acct in request.form.getlist('account'):
-        account = Account.query.get(acct)
+    for account_id in request.form.getlist('account'):
+        account: Account = Account.find(account_id)
 
-        if not account or account.user_id != g.user.id:
-            flash('Account does not exist or does not belong to current user.')
-            return redirect(url_for('upload.create_art'))
+        if not account:
+            flash('Account does not exist.')
 
         account.used_last = 1
 
@@ -514,14 +514,10 @@ def zip_post():
 @app.route('/review/<int:id>', methods=['GET'])
 @login_required
 def review(id=None):
-    q = SavedSubmission.query.filter_by(user_id=g.user.id)
-    if id:
-        q = q.filter_by(id=id)
-    sub: SavedSubmission = q.first()
+    sub: SavedSubmission = SavedSubmission.find(id)
 
     if sub:
-        return render_template('review/review.html', sub=sub, rating=Rating, user=g.user,
-                               accounts=sub.all_selected_accounts(g.user), sites=known_list())
+        return render_template('review/review.html', sub=sub, accounts=sub.all_selected_accounts(g.user))
 
     return redirect(url_for('list.index'))
 
@@ -536,12 +532,22 @@ def has_text(s):
     return '✗' if not s else '✓'
 
 
+@app.app_template_global('rating')
+def global_rating():
+    return Rating
+
+
+@app.app_template_global('known_sites')
+def global_known_sites():
+    return known_list()
+
+
 @app.route('/group/create', methods=['GET'])
 @login_required
 def create_group():
     accounts = map(lambda account: {'account': account, 'selected': account.used_last}, g.user.accounts)
 
-    return render_template('review/group.html', accounts=accounts, rating=Rating, is_group=True)
+    return render_template('review/group.html', accounts=accounts, is_group=True)
 
 
 @app.route('/group/create', methods=['POST'])
@@ -554,10 +560,10 @@ def create_group_post():
     images = []
     titles = []
     for i in range(4):
-        image = request.files.get('image-' + str(i + 1))
-        if not image or image.filename == '':
+        image_upload = request.files.get('image-' + str(i + 1))
+        if not image_upload or image_upload.filename == '':
             continue
-        images.append(image)
+        images.append(image_upload)
 
         item = request.form.get('title-' + str(i + 1))
         if not item or item == '':
@@ -577,23 +583,23 @@ def create_group_post():
     master.group_id = group.id
     db.session.add(master)
 
-    for idx, image in enumerate(images):
+    for idx, image_upload in enumerate(images):
         saved = SavedSubmission(g.user, titles[idx], description, keywords, rating)
         saved.data = data
         saved.set_accounts(accounts)
         saved.group_id = group.id
 
-        ext = safe_ext(image.filename)
+        ext = safe_ext(image_upload.filename)
         if ext:
-            saved.original_filename = secure_filename(image.filename)
+            saved.original_filename = secure_filename(image_upload.filename)
 
             name = random_string(16) + '.' + ext
 
-            image.save(join(current_app.config['UPLOAD_FOLDER'], name))
+            image_upload.save(join(current_app.config['UPLOAD_FOLDER'], name))
             saved.image_filename = name
-            saved.image_mimetype = image.mimetype
+            saved.image_mimetype = image_upload.mimetype
         else:
-            flash('{0} has a bad file extension'.format(image.filename))
+            flash('{0} has a bad file extension'.format(image_upload.filename))
             continue
 
         db.session.add(saved)
@@ -606,9 +612,9 @@ def create_group_post():
 @app.route('/master/<int:id>', methods=['GET'])
 @login_required
 def update_master(id):
-    sub = SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(id=id).first()
+    sub = SavedSubmission.find(id)
 
-    return render_template('review/master.html', sub=sub, accounts=sub.all_selected_accounts(g.user), rating=Rating)
+    return render_template('review/master.html', sub=sub, accounts=sub.all_selected_accounts(g.user))
 
 
 @app.route('/master', methods=['POST'])
@@ -620,7 +626,7 @@ def update_master_post():
     keywords = request.form.get('keywords')
     rating = request.form.get('rating')
 
-    sub: SavedSubmission = SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(id=sub_id).first()
+    sub: SavedSubmission = SavedSubmission.find(sub_id)
     sub.title = title
     sub.description = description
     sub.tags = keywords
@@ -636,8 +642,8 @@ def update_master_post():
     return redirect(url_for('list.index'))
 
 
-def perform_group_upload(id):
-    group: SubmissionGroup = SubmissionGroup.query.filter_by(user_id=g.user.id).filter_by(id=id).first()
+def perform_group_upload(group_id):
+    group: SubmissionGroup = SubmissionGroup.find(group_id)
     master = group.master
 
     had_error = False

@@ -51,7 +51,7 @@ def start_influx():
 
 
 @app.template_global('nonce')
-def nonce():
+def nonce() -> str:
     n = g.get('nonce')
     if n:
         return n

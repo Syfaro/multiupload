@@ -1,7 +1,7 @@
 import re
 
 
-def parse_description(description, uploading_to):
+def parse_description(description, uploading_to) -> str:
     """Attempt to parse a description into a format valid for each site."""
     exp = r'<\|(\S+?),(\d+?),(\d)\|>'
     match = re.search(exp, description)

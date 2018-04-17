@@ -1,7 +1,7 @@
 import json
 from random import SystemRandom
 from string import ascii_letters
-from typing import List
+from typing import Any, List, Union
 
 from bcrypt import gensalt
 from bcrypt import hashpw
@@ -29,21 +29,21 @@ class User(db.Model):
 
     accounts = db.relationship('Account', backref='user', lazy='dynamic')
 
-    def __init__(self, username, password, email=None):
+    def __init__(self, username: str, password: str, email: str = None):
         self.username = username
         if email:
             self.email = email
         self.email_verifier = ''.join(SystemRandom().choice(ascii_letters) for _ in range(16))
         self.password = hashpw(password.encode('utf-8'), gensalt())
 
-    def verify(self, password):
+    def verify(self, password: str) -> bool:
         self_password = self.password
         if hasattr(self_password, 'encode'):
             self_password = self_password.encode('utf-8')
         return hashpw(password.encode('utf-8'), self_password) == self_password
 
     @classmethod
-    def by_name_or_email(cls, s):
+    def by_name_or_email(cls, s: str):
         return cls.query.filter(
             (func.lower(cls.email) == func.lower(s)) | (func.lower(cls.username) == func.lower(s))).first()
 
@@ -52,7 +52,7 @@ class Site(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), unique=True, nullable=False)
 
-    def __init__(self, name):
+    def __init__(self, name: str):
         self.name = name
 
     @classmethod
@@ -73,7 +73,7 @@ class Account(db.Model):
     config = db.relationship('AccountConfig', lazy='dynamic', cascade='delete')
     data = db.relationship('AccountData', lazy='dynamic', cascade='delete')
 
-    def __init__(self, site, user_id, username, credentials):
+    def __init__(self, site: Union[Sites, int], user_id: int, username: str, credentials: str):
         if isinstance(site, Sites):
             self.site_id = site.value
         else:
@@ -82,7 +82,7 @@ class Account(db.Model):
         self.username = username
         self.credentials = encrypt(session['password'], credentials)
 
-    def update_credentials(self, credentials):
+    def update_credentials(self, credentials: str) -> None:
         self.credentials = encrypt(session['password'], credentials)
 
     def __getitem__(self, arg):
@@ -93,6 +93,14 @@ class Account(db.Model):
         return Sites(self.site_id)
 
     @classmethod
+    def find(cls, account_id: int):
+        return cls.query.filter_by(id=account_id).filter_by(user_id=g.user.id).first()
+
+    @classmethod
+    def all(cls):
+        return cls.query.filter_by(user_id=g.user.id).order_by(cls.site_id.asc()).order_by(cls.username.asc()).all()
+
+    @classmethod
     def lookup_username(cls, site: Sites, uid: int, username: str):
         return cls.query.filter_by(site_id=site.value) \
             .filter_by(user_id=uid) \
@@ -101,8 +109,8 @@ class Account(db.Model):
 
 
 class AccountConfig(db.Model):
+    """A setting for an account. Uses short string key/value pairs."""
     id = db.Column(db.Integer, primary_key=True)
-
     account_id = db.Column(db.Integer, db.ForeignKey('account.id'), nullable=False)
 
     key = db.Column(db.String(120), nullable=False)
@@ -110,15 +118,15 @@ class AccountConfig(db.Model):
 
     account = db.relationship('Account', back_populates='config')
 
-    def __init__(self, account_id, key, val):
+    def __init__(self, account_id: int, key: str, val: str):
         self.account_id = account_id
         self.key = key
         self.val = val
 
 
 class AccountData(db.Model):
+    """Data associated to an account. Uses a short key with a JSON value."""
     id = db.Column(db.Integer, primary_key=True)
-
     account_id = db.Column(db.Integer, db.ForeignKey('account.id'), nullable=False)
 
     key = db.Column(db.String(120), nullable=False)
@@ -126,7 +134,7 @@ class AccountData(db.Model):
 
     account = db.relationship('Account', back_populates='data')
 
-    def __init__(self, account, key, data):
+    def __init__(self, account: Union[Account, int], key: str, data: Any):
         if isinstance(account, Account):
             self.account_id = account.id
         else:
@@ -136,11 +144,11 @@ class AccountData(db.Model):
         self.data = json.dumps(data)
 
     @property
-    def json(self):
+    def json(self) -> Any:
         return json.loads(self.data)
 
     @json.setter
-    def json(self, data):
+    def json(self, data) -> None:
         self.data = json.dumps(data)
 
 
@@ -149,10 +157,10 @@ class Notice(db.Model):
     text = db.Column(db.String(500), nullable=False)
     active = db.Column(db.Boolean, default=1, nullable=False)
 
-    def __init__(self, text):
+    def __init__(self, text: str):
         self.text = text
 
-    def was_viewed_by(self, user):
+    def was_viewed_by(self, user: int):
         return NoticeViewed.query.filter_by(notice_id=self.id, user_id=user).first()
 
     @classmethod
@@ -166,7 +174,7 @@ class NoticeViewed(db.Model):
     notice_id = db.Column(db.Integer, db.ForeignKey('notice.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
-    def __init__(self, notice, user):
+    def __init__(self, notice: int, user: int):
         self.notice_id = notice
         self.user_id = user
 
@@ -189,7 +197,8 @@ class SavedSubmission(db.Model):
     group_id = db.Column(db.Integer, db.ForeignKey('submission_group.id'), nullable=True)
     master = db.Column(db.Boolean, default=False, nullable=False)
 
-    def __init__(self, user=None, title=None, description=None, tags=None, rating=None):
+    def __init__(self, user: User = None, title: str = None, description: str = None, tags: str = None,
+                 rating: str = None):
         if user:
             self.user_id = user.id
         self.title = title
@@ -197,7 +206,7 @@ class SavedSubmission(db.Model):
         self.tags = tags
         self.rating = rating
 
-    def set_accounts(self, ids):
+    def set_accounts(self, ids: List[int]) -> None:
         self.account_ids = ' '.join(ids)
 
     @property
@@ -209,7 +218,7 @@ class SavedSubmission(db.Model):
         if self.account_ids is None:
             return []
 
-        return [Account.query.get(account) for account in self.account_ids.split(' ')]
+        return [Account.find(int(account)) for account in self.account_ids.split(' ')]
 
     def all_selected_accounts(self, user):
         accounts = self.accounts
@@ -233,7 +242,7 @@ class SavedSubmission(db.Model):
     def data(self) -> dict:
         return json.loads(self.site_data) if self.site_data else {}
 
-    def has_all(self, ignore_sites=False) -> bool:
+    def has_all(self, ignore_sites: bool = False) -> bool:
         return all(i is not None and i != '' for i in
                    [self.title, self.description, self.tags, self.rating,
                     self.account_ids if not ignore_sites else 'hi', self.image_filename])
@@ -247,6 +256,10 @@ class SavedSubmission(db.Model):
         return cls.query.filter_by(user_id=g.user.id).filter_by(master=False).group_by(cls.group_id).order_by(
             cls.group_id.asc()).order_by(cls.id.asc()).all()
 
+    @classmethod
+    def find(cls, sub_id: int):
+        return cls.query.filter_by(user_id=g.user.id).filter_by(id=sub_id).first()
+
 
 class SubmissionGroup(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -254,7 +267,7 @@ class SubmissionGroup(db.Model):
     name = db.Column(db.String(255), nullable=False)
     grouped = db.Column(db.Boolean, default=False)
 
-    def __init__(self, user, name, grouped=False):
+    def __init__(self, user: User, name: str, grouped: bool = False):
         self.user_id = user.id
         self.name = name
         self.grouped = grouped
@@ -264,19 +277,23 @@ class SubmissionGroup(db.Model):
         return cls.query.filter_by(user_id=g.user.id).all()
 
     @staticmethod
-    def get_ungrouped_submissions():
+    def get_ungrouped_submissions() -> List[SavedSubmission]:
         return SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(group_id=None).order_by(
             SavedSubmission.id.asc()).all()
 
     @property
-    def submittable(self):
+    def submittable(self) -> bool:
         return all([sub.has_all(ignore_sites=True) for sub in self.submissions])
 
     @property
-    def submissions(self):
+    def submissions(self) -> List[SavedSubmission]:
         return SavedSubmission.query.filter_by(group_id=self.id).filter_by(master=False).order_by(
             SavedSubmission.id.asc()).all()
 
     @property
-    def master(self):
+    def master(self) -> SavedSubmission:
         return SavedSubmission.query.filter_by(group_id=self.id).filter_by(master=True).first()
+
+    @classmethod
+    def find(cls, group_id: int):
+        return cls.query.filter_by(user_id=g.user.id).filter_by(id=group_id).first()
