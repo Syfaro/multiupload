@@ -728,7 +728,4 @@ def upload_group_post():
         db.session.delete(group)
         db.session.commit()
 
-    return jsonify({
-        'links': links,
-        'errors': err_messages,
-    })
+    return render_template('after_upload.html', uploads=links)
