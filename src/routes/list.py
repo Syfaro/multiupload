@@ -169,6 +169,10 @@ def group_delete_post():
         db.session.delete(sub)
     db.session.commit()
 
+    if group.master:  # not returned from group.submissions
+        db.session.delete(group.master)
+        db.session.commit()
+
     db.session.delete(group)
     db.session.commit()
 

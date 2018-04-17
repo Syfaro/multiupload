@@ -541,7 +541,7 @@ def has_text(s):
 def create_group():
     accounts = map(lambda account: {'account': account, 'selected': account.used_last}, g.user.accounts)
 
-    return render_template('review/group.html', accounts=accounts, rating=Rating)
+    return render_template('review/group.html', accounts=accounts, rating=Rating, is_group=True)
 
 
 @app.route('/group/create', methods=['POST'])
@@ -552,11 +552,17 @@ def create_group_post():
     keywords = request.form.get('keywords')
     rating = request.form.get('rating')
     images = []
+    titles = []
     for i in range(4):
         image = request.files.get('image-' + str(i + 1))
         if not image or image.filename == '':
             continue
         images.append(image)
+
+        item = request.form.get('title-' + str(i + 1))
+        if not item or item == '':
+            continue
+        titles.append(item)
     data = save_multi_dict(request.form)
     accounts = request.form.getlist('account')
 
@@ -571,8 +577,8 @@ def create_group_post():
     master.group_id = group.id
     db.session.add(master)
 
-    for image in images:
-        saved = SavedSubmission(g.user, title, description, keywords, rating)
+    for idx, image in enumerate(images):
+        saved = SavedSubmission(g.user, titles[idx], description, keywords, rating)
         saved.data = data
         saved.set_accounts(accounts)
         saved.group_id = group.id
@@ -643,8 +649,24 @@ def upload_group_post():
     had_error = False
     err_messages = []
 
-    for account in master.accounts:
+    twitter_account = master.data.get('twitter-account')
+    twitter_account_ids = []
+    twitter_links = []
+    if twitter_account is not None:
+        try:
+            for i in twitter_account.split(' '):
+                twitter_account_ids.append(int(i))
+        except ValueError:
+            pass
+
+    extra = master.data
+
+    accounts: List[Account] = sorted(master.accounts, key=lambda x: x.site_id)
+
+    for account in accounts:
         decrypted = simplecrypt.decrypt(session['password'], account.credentials)
+
+        extra['twitter-links'] = twitter_links
 
         for site in KNOWN_SITES:
             if site.SITE == account.site:
@@ -658,7 +680,7 @@ def upload_group_post():
                             continue
 
                     try:
-                        link = s.upload_group(group)
+                        link = s.upload_group(group, extra)
                     except SiteError as ex:
                         had_error = True
                         err_messages.append(ex.message)
@@ -669,8 +691,11 @@ def upload_group_post():
                         'link': link,
                         'name': '{site} - {account}'.format(site=site.SITE.name, account=account.username)
                     })
+
+                    if account.id in twitter_account_ids:
+                        twitter_links.append((account.site, link,))
                 else:
-                    for sub in group.submissions:
+                    for idx, sub in enumerate(group.submissions):
                         errors = s.validate_submission(sub)
                         if errors:
                             for error in errors:
@@ -678,7 +703,7 @@ def upload_group_post():
                                 continue
 
                         try:
-                            link = s.submit_artwork(sub.submission, master.data)
+                            link = s.submit_artwork(sub.submission, extra)
                         except SiteError as ex:
                             had_error = True
                             err_messages.append(ex.message)
@@ -690,10 +715,16 @@ def upload_group_post():
                             'name': '{site} - {account}'.format(site=site.SITE.name, account=account.username)
                         })
 
+                        if account.id in twitter_account_ids:
+                            if extra.get('twitter-image') == str(idx + 1):
+                                twitter_links.append((account.site, link,))
+
     if not had_error:
         db.session.delete(master)
         for sub in group.submissions:
             db.session.delete(sub)
+        db.session.commit()
+
         db.session.delete(group)
         db.session.commit()
 

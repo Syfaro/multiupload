@@ -21,6 +21,11 @@
                    accept="image/*" data-image="{{ num }}">
         </div>
 
+        <div class="form-group">
+            <input type="text" name="title-{{ num }}" class="form-control custom-title" placeholder="Custom title"
+                   readonly>
+        </div>
+
         <img class="img-fluid block-center preview-image image-{{ num }}" data-image="{{ num }}">
     </div>
 {%- endmacro %}
@@ -30,7 +35,16 @@
         <div class="row">
             <div class="col-sm-12">
                 <div class="page-header">
-                    <h1>{{ 'Upload Art Group' }}</h1>
+                    <h1>Upload Art Group</h1>
+
+                    <p>
+                        Please note this feature is experimental and may not always work as expected.
+                    </p>
+
+                    <p>
+                        If you have any feedback on how to improve it or find any issues with it, please send me <a
+                            href="https://syfaro.net/#contact">a message</a>.
+                    </p>
                 </div>
             </div>
         </div>
@@ -48,13 +62,13 @@
                 <div class="col-sm-12 col-md-4 col-lg-3">
                     <div class="form-group">
                         <label for="title">Title</label>
-                        <input type="text" name="title" id="title" placeholder="Title" class="form-control">
+                        <input type="text" name="title" id="title" placeholder="Title" class="form-control" required>
                     </div>
 
                     <div class="form-group">
                         <label for="description">Description</label>
                         <textarea class="form-control" name="description" id="description"
-                                  placeholder="Description"></textarea>
+                                  placeholder="Description" required></textarea>
 
                         <p class="form-text">
                             <button type="button" class="btn btn-secondary btn-sm mb-1" data-toggle="modal"
@@ -74,7 +88,8 @@
 
                     <div class="form-group">
                         <label for="keywords">Keywords</label>
-                        <textarea class="form-control" name="keywords" id="keywords" placeholder="Keywords"></textarea>
+                        <textarea class="form-control" name="keywords" id="keywords" placeholder="Keywords"
+                                  required></textarea>
 
                         <p class="form-text twitter-hashtag d-none">
                             Keywords beginning with a hashtag will only appear on submissions to Twitter.

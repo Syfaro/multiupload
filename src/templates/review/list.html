@@ -12,7 +12,8 @@
                 <th>Description</th>
                 <th>Keywords</th>
                 <th>Rating</th>
-                {% if not group.grouped %}<th>Sites</th>{% endif %}
+                {% if not group.grouped %}
+                    <th>Sites</th>{% endif %}
                 <th>Image</th>
                 <th></th>
             </tr>
@@ -25,7 +26,8 @@
                     <td>{{ sub.description|has_text }}</td>
                     <td>{{ sub.tags|has_text }}</td>
                     <td>{{ sub.rating|has_text }}</td>
-                    {% if not group.grouped %}<td>{{ sub.account_ids|has_text }}</td>{% endif %}
+                    {% if not group.grouped %}
+                        <td>{{ sub.account_ids|has_text }}</td>{% endif %}
                     <td>{{ sub.image_filename|has_text }}</td>
                     <td>
                         <form action="{{ url_for('list.remove') }}" method="POST">
@@ -92,8 +94,10 @@
                                 Submit group
                             </button>
 
-                            <a href="{{ url_for('upload.update_master', id=group.master.id) }}"
-                               class="btn btn-sm btn-secondary mr-sm-2 mb-2">Update master</a>
+                            {% if group.master %}
+                                <a href="{{ url_for('upload.update_master', id=group.master.id) }}"
+                                   class="btn btn-sm btn-secondary mr-sm-2 mb-2">Update master</a>
+                            {% endif %}
                         {% endif %}
                         <button class="btn btn-sm btn-danger mr-sm-2 mb-2"
                                 formaction="{{ url_for('list.group_delete_post') }}">Delete items in group
@@ -116,7 +120,7 @@
             <div class="row">
                 <div class="col-sm-12">
                     <a href="#" class="btn btn-primary select-action disabled" data-action="add" data-toggle="modal"
-                       data-target="#addGroupModal">Add selected to group</a>
+                       data-target="#addGroupModal">Move selected to group</a>
                     <a href="#" class="btn btn-danger select-action disabled" data-action="delete">Delete selected</a>
                 </div>
             </div>
@@ -143,7 +147,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Add to group</h5>
+                    <h5 class="modal-title">Move to group</h5>
                     <button type="button" class="close"></button>
                 </div>
                 <div class="modal-body">
@@ -164,7 +168,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary add-to-group">Add to group</button>
+                    <button type="button" class="btn btn-primary add-to-group">Move to group</button>
                 </div>
             </div>
         </div>

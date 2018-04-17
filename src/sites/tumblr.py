@@ -134,7 +134,7 @@ class Tumblr(Site):
     def tag_str(self, tags: List[str]) -> str:
         return ' ,'.join(tags)
 
-    def upload_group(self, group: SubmissionGroup) -> str:
+    def upload_group(self, group: SubmissionGroup, extra: Any = None) -> str:
         t = tumblpy.Tumblpy(current_app.config['TUMBLR_KEY'], current_app.config['TUMBLR_SECRET'],
                             self.credentials['token'], self.credentials['secret'])
 

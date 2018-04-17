@@ -1,8 +1,33 @@
 class ArtGroupUpload {
     constructor() {
         this.fileInputs = Array.from(document.querySelectorAll('input.upload-image'));
+        this.titleInputs = Array.from(document.querySelectorAll('.custom-title'));
+        this.mainTitle = document.querySelector('input[name="title"]');
         this.imagePreviews = Array.from(document.querySelectorAll('.preview-image')).sort(ArtGroupUpload.sortImages);
         this.addEventListeners();
+        this.mainTitle.addEventListener('keyup', this.updateTitles.bind(this));
+        this.titleInputs.forEach(input => input.addEventListener('focus', ArtGroupUpload.focusCustomTitle.bind(this)));
+        this.titleInputs.forEach(input => input.addEventListener('blur', this.blurCustomTitle.bind(this)));
+    }
+    blurCustomTitle(ev) {
+        requestAnimationFrame(() => {
+            const target = ev.target;
+            if (target.value == '' || target.value == this.mainTitle.value) {
+                target.readOnly = true;
+                target.value = this.mainTitle.value;
+            }
+        });
+    }
+    static focusCustomTitle(ev) {
+        const target = ev.target;
+        target.readOnly = false;
+    }
+    updateTitles() {
+        requestAnimationFrame(() => {
+            this.titleInputs
+                .filter(input => input.readOnly)
+                .forEach(input => input.value = this.mainTitle.value);
+        });
     }
     static sortImages(a, b) {
         const first = parseInt(a.dataset.image, 10);

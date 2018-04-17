@@ -1,5 +1,5 @@
 import json
-from typing import Any
+from typing import Any, List
 
 import tweepy
 from flask import Response
@@ -10,7 +10,7 @@ from flask import request
 from flask import session
 
 from constant import Sites
-from models import Account, SubmissionGroup
+from models import Account, SubmissionGroup, SavedSubmission
 from models import db
 from sentry import sentry
 from sites import AccountExists
@@ -146,24 +146,24 @@ class Twitter(Site):
 
         return 'https://twitter.com/{username}/status/{id}'.format(username=tweet.user.screen_name, id=tweet.id_str)
 
-    def upload_group(self, group: SubmissionGroup):
-        master = group.master
-        s = master.submission
-        submissions = group.submissions
+    def upload_group(self, group: SubmissionGroup, extra: Any = None):
+        master: SavedSubmission = group.master
+        s: Submission = master.submission
+        submissions: List[SavedSubmission] = group.submissions
 
-        images = list(self.collect_images(submissions))
+        images = list(self.collect_images(submissions, max_size=2000))
 
         auth = self._get_oauth_handler()
         auth.set_access_token(self.credentials['token'], self.credentials['secret'])
 
         api = tweepy.API(auth)
 
-        extra = master.data
+        data = master.data
 
-        use_custom_text = extra.get('twitter-custom', 'n')
-        custom_text = extra.get('twitter-custom-text')
+        use_custom_text = data.get('twitter-custom', 'n')
+        custom_text = data.get('twitter-custom-text')
+        format: str = data.get('twitter-format', '')
 
-        format: str = extra.get('twitter-format', '')
         links: list = extra.get('twitter-links')
 
         if use_custom_text == 'y':

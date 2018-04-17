@@ -3,6 +3,7 @@ from typing import Any
 from typing import List
 from typing import Union
 
+from PIL import Image
 from flask import current_app
 from os.path import join
 
@@ -58,7 +59,7 @@ class Site(object):
     def get_folders(self, update=False) -> Union[None, List[dict]]:
         return None
 
-    def upload_group(self, group: SubmissionGroup):
+    def upload_group(self, group: SubmissionGroup, extra: Any = None):
         raise NotImplementedError()
 
     @staticmethod
@@ -66,10 +67,22 @@ class Site(object):
         return False
 
     @staticmethod
-    def collect_images(submissions: List[SavedSubmission]):
+    def collect_images(submissions: List[SavedSubmission], max_size=None, format=None):
         for sub in submissions:
             with open(join(current_app.config['UPLOAD_FOLDER'], sub.image_filename), 'rb') as f:
                 image_bytes = BytesIO(f.read())
+
+            if max_size:
+                image = Image.open(image_bytes)
+                if not image.mode.startswith('RGB'):
+                    image = image.convert('RGBA')
+                image.thumbnail((max_size, max_size), Image.ANTIALIAS)
+                image_bytes = BytesIO()
+                if format:
+                    image.save(image_bytes, format)
+                else:
+                    image.save(image_bytes, image.format)
+                image_bytes.seek(0)
 
             yield {
                 'filename': sub.image_filename,

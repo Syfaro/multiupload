@@ -5,7 +5,8 @@
     "rootDir": "ts/",
     "lib": ["dom", "es6"],
     "target": "es2017",
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "module": "es6"
   },
   "include": [
     "ts/**/*"

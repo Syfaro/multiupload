@@ -265,7 +265,8 @@ class SubmissionGroup(db.Model):
 
     @staticmethod
     def get_ungrouped_submissions():
-        return SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(group_id=None).all()
+        return SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(group_id=None).order_by(
+            SavedSubmission.id.asc()).all()
 
     @property
     def submittable(self):
@@ -273,7 +274,8 @@ class SubmissionGroup(db.Model):
 
     @property
     def submissions(self):
-        return SavedSubmission.query.filter_by(group_id=self.id).filter_by(master=False).all()
+        return SavedSubmission.query.filter_by(group_id=self.id).filter_by(master=False).order_by(
+            SavedSubmission.id.asc()).all()
 
     @property
     def master(self):

@@ -127,3 +127,15 @@ useCustom.addEventListener('change', ev => {
 });
 
 if (useCustom.checked) customTextBox.classList.remove('d-none');
+
+const links = Array.from(document.querySelectorAll('.twitter-links-image input')).sort((a, b) => {
+    if (parseInt(a.value, 10) > parseInt(b.value, 10)) return 1;
+    if (parseInt(a.value, 10) < parseInt(b.value, 10)) return -1;
+    return 0;
+});
+Array.from(document.querySelectorAll('.col-md-6 input[type="file"]')).forEach(input => {
+    input.addEventListener('change', ev => {
+        const id = parseInt(ev.target.name.split('-')[1], 10);
+        links[id - 1].disabled = false;
+    });
+});

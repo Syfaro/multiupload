@@ -14,18 +14,6 @@
     </div>
 {%- endmacro %}
 
-{% macro imageUpload(num) -%}
-    <div class="col-md-6">
-        <div class="form-group">
-            <label for="image">Image #{{ num }}</label>
-            <input type="file" class="form-control upload-image" id="image-{{ num }}" name="image-{{ num }}"
-                   accept="image/*" data-image="{{ num }}">
-        </div>
-
-        <img class="img-fluid block-center preview-image image-{{ num }}" data-image="{{ num }}">
-    </div>
-{%- endmacro %}
-
 {% block body %}
     <div class="container">
         <div class="row">
