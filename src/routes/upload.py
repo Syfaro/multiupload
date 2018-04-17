@@ -10,7 +10,7 @@ from zipfile import ZipFile
 import magic
 import simplecrypt
 from chardet import UniversalDetector
-from flask import Blueprint, Response, jsonify, stream_with_context
+from flask import Blueprint, Response, stream_with_context
 from flask import current_app
 from flask import flash
 from flask import g
@@ -636,18 +636,11 @@ def update_master_post():
     return redirect(url_for('list.index'))
 
 
-@app.route('/group', methods=['POST'])
-@login_required
-def upload_group_post():
-    group_id = request.form.get('group_id')
-
-    group: SubmissionGroup = SubmissionGroup.query.filter_by(user_id=g.user.id).filter_by(id=group_id).first()
+def perform_group_upload(id):
+    group: SubmissionGroup = SubmissionGroup.query.filter_by(user_id=g.user.id).filter_by(id=id).first()
     master = group.master
 
-    links = []
-
     had_error = False
-    err_messages = []
 
     twitter_account = master.data.get('twitter-account')
     twitter_account_ids = []
@@ -663,6 +656,8 @@ def upload_group_post():
 
     accounts: List[Account] = sorted(master.accounts, key=lambda x: x.site_id)
 
+    yield 'event: count\ndata: {0}\n\n'.format(len(accounts))
+
     for account in accounts:
         decrypted = simplecrypt.decrypt(session['password'], account.credentials)
 
@@ -676,48 +671,98 @@ def upload_group_post():
                     errors = s.validate_submission(master)
                     if errors:
                         for error in errors:
-                            flash(error)
+                            yield 'event: validationerror\ndata: {0}\n\n'.format(error)
                             continue
 
                     try:
                         link = s.upload_group(group, extra)
-                    except SiteError as ex:
+                    except BadCredentials:
+                        yield 'event: badcreds\ndata: {0}\n\n'.format(json.dumps({
+                            'site': account.site.value,
+                            'account': account.username,
+                        }))
                         had_error = True
-                        err_messages.append(ex.message)
-                        flash('Site error: {0}'.format(ex.message))
+                        continue
+                    except SiteError as ex:
+                        yield 'event: siteerror\ndata: {msg}\n\n'.format(msg=json.dumps({
+                            'msg': ex.message,
+                            'site': account.site.value,
+                            'account': account.username,
+                        }))
+                        had_error = True
+                        continue
+                    except HTTPError as ex:
+                        yield 'event: httperror\ndata: {info}\n\n'.format(info=json.dumps({
+                            'site': account.site.value,
+                            'account': account.username,
+                            'code': ex.response.status_code,
+                        }))
+                        had_error = True
                         continue
 
-                    links.append({
+                    yield 'event: upload\ndata: {0}\n\n'.format(json.dumps({
                         'link': link,
                         'name': '{site} - {account}'.format(site=site.SITE.name, account=account.username)
-                    })
+                    }))
 
                     if account.id in twitter_account_ids:
                         twitter_links.append((account.site, link,))
                 else:
-                    for idx, sub in enumerate(group.submissions):
+                    submissions = group.submissions
+                    sub_count = len(submissions)
+
+                    for idx, sub in enumerate(submissions):
                         errors = s.validate_submission(sub)
                         if errors:
                             for error in errors:
-                                flash(error)
+                                yield 'event: validationerror\ndata: {0}\n\n'.format(json.dumps({
+                                    'msg': error,
+                                    'site': account.site.value,
+                                    'account': account.username,
+                                }))
                                 continue
 
                         try:
                             link = s.submit_artwork(sub.submission, extra)
-                        except SiteError as ex:
+                        except BadCredentials:
+                            yield 'event: badcreds\ndata: {0}\n\n'.format(json.dumps({
+                                'site': account.site.value,
+                                'account': account.username,
+                            }))
                             had_error = True
-                            err_messages.append(ex.message)
-                            flash('Site error: {0}'.format(ex.message))
+                            continue
+                        except SiteError as ex:
+                            yield 'event: siteerror\ndata: {msg}\n\n'.format(msg=json.dumps({
+                                'msg': ex.message,
+                                'site': account.site.value,
+                                'account': account.username,
+                            }))
+                            had_error = True
+                            continue
+                        except HTTPError as ex:
+                            yield 'event: httperror\ndata: {info}\n\n'.format(info=json.dumps({
+                                'site': account.site.value,
+                                'account': account.username,
+                                'code': ex.response.status_code,
+                            }))
+                            had_error = True
                             continue
 
-                        links.append({
+                        yield 'event: upload\ndata: {0}\n\n'.format(json.dumps({
                             'link': link,
                             'name': '{site} - {account}'.format(site=site.SITE.name, account=account.username)
-                        })
+                        }))
 
                         if account.id in twitter_account_ids:
                             if extra.get('twitter-image') == str(idx + 1):
                                 twitter_links.append((account.site, link,))
+
+                        if 1 < sub_count != idx + 1:
+                            yield 'event: delay\ndata: start\n\n'
+                            time.sleep(20)
+                            yield 'event: delay\ndata: end\n\n'
+
+                yield 'event: groupdone\ndata: done\n\n'
 
     if not had_error:
         db.session.delete(master)
@@ -728,4 +773,12 @@ def upload_group_post():
         db.session.delete(group)
         db.session.commit()
 
-    return render_template('after_upload.html', uploads=links)
+    yield 'event: done\ndata: done\n\n'
+
+
+@app.route('/group/post')
+@login_required
+def group_upload():
+    group_id = request.args.get('id')
+
+    return Response(stream_with_context(perform_group_upload(group_id)), mimetype='text/event-stream')

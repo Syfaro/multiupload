@@ -34,8 +34,7 @@
                             <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="id" value="{{ sub.id }}">
                             {% if not sub.group.grouped %}
-                                <button formaction="{{ url_for('upload.create_art_post_saved') }}"
-                                        class="btn btn-primary btn-sm submit-submission{{ ' disabled' if not sub.has_all else '' }}"
+                                <button class="btn btn-primary btn-sm submit-submission{{ ' disabled' if not sub.has_all else '' }}"
                                         data-toggle="modal" data-target="#uploadModal">
                                     Submit
                                 </button>
@@ -89,8 +88,8 @@
                                     formaction="{{ url_for('list.group_remove_post') }}">Remove group
                             </button>
                         {% else %}
-                            <button class="btn btn-sm btn-primary mr-sm-2 mb-2"
-                                    formaction="{{ url_for('upload.upload_group_post') }}" {{ 'disabled' if not group.submittable }}>
+                            <button class="btn btn-sm btn-primary mr-sm-2 mb-2 group-upload"
+                                    data-toggle="modal" data-target="#uploadModal" {{ 'disabled' if not group.submittable }}>
                                 Submit group
                             </button>
 
@@ -176,4 +175,5 @@
 
     <script src="{{ url_for('static', filename='js/list/group.js') }}" nonce="{{ nonce() }}"></script>
     <script src="{{ url_for('static', filename='js/list/upload.js') }}" nonce="{{ nonce() }}"></script>
+    <script src="{{ url_for('static', filename='js/list/upload_group.js') }}" nonce="{{ nonce() }}"></script>
 {% endblock %}
