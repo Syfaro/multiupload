@@ -55,4 +55,26 @@ selectActions.forEach(action => action.addEventListener('click', ev => ev.preven
 inputCheckboxes.forEach(checkbox => checkbox.addEventListener('change', inputChange));
 groupSelect.addEventListener('change', groupSelectChange);
 groupButton.addEventListener('click', addToGroup);
+const d = document.querySelector('.select-action[data-action="delete"]');
+if (d) {
+    d.addEventListener('click', async (ev) => {
+        ev.preventDefault();
+        const checked = inputCheckboxes.filter(box => box.checked);
+        console.log(checked);
+        for (const check of checked) {
+            const id = check.dataset.id;
+            await fetch('/list/remove', {
+                method: 'POST',
+                credentials: 'same-origin',
+                redirect: 'manual',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': Multiupload.csrf,
+                },
+                body: `id=${id}`
+            });
+        }
+        window.location.reload();
+    });
+}
 //# sourceMappingURL=group.js.map

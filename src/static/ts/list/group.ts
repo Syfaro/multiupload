@@ -1,7 +1,7 @@
 declare const Multiupload;
 
-const inputCheckboxes = Array.from(document.querySelectorAll('input[type="checkbox"]')) as [HTMLInputElement];
-const selectActions = Array.from(document.querySelectorAll('.select-action')) as [HTMLAnchorElement];
+const inputCheckboxes = Array.from(document.querySelectorAll('input[type="checkbox"]')) as HTMLInputElement[];
+const selectActions = Array.from(document.querySelectorAll('.select-action')) as HTMLAnchorElement[];
 const newGroupName = document.querySelector('.new-group-name') as HTMLDivElement;
 const groupSelect = document.querySelector('.group-select') as HTMLSelectElement;
 const groupName = document.querySelector('input[name="group-name"]') as HTMLInputElement;
@@ -66,3 +66,31 @@ selectActions.forEach(action => action.addEventListener('click', ev => ev.preven
 inputCheckboxes.forEach(checkbox => checkbox.addEventListener('change', inputChange));
 groupSelect.addEventListener('change', groupSelectChange);
 groupButton.addEventListener('click', addToGroup);
+
+const d = document.querySelector('.select-action[data-action="delete"]');
+if (d) {
+    d.addEventListener('click', async ev => {
+        ev.preventDefault();
+
+        const checked = inputCheckboxes.filter(box => box.checked);
+
+        console.log(checked);
+
+        for (const check of checked) {
+            const id = check.dataset.id;
+
+            await fetch('/list/remove', {
+                method: 'POST',
+                credentials: 'same-origin',
+                redirect: 'manual',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': Multiupload.csrf,
+                },
+                body: `id=${id}`
+            });
+        }
+
+        window.location.reload();
+    });
+}
