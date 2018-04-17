@@ -12,8 +12,8 @@ from sqlalchemy import func
 
 from models import User
 from models import db
-from sites.known import known_names
-from utils import english_series, random_string
+from sites.known import known_names, KNOWN_SITES
+from utils import english_series
 from utils import get_active_notices
 from utils import send_to_influx
 
@@ -38,7 +38,7 @@ def features():
     if 'id' in session:
         g.user = User.query.get(session['id'])
 
-    return render_template('features.html')
+    return render_template('features.html', sites=KNOWN_SITES)
 
 
 @app.route('/upload')

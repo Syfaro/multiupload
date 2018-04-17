@@ -67,6 +67,10 @@ class Site(object):
         return False
 
     @staticmethod
+    def supports_folder() -> bool:
+        return False
+
+    @staticmethod
     def collect_images(submissions: List[SavedSubmission], max_size=None, format=None):
         for sub in submissions:
             with open(join(current_app.config['UPLOAD_FOLDER'], sub.image_filename), 'rb') as f:

@@ -249,3 +249,7 @@ class DeviantArt(Site):
     def get_da():
         return DeviantArtAPI(current_app.config['DEVIANTART_KEY'], current_app.config['DEVIANTART_SECRET'],
                              current_app.config['DEVIANTART_CALLBACK'], current_app.config['DEVIANTART_SCOPES'])
+
+    @staticmethod
+    def supports_folder():
+        return True

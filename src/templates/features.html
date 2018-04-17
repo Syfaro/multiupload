@@ -104,5 +104,34 @@
                 </p>
             </div>
         </div>
+
+        <div class="row mt-2">
+            <div class="col-sm-12">
+                <h2>Site Specific Features</h2>
+
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Site Name</th>
+                                <th>Image Uploads</th>
+                                <th>Grouped Submissions</th>
+                                <th>Folders</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for site in sites %}
+                                <tr>
+                                    <th>{{ site.SITE.name }}</th>
+                                    <th>✓</th>
+                                    <th>{{ site.supports_group() | has_text }}</th>
+                                    <th>{{ site.supports_folder() | has_text }}</th>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 {% endblock %}

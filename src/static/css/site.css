@@ -24,6 +24,10 @@
     text-align: justify;
 }
 
+.features table {
+    table-layout: fixed;
+}
+
 .revision a {
     font-family: monospace;
 }
