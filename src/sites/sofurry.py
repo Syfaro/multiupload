@@ -119,7 +119,12 @@ class SoFurry(Site):
         return ', '.join(tags)
 
     def validate_submission(self, submission: Submission) -> Union[None, List[str]]:
+        errors: List[str] = []
+
+        if not submission.image_bytes:
+            errors.append('Missing image.')
+
         if len(submission.tags) < 2:
-            return ['SoFurry requires at least two tags.']
+            errors.append('SoFurry requires at least 2 tags')
 
         return None

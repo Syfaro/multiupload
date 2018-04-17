@@ -51,6 +51,9 @@ class Site(object):
         return None
 
     def validate_submission(self, submission: Submission) -> Union[None, List[str]]:
+        if not submission.image_bytes:
+            return ['Missing image.']
+
         return None
 
     def tag_str(self, tags: List[str]) -> str:

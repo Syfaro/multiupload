@@ -78,11 +78,14 @@ function uploadWithEvents(id) {
 function clickedSubmit(ev) {
     ev.preventDefault();
     const target = ev.target;
-    if (target.classList.contains('disabled'))
+    const parent = target.parentNode;
+    const id = parent.querySelector('input[name="id"]');
+    if (target.disabled || !id) {
+        $('#uploadModal').modal('hide');
         return;
-    const id = target.parentNode.querySelector('input[name="id"]').value;
+    }
     target.classList.add('disabled');
-    uploadWithEvents(id);
+    uploadWithEvents(parseInt(id.value, 10));
 }
 const submitButtons = Array.from(document.querySelectorAll('.submit-submission'));
 submitButtons.forEach(button => button.addEventListener('click', clickedSubmit));

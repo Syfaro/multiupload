@@ -1,4 +1,5 @@
 declare const Raven;
+declare const $;
 
 const uploadBody = document.querySelector('#uploadModal .modal-body') as HTMLDivElement;
 const uploadClose = document.querySelector('#uploadModal button') as HTMLButtonElement;
@@ -110,13 +111,17 @@ function uploadWithEvents(id: number) {
 function clickedSubmit(ev) {
     ev.preventDefault();
 
-    const target = ev.target;
-    if (target.classList.contains('disabled')) return;
+    const target = ev.target as HTMLButtonElement;
+    const parent = target.parentNode as HTMLFormElement;
+    const id = parent.querySelector('input[name="id"]') as HTMLInputElement;
+    if (target.disabled || !id) {
+        $('#uploadModal').modal('hide');
+        return;
+    }
 
-    const id = target.parentNode.querySelector('input[name="id"]').value;
     target.classList.add('disabled');
 
-    uploadWithEvents(id);
+    uploadWithEvents(parseInt(id.value, 10));
 }
 
 const submitButtons = Array.from(document.querySelectorAll('.submit-submission'));
