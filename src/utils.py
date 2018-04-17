@@ -79,6 +79,12 @@ def login_required(f):
             session.pop('id')
             return redirect(url_for('home.home'))
 
+        sentry.client.user_context({
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+        })
+
         g.user = user
 
         return f(*args, **kwargs)
