@@ -177,10 +177,13 @@ def refresh_folders():
     accounts: List[Account] = g.user.accounts
 
     for account in accounts:
-        decrypted = simplecrypt.decrypt(session['password'], account.credentials)
-
         for known_site in KNOWN_SITES:
             if known_site.SITE == account.site:
+                if not known_site.supports_folder():
+                    continue
+
+                decrypted = simplecrypt.decrypt(session['password'], account.credentials)
+
                 s = known_site(decrypted, account)
                 s.get_folders(update=True)
 
