@@ -10,7 +10,7 @@ from flask import session
 
 from constant import HEADERS
 from constant import Sites
-from models import Account
+from models import Account, AccountData
 from models import db
 from sites import BadCredentials
 from sites import Site
@@ -168,12 +168,18 @@ class FurryNetwork(Site):
 
         post_id = j.get('id')
 
+        collection_ids = []
+
+        collection = extra.get('folder-{0}'.format(self.account.id))
+        if collection and collection != 'None':
+            collection_ids.append(int(collection))
+
         req = sess.patch('https://beta.furrynetwork.com/api/artwork/{id}'.format(id=post_id), data=json.dumps({
             'rating': self.map_rating(submission.rating),
             'description': submission.description_for_site(self.SITE),
             'title': submission.title,
             'tags': submission.tags,
-            'collections': [],
+            'collections': collection_ids,
             'status': 'public',
             'publish': True,
             'community_tags_allowed': True,
@@ -200,3 +206,68 @@ class FurryNetwork(Site):
             r = 1
 
         return r
+
+    def get_folders(self, update=False):
+        prev_folders: AccountData = self.account.data.filter_by(key='folders').first()
+        if prev_folders and not update:
+            return prev_folders.json
+
+        sess = cfscrape.create_scraper()
+
+        character_id = self.credentials['character_id']
+
+        req = sess.post('https://beta.furrynetwork.com/api/oauth/token', data={
+            'grant_type': 'refresh_token',
+            'client_id': '123',
+            'refresh_token': self.credentials['refresh'],
+        }, headers=HEADERS)
+        req.raise_for_status()
+
+        j = req.json()
+
+        access_token = j.get('access_token', None)
+        if not access_token:
+            raise BadCredentials()
+
+        user_id = j.get('user_id')
+
+        auth_headers = HEADERS.copy()
+        auth_headers['Authorization'] = 'Bearer {token}'.format(token=access_token)
+
+        req = sess.get('https://beta.furrynetwork.com/api/user', headers=auth_headers)
+        req.raise_for_status()
+        j = req.json()
+
+        character_name = None
+
+        for character in j.get('characters'):
+            if character.get('id') == character_id:
+                character_name = character.get('name')
+
+        req = sess.get('https://beta.furrynetwork.com/api/character/{0}/artwork/collections'.format(character_name),
+                       data={'user_id': user_id}, headers=auth_headers)
+        req.raise_for_status()
+
+        j = req.json()
+
+        folders = []
+
+        for collection in j:
+            folders.append({
+                'name': collection.get('name'),
+                'folder_id': collection.get('id')
+            })
+
+        if prev_folders:
+            prev_folders.json = folders
+        else:
+            prev_folders = AccountData(self.account, 'folders', folders)
+            db.session.add(prev_folders)
+
+        db.session.commit()
+
+        return folders
+
+    @staticmethod
+    def supports_folder():
+        return True

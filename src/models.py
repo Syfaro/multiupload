@@ -211,7 +211,7 @@ class SavedSubmission(db.Model):
         self.rating = rating
 
     def set_accounts(self, ids: List[int]) -> None:
-        self.account_ids = ' '.join(ids)
+        self.account_ids = ' '.join([str(i) for i in ids])
 
     @property
     def group(self):
@@ -237,6 +237,8 @@ class SavedSubmission(db.Model):
                 'account': a,
                 'selected': a in accounts,
             })
+
+        result = sorted(result, key=lambda a: a['account'].site.name)
 
         return result
 

@@ -115,6 +115,7 @@ class Submission(object):
     def tags_from_str(tags: str) -> Tuple[List[str], List[str]]:
         """Takes in a string, and returns regular keywords and hashtags."""
         tag_list = tags.split(' ')
+        tag_list = list(filter(None, tag_list))
 
         hashtags = []
         for keyword in tag_list:

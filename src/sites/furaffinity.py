@@ -15,7 +15,7 @@ from requests import HTTPError
 
 from constant import HEADERS
 from constant import Sites
-from models import Account
+from models import Account, AccountData
 from models import db
 from sites import AccountExists
 from sites import BadCredentials
@@ -159,7 +159,7 @@ class FurAffinity(Site):
                 raise SiteError('Got error: {0}'.format(message))
             raise SiteError('Unable to get FurAffinity upload token from part 3')
 
-        req = sess.post('https://www.furaffinity.net/submit/', data={
+        data = {
             'part': '5',
             'submission_type': 'submission',
             'key': key,
@@ -167,7 +167,13 @@ class FurAffinity(Site):
             'message': submission.description_for_site(self.SITE),
             'keywords': self.tag_str(submission.tags),
             'rating': self.map_rating(submission.rating),
-        }, cookies=self.credentials, headers=HEADERS)
+        }
+
+        folder = extra.get('folder-{0}'.format(self.account.id))
+        if folder and folder != 'None':
+            data['folder_ids[]'] = folder
+
+        req = sess.post('https://www.furaffinity.net/submit/', data=data, cookies=self.credentials, headers=HEADERS)
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
@@ -206,3 +212,46 @@ class FurAffinity(Site):
             r = '2'
 
         return r
+
+    def get_folders(self, update=False):
+        prev_folders: AccountData = self.account.data.filter_by(key='folders').first()
+        if prev_folders and not update:
+            return prev_folders.json
+
+        sess = cfscrape.create_scraper()
+
+        req = sess.get('https://www.furaffinity.net/controls/folders/submissions/',
+                       cookies=self.credentials, headers=HEADERS)
+
+        soup = BeautifulSoup(req.content, 'html.parser')
+
+        folders = []
+
+        for a in soup.select('table tr.folder-row a.folder-name'):
+            name = a.get_text().replace('(Folder)', '').strip()
+
+            try:
+                link = a.get('href')
+                match = re.search(r'/(\d+)/', link)
+                folder_id = int(match.group(1))
+            except (IndexError, ValueError):
+                continue
+
+            folders.append({
+                'name': name,
+                'folder_id': folder_id,
+            })
+
+        if prev_folders:
+            prev_folders.json = folders
+        else:
+            prev_folders = AccountData(self.account, 'folders', folders)
+            db.session.add(prev_folders)
+
+        db.session.commit()
+
+        return folders
+
+    @staticmethod
+    def supports_folder():
+        return True

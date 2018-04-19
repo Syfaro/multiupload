@@ -3,6 +3,7 @@
 {% set page = 'review' if sub.id else 'upload' %}
 
 {% from 'modals.html' import userLinkModal, descriptionPreviewModal %}
+{% from 'review/helpers.html' import folder_select %}
 
 {% macro ratingCheckbox(rating) -%}
     {% set name = rating.value|capitalize %}
@@ -84,6 +85,19 @@
                     {% for r in rating() %}
                         {{ ratingCheckbox(r) }}
                     {% endfor %}
+
+                    <div class="mt-2">
+                        {% for account in accounts %}
+                            {% set folders = account.account.data.filter_by(key='folders').first() %}
+                            {% if folders %}
+                                {% set data = folders.json %}
+
+                                {% if data|length > 0 %}
+                                    {{ folder_select(account.account, data, sub) }}
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                    </div>
 
                     {{ getSiteTemplates('left_sidebar') }}
                 </div>
@@ -176,6 +190,7 @@
     <script src="{{ url_for('static', filename='js/upload/review.js') }}" nonce="{{ nonce() }}"></script>
     <script src="{{ url_for('static', filename='js/upload/userlink.js') }}" nonce="{{ nonce() }}"></script>
     <script src="{{ url_for('static', filename='js/upload/preview.js') }}" nonce="{{ nonce() }}"></script>
+    <script src="{{ url_for('static', filename='js/upload/folders.js') }}" nonce="{{ nonce() }}"></script>
 
     {% if not sub.group.grouped %}
         {{ getSiteScripts() }}

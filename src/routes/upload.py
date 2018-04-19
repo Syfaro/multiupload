@@ -51,6 +51,8 @@ def create_art():
         'selected': account.used_last,
     }, g.user.accounts)
 
+    accounts = sorted(accounts, key=lambda a: a['account'].site.name)
+
     return render_template('review/review.html', accounts=accounts, sub=SavedSubmission())
 
 
@@ -122,18 +124,18 @@ def upload_and_send(submission: SavedSubmission, accounts: List[Account], saved:
             upload_accounts.append(account)
         except BadCredentials:
             yield 'event: badcreds\ndata: {info}\n\n'.format(
-                info=json.dumps({'site': account.site.value, 'account': account.username}))
+                info=json.dumps({'site': account.site.name, 'account': account.username}))
             upload_error = True
         except SiteError as ex:
             yield 'event: siteerror\ndata: {msg}\n\n'.format(msg=json.dumps({
                 'msg': ex.message,
-                'site': account.site.value,
+                'site': account.site.name,
                 'account': account.username,
             }))
             upload_error = True
         except HTTPError as ex:
             yield 'event: httperror\ndata: {info}\n\n'.format(info=json.dumps({
-                'site': account.site.value,
+                'site': account.site.name,
                 'account': account.username,
                 'code': ex.response.status_code,
             }))
@@ -547,6 +549,8 @@ def global_known_sites():
 def create_group():
     accounts = map(lambda account: {'account': account, 'selected': account.used_last}, g.user.accounts)
 
+    accounts = sorted(accounts, key=lambda a: a['account'].site.name)
+
     return render_template('review/group.html', accounts=accounts, is_group=True)
 
 
@@ -684,7 +688,7 @@ def perform_group_upload(group_id):
                         link = s.upload_group(group, extra)
                     except BadCredentials:
                         yield 'event: badcreds\ndata: {0}\n\n'.format(json.dumps({
-                            'site': account.site.value,
+                            'site': account.site.name,
                             'account': account.username,
                         }))
                         had_error = True
@@ -692,14 +696,14 @@ def perform_group_upload(group_id):
                     except SiteError as ex:
                         yield 'event: siteerror\ndata: {msg}\n\n'.format(msg=json.dumps({
                             'msg': ex.message,
-                            'site': account.site.value,
+                            'site': account.site.name,
                             'account': account.username,
                         }))
                         had_error = True
                         continue
                     except HTTPError as ex:
                         yield 'event: httperror\ndata: {info}\n\n'.format(info=json.dumps({
-                            'site': account.site.value,
+                            'site': account.site.name,
                             'account': account.username,
                             'code': ex.response.status_code,
                         }))
@@ -723,7 +727,7 @@ def perform_group_upload(group_id):
                             for error in errors:
                                 yield 'event: validationerror\ndata: {0}\n\n'.format(json.dumps({
                                     'msg': error,
-                                    'site': account.site.value,
+                                    'site': account.site.name,
                                     'account': account.username,
                                 }))
                                 continue
@@ -732,7 +736,7 @@ def perform_group_upload(group_id):
                             link = s.submit_artwork(sub.submission, extra)
                         except BadCredentials:
                             yield 'event: badcreds\ndata: {0}\n\n'.format(json.dumps({
-                                'site': account.site.value,
+                                'site': account.site.name,
                                 'account': account.username,
                             }))
                             had_error = True
@@ -740,14 +744,14 @@ def perform_group_upload(group_id):
                         except SiteError as ex:
                             yield 'event: siteerror\ndata: {msg}\n\n'.format(msg=json.dumps({
                                 'msg': ex.message,
-                                'site': account.site.value,
+                                'site': account.site.name,
                                 'account': account.username,
                             }))
                             had_error = True
                             continue
                         except HTTPError as ex:
                             yield 'event: httperror\ndata: {info}\n\n'.format(info=json.dumps({
-                                'site': account.site.value,
+                                'site': account.site.name,
                                 'account': account.username,
                                 'code': ex.response.status_code,
                             }))
