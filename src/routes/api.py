@@ -9,8 +9,8 @@ from flask import jsonify
 from flask import request
 from flask import session
 from simplecrypt import decrypt
-from werkzeug.contrib.cache import SimpleCache
 
+from cache import cache
 from constant import HEADERS
 from constant import Sites
 from description import parse_description
@@ -21,8 +21,6 @@ from sites.known import known_list
 from utils import login_required
 
 app = Blueprint('api', __name__)
-
-cache = SimpleCache()
 
 
 @app.route('/sites')

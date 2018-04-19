@@ -45,6 +45,32 @@
 
         <div class="row">
             <div class="col-sm-12 col-md-4 offset-md-4">
+                <h2>Change theme</h2>
+
+                <form method="POST" action="{{ url_for('user.update_theme') }}">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="form-group">
+                        <label for="theme">Theme name</label>
+                        <select class="form-control" id="theme" name="theme">
+                            {% for theme in themes.themes %}
+                                <option value="{{ theme.name }}" {{ 'selected' if g.user.theme == theme.name or g.user.theme is none and theme.name == 'Pulse' }}>{{ theme.name }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <small class="form-text text-muted">
+                            You can see previews of the themes <a href="https://bootswatch.com/">here</a>. The default
+                            theme is Pulse.
+                        </small>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-12 col-md-4 offset-md-4">
                 <h2>SoFurry settings</h2>
 
                 <div>

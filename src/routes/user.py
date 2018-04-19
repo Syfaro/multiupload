@@ -1,5 +1,6 @@
 from random import SystemRandom
 from string import ascii_letters
+from typing import Union
 
 import bcrypt
 import passwordmeter
@@ -14,6 +15,7 @@ from flask import request
 from flask import url_for
 from sqlalchemy import func
 
+from cache import cache
 from constant import Sites
 from models import Account, SavedSubmission, User
 from models import AccountConfig
@@ -352,7 +354,8 @@ def settings():
                 'enabled': header and header.val == 'yes'
             })
 
-    return render_template('user/settings.html', sofurry=sofurry, furaffinity=furaffinity, tumblr=tumblr)
+    return render_template('user/settings.html',
+                           sofurry=sofurry, furaffinity=furaffinity, tumblr=tumblr, themes=get_themes())
 
 
 @app.route('/sofurry/remap', methods=['POST'])
@@ -420,3 +423,41 @@ def settings_tumblr_title_post():
     db.session.commit()
 
     return redirect(url_for('user.settings'))
+
+
+@app.route('/theme', methods=['POST'])
+@login_required
+def update_theme():
+    theme_name = request.form.get('theme')
+
+    theme = get_theme_by_name(theme_name)
+
+    g.user.theme = theme['name']
+    g.user.theme_url = theme['cssCdn']
+
+    db.session.commit()
+
+    flash('Theme updated!')
+    return redirect(url_for('user.settings'))
+
+
+def get_theme_by_name(name: str) -> Union[None, dict]:
+    themes = get_themes()
+
+    for theme in themes.get('themes'):
+        if theme.get('name') == name:
+            return theme
+
+    return None
+
+
+def get_themes() -> dict:
+    cached = cache.get('theme')
+    if cached:
+        return cached
+
+    r = requests.get('https://bootswatch.com/api/4.json').json()
+
+    cache.set('theme', r)
+
+    return r

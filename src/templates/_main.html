@@ -79,7 +79,12 @@
 
     <link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon" type="image/x-icon">
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pulse.min.css') }}">
+    {% if g.user and g.user.theme %}
+        <link rel="stylesheet" href="{{ g.user.theme_url }}">
+    {% else %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/pulse.min.css') }}">
+    {% endif %}
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/site.css') }}">
 
     <script nonce="{{ nonce() }}">

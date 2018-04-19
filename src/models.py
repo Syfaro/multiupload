@@ -21,11 +21,15 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(16), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
+
     email = db.Column(db.String(254), unique=True, nullable=True)
     email_verifier = db.Column(db.String(16), unique=True)
     email_verified = db.Column(db.Boolean, default=False)
     email_subscribed = db.Column(db.Boolean, default=False, nullable=False)
     email_reset_verifier = db.Column(db.String(16), unique=True)
+
+    theme = db.Column(db.String(255), nullable=True)
+    theme_url = db.Column(db.String(255), nullable=True)
 
     accounts = db.relationship('Account', backref='user', lazy='dynamic')
 
