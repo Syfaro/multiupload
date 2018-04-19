@@ -133,8 +133,6 @@ def write_upload_time(start_time, site: int = None, measurement: str = 'upload_t
 
 
 def write_site_response(site: int, req: requests.Response) -> None:
-    print(req.content)
-
     point = {
         'measurement': 'site_response',
         'fields': {
