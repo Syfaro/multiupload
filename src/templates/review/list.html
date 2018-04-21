@@ -20,7 +20,7 @@
             </thead>
             <tbody>
             {% for sub in submissions %}
-                <tr>
+                <tr data-image="{{ sub.image_filename }}">
                     <td><input type="checkbox" data-id="{{ sub.id }}"></td>
                     <th>{{ sub.title }}</th>
                     <td>{{ sub.description|has_text }}</td>
@@ -176,4 +176,5 @@
     <script src="{{ url_for('static', filename='js/list/group.js') }}" nonce="{{ nonce() }}"></script>
     <script src="{{ url_for('static', filename='js/list/upload.js') }}" nonce="{{ nonce() }}"></script>
     <script src="{{ url_for('static', filename='js/list/upload_group.js') }}" nonce="{{ nonce() }}"></script>
+    <script src="{{ url_for('static', filename='js/list/preview.js') }}" nonce="{{ nonce() }}"></script>
 {% endblock %}
