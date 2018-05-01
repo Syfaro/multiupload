@@ -1,10 +1,18 @@
+.jumbotron {
+    background-color: #ddd;
+}
+
+.jumbotron p {
+    font-size: 1.2em;
+}
+
 .page-header h1 {
     padding: 2rem 0;
     font-size: 3rem;
 }
 
 .page-header + h1 {
-    margin: -3rem 0 2rem;
+    margin: -2rem 0 2rem;
 }
 
 .settings .row {

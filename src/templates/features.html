@@ -19,7 +19,7 @@
                 <p>
                     Just select which sites and accounts you want to upload to.
                     Like splitting your art between accounts on a single site?
-                    Just add all the accounts and select which you want for each upload.
+                    Add all the accounts and select which you want for each upload.
                 </p>
             </div>
 
@@ -27,7 +27,7 @@
                 <h2>Automatically Convert Descriptions</h2>
 
                 <p>
-                    Handles converting Markdown into the format the site you're uploading to uses.
+                    It handles converting Markdown into the format the site you're uploading to uses.
                     You don't have to think about which site uses Markdown, BBCode, or HTML.
                     Write the description once and it automatically converts it!
                     It even handles user links so you can have it show profile pictures on FurAffinity while still
@@ -44,7 +44,7 @@
                 </p>
 
                 <p>
-                    There are no ads or tracking scripts.
+                    To make sure nothing gets in the way of the site or your privacy, there are no ads or tracking scripts.
                 </p>
             </div>
 
@@ -53,7 +53,7 @@
 
                 <p>
                     Want to get a bunch of submissions ready to go without submitting them yet?
-                    Upload them and save it for later. When you're ready, click submit.
+                    Upload them and save it for later. When you're ready, just click submit.
                 </p>
             </div>
 
@@ -79,8 +79,8 @@
                 <h2>Twitter Posts</h2>
 
                 <p>
-                    Create posts on Twitter with links to one or many of the submission on other sites.
-                    Great if you want to allow followers to use their preferred site.
+                    Create posts on Twitter with links to one or many sites.
+                    Great if you want to allow followers to view more details on their preferred site.
                 </p>
             </div>
 
@@ -88,8 +88,8 @@
                 <h2>ZIP Uploads</h2>
 
                 <p>
-                    Create a ZIP with your artwork and a spreadsheet of information to easily bulk upload your artwork.
-                    You can then go through the submissions, fix up anything that needs changing, and submit it all.
+                    Create a ZIP with your artwork and a spreadsheet of information to easily upload in bulk.
+                    You can go through the submissions, fix up anything that needs changing, and submit it all.
                 </p>
             </div>
 
@@ -136,6 +136,11 @@
                     </table>
                 </div>
             </div>
+        </div>
+
+        <div class="block-center text-center">
+            <img class="img-fluid" src="{{ url_for('static', filename='img/banner.png') }}"
+                         srcset="{{ url_for('static', filename='img/banner.png') }} 1x, {{ url_for('static', filename='img/banner@2x.png') }} 2x">
         </div>
     </div>
 {% endblock %}

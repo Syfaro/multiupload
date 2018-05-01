@@ -3,17 +3,31 @@
 {% block body %}
     <div class="jumbotron">
         <div class="container">
-            <div class="page-header">
-                <h1>Furry Art Multiuploader</h1>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="page-header">
+                        <h1>Furry Art Multi&shy;uploader</h1>
+                    </div>
+
+                    <h1>
+                        Upload everywhere quick from just one spot!
+                    </h1>
+
+                    <p>
+                        Supporting uploads to {{ text }}.
+                    </p>
+
+                    <p>
+                        For more information on what the site can do for you, check out what <a
+                            href="{{ url_for('home.features') }}">features</a> are available.
+                    </p>
+                </div>
+
+                <div class="col-sm-6">
+                    <img class="img-fluid" src="{{ url_for('static', filename='img/banner.png') }}"
+                         srcset="{{ url_for('static', filename='img/banner.png') }} 1x, {{ url_for('static', filename='img/banner@2x.png') }} 2x">
+                </div>
             </div>
-
-            <h1>
-                A simple way to post your art to multiple sites and accounts.
-            </h1>
-
-            <p>
-                Now supporting {{ text }}!
-            </p>
         </div>
     </div>
 
