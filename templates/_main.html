@@ -24,7 +24,7 @@
                             {% if user is defined %}
                                 <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span
                                         aria-hidden="true" data-id="{{ notice.id }}">&times;</span></button>{% endif %}
-                            {{ notice.text }}
+                            {{ notice.text | safe }}
                         </div>
                     {% endfor %}
                 </div>
@@ -79,6 +79,15 @@
         .syfaro:hover {
             color: #7f50c3;
             text-decoration: none;
+        }
+
+        .alert.alert-info a {
+            color: #111;
+            text-decoration: none;
+        }
+
+        .alert.alert-info a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
