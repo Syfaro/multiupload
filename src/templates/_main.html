@@ -81,11 +81,10 @@
 
     {% if g.user and g.user.theme %}
         <link rel="stylesheet" href="{{ g.user.theme_url }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/site.css') }}">
     {% else %}
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/pulse.min.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
     {% endif %}
-
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/site.css') }}">
 
     <script nonce="{{ nonce() }}">
         const Multiupload = {

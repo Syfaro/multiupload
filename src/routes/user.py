@@ -430,10 +430,14 @@ def settings_tumblr_title_post():
 def update_theme():
     theme_name = request.form.get('theme')
 
-    theme = get_theme_by_name(theme_name)
+    if theme_name == 'Default':
+        g.user.theme = None
+        g.user.theme_url = None
+    else:
+        theme = get_theme_by_name(theme_name)
 
-    g.user.theme = theme['name']
-    g.user.theme_url = theme['cssCdn']
+        g.user.theme = theme['name']
+        g.user.theme_url = theme['cssCdn']
 
     db.session.commit()
 

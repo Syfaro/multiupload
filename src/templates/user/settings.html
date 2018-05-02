@@ -53,14 +53,17 @@
                     <div class="form-group">
                         <label for="theme">Theme name</label>
                         <select class="form-control" id="theme" name="theme">
-                            {% for theme in themes.themes %}
-                                <option value="{{ theme.name }}" {{ 'selected' if g.user.theme == theme.name or g.user.theme is none and theme.name == 'Pulse' }}>{{ theme.name }}</option>
-                            {% endfor %}
+                            <option value="Default" {{ 'selected' if not g.user.theme or g.user.theme == 'Default' }}>Default</option>
+
+                            <optgroup label="Other Themes">
+                                {% for theme in themes.themes %}
+                                    <option value="{{ theme.name }}" {{ 'selected' if g.user.theme == theme.name }}>{{ theme.name }}</option>
+                                {% endfor %}
+                            </optgroup>
                         </select>
 
                         <small class="form-text text-muted">
-                            You can see previews of the themes <a href="https://bootswatch.com/">here</a>. The default
-                            theme is Pulse.
+                            You can see previews of the themes <a href="https://bootswatch.com/">here</a>.
                         </small>
                     </div>
 

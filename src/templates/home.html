@@ -76,18 +76,20 @@
             <div class="col-sm-12 col-md-6">
                 <h2>Sign In</h2>
 
+                {% set username = session.pop('username', None) %}
+
                 <form method="POST" action="{{ url_for('home.login_post') }}">
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 
                     <div class="form-group">
                         <input type="text" class="form-control" name="username" autocomplete="username"
                                placeholder="Username" maxlength="254"
-                               value="{{ session.username if session.username else '' }}">
+                               value="{{ username if username else '' }}">
                     </div>
 
                     <div class="form-group">
                         <input type="password" class="form-control" name="password" autocomplete="current-password"
-                               placeholder="Password" maxlength="72">
+                               placeholder="Password" maxlength="72" {{ 'autofocus' if username }}>
                     </div>
 
                     <div class="form-group">

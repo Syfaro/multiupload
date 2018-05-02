@@ -59,6 +59,8 @@ def login_post():
         flash('Missing username.')
         return redirect(url_for('home.home'))
 
+    session['username'] = username
+
     if not password:
         flash('Missing password.')
         return redirect(url_for('home.home'))
