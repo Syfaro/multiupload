@@ -76,6 +76,10 @@ def login_post():
     session['id'] = user.id
     session['password'] = password
 
+    redir = session.pop('redir')
+    if redir:
+        return redirect(redir)
+
     return redirect(url_for('upload.create_art'))
 
 

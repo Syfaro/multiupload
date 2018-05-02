@@ -9,9 +9,10 @@ from typing import List, Tuple
 from typing import Union
 
 import requests
-from flask import current_app
+from flask import current_app, flash
 from flask import g
 from flask import redirect
+from flask import request
 from flask import session
 from flask import url_for
 from werkzeug.datastructures import MultiDict
@@ -71,12 +72,16 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'id' not in session:
+            flash('You must log in before you can view this page.')
+
+            session['redir'] = request.path
             return redirect(url_for('home.home'))
 
         user: User = User.query.get(session['id'])
 
         if not user:
             session.pop('id')
+            session['redir'] = request.path
             return redirect(url_for('home.home'))
 
         sentry.client.user_context({
