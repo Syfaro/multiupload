@@ -76,7 +76,7 @@ def login_post():
     session['id'] = user.id
     session['password'] = password
 
-    redir = session.pop('redir')
+    redir = session.pop('redir', None)
     if redir:
         return redirect(redir)
 
