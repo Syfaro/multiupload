@@ -22,7 +22,7 @@ from sentry import sentry
 
 rng = SystemRandom()
 
-RESIZE_EXP = re.compile(r'(?P<height>\d+).+?(?P<width>\d+)')
+RESIZE_EXP = re.compile(r'(?P<height>\d+)\D{1,}(?P<width>\d+)')
 
 
 def random_string(length) -> str:
