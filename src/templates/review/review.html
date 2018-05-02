@@ -125,7 +125,8 @@
                                        id="account{{ account.account.id }}" {{ 'checked' if account.selected }}
                                        data-site="{{ account.account.site_id }}"
                                        data-site-name="{{ account.account.site.name }}"
-                                       data-account="{{ account.account.username }}">
+                                       data-account="{{ account.account.username }}"
+                                       data-account-id="{{ account.account.id }}">
                                 <label class="form-check-label"
                                        for="account{{ account.account.id }}">{{ account.account.site.name }}
                                     - {{ account.account.username }}</label>

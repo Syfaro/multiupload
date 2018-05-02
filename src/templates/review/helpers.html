@@ -1,6 +1,6 @@
 {% macro folder_select(account, folders, sub, multiple = False) -%}
     {% if account.site.value != 8 %}
-        <div class="form-group folders" data-site="{{ account.site.value }}">
+        <div class="form-group folders" data-site="{{ account.site.value }}" data-account="{{ account.id }}">
             <label for="folders-{{ account.id }}">Folder for {{ account.site.name }} - {{ account.username }}</label>
             <select class="form-control" name="folder-{{ account.id }}" id="folders-{{ account.id }}" {{ 'multiple' if multiple }}>
                 <option value="None">None</option>

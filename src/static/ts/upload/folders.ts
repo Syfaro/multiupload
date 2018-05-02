@@ -10,18 +10,18 @@ class FolderDisplay {
     }
 
     private updateFolders() {
-        const selectedSites: number[] = [];
+        const selectedAccounts: number[] = [];
 
         this.accounts.forEach(account => {
             if (account.checked) {
-                selectedSites.push(parseInt(account.dataset.site!, 10));
+                selectedAccounts.push(parseInt(account.dataset.accountId!, 10));
             }
         });
 
         this.folders.forEach(folder => {
-            const site = parseInt(folder.dataset.site!, 10);
+            const site = parseInt(folder.dataset.account!, 10);
 
-            if (selectedSites.includes(site)) {
+            if (selectedAccounts.includes(site)) {
                 folder.classList.remove('d-none');
             } else {
                 folder.classList.add('d-none');
