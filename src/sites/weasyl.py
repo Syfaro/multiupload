@@ -9,7 +9,7 @@ from flask import session
 
 from constant import HEADERS
 from constant import Sites
-from models import Account, AccountData
+from models import Account, AccountData, SavedSubmission
 from models import db
 from sites import AccountExists
 from sites import BadCredentials
@@ -120,6 +120,11 @@ class Weasyl(Site):
 
     def validate_submission(self, submission: Submission) -> Union[None, List[str]]:
         errors: List[str] = []
+
+        if isinstance(submission, Submission) and not submission.image_bytes:
+            errors.append('Missing image')
+        elif isinstance(submission, SavedSubmission) and not submission.image_filename:
+            errors.append('Missing image')
 
         if not submission.image_bytes:
             errors.append('Missing image.')
