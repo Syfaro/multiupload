@@ -1,6 +1,6 @@
 class ImagePreview {
     constructor() {
-        this.submissions = Array.from(document.querySelectorAll('tbody tr th'));
+        this.submissions = Array.from(document.querySelectorAll('tbody tr:not([data-image="None"]) th'));
         this.submissions.forEach(submission => {
             $(submission).popover({
                 content: function () {

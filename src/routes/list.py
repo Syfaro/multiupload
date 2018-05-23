@@ -115,16 +115,19 @@ def group_add_post():
         flash('No posts selected.')
         return redirect(url_for('list.index'))
 
-    if not group_id and group_name:
+    if group_id and group_id != 'new':
+        try:
+            group: SubmissionGroup = SubmissionGroup.find(int(group_id))
+        except (TypeError, ValueError):
+            flash('Invalid group ID.')
+            return redirect(url_for('list.index'))
+    elif group_name:
         group = SubmissionGroup(g.user, group_name)
         db.session.add(group)
         db.session.commit()
     else:
-        try:
-            group: SubmissionGroup = SubmissionGroup.find(int(group_id))
-        except ValueError:
-            flash('Invalid group ID.')
-            return redirect(url_for('list.index'))
+        flash('Missing group or group name')
+        return redirect(url_for('list.index'))
 
     touched_groups = set()
 

@@ -80,8 +80,8 @@ class SoFurry(Site):
         try:
             key = soup.select('input[name="YII_CSRF_TOKEN"]')[0]['value']
             key2 = soup.select('#UploadForm_P_id')[0]['value']
-        except ValueError:
-            raise SiteError('Unable to load upload page')
+        except (IndexError, ValueError):
+            raise SiteError('Unable to load upload page for SoFurry')
 
         req = sess.post('https://www.sofurry.com/upload/details?contentType=1', data={
             'UploadForm[P_title]': submission.title,

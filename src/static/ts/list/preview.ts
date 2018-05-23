@@ -1,5 +1,5 @@
 class ImagePreview {
-    private submissions = Array.from(document.querySelectorAll('tbody tr th')) as HTMLTableHeaderCellElement[];
+    private submissions = Array.from(document.querySelectorAll('tbody tr:not([data-image="None"]) th')) as HTMLTableHeaderCellElement[];
 
     constructor() {
         this.submissions.forEach(submission => {
