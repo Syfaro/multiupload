@@ -127,6 +127,14 @@ class AccountConfig(db.Model):
         self.key = key
         self.val = val
 
+    def __repr__(self):
+        return '<AccountConfig {id}, {account_id}, {key}: {value}>'.format(
+            id=self.id,
+            account_id=self.account_id,
+            key=self.key,
+            value=self.val,
+        )
+
 
 class AccountData(db.Model):
     """Data associated to an account. Uses a short key with a JSON value."""

@@ -124,8 +124,16 @@ class Twitter(Site):
         if use_custom_text == 'y':
             status = custom_text.strip()
         else:
+            hashtags = submission.hashtags
+
+            if submission.rating in (Rating.mature, Rating.explicit):
+                if '#NSFW' not in (hashtag.upper() for hashtag in hashtags):
+                    hashtags.append('#NSFW')
+
+            hashtags_str = self.tag_str(hashtags)
+
             status = '{title} {hashtags}'.format(title=submission.title,
-                                                 hashtags=self.tag_str(submission.hashtags)).strip()
+                                                 hashtags=hashtags_str.strip())
 
         if links:
             if format == 'single' or format == '':
@@ -138,9 +146,14 @@ class Twitter(Site):
                     status += '\n{name}: {link}'.format(name=name, link=link[1])
 
         try:
-            tweet = api.update_with_media(filename=submission.image_filename,
-                                          file=submission.image_bytes, status=status,
-                                          possibly_sensitive=False if submission.rating == Rating.general else True)
+            noimage = self.account['twitter_noimage']
+
+            if submission.rating == Rating.explicit and (noimage and noimage.val == 'yes'):
+                tweet = api.update_status(status=status, possibly_sensitive=True)
+            else:
+                tweet = api.update_with_media(filename=submission.image_filename,
+                                              file=submission.image_bytes, status=status,
+                                              possibly_sensitive=False if submission.rating == Rating.general else True)
         except tweepy.TweepError as ex:
             raise SiteError(ex.reason)
 

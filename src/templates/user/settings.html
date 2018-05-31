@@ -79,10 +79,10 @@
                 <div>
                     <p class="help-block">Make explicit correspond to SoFurry's extreme rating.</p>
 
-                    {% if sofurry | length > 0 %}
+                    {% if sites.sofurry | length > 0 %}
                         <form method="POST" action="{{ url_for('user.settings_sofurry_remap_post') }}">
                             <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-                            {% for account in sofurry %}
+                            {% for account in sites.sofurry %}
                                 <div class="checkbox">
                                     <label>
                                         <input type="checkbox" name="account[{{ account.id }}]"
@@ -108,10 +108,10 @@
                 <div>
                     <p class="help-block">Enable uploading higher resolution images to FurAffinity.</p>
 
-                    {% if furaffinity | length > 0 %}
+                    {% if sites.furaffinity | length > 0 %}
                         <form method="POST" action="{{ url_for('user.settings_furaffinity_resolution_post') }}">
                             <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-                            {% for account in furaffinity %}
+                            {% for account in sites.furaffinity %}
                                 <div class="checkbox">
                                     <label>
                                         <input type="checkbox" name="account[{{ account.id }}]"
@@ -137,10 +137,10 @@
                 <div>
                     <p>Include title in submission. It does not currently appear in the preview.</p>
 
-                    {% if tumblr | length > 0 %}
+                    {% if sites.tumblr | length > 0 %}
                         <form method="POST" action="{{ url_for('user.settings_tumblr_title_post') }}">
                             <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-                            {% for account in tumblr %}
+                            {% for account in sites.tumblr %}
                                 <div class="checkbox">
                                     <label>
                                         <input type="checkbox" name="account[{{ account.id }}]"
@@ -156,6 +156,56 @@
                         <p>No Tumblr accounts configured.</p>
                     {% endif %}
                 </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-12 col-md-4 offset-md-4">
+                <h2>Twitter settings</h2>
+
+                <div>
+                    <p>Include #NSFW hashtag on mature and adult submissions.</p>
+
+                    {% if sites.twitter_hashtag | length > 0 %}
+                        <form method="POST" action="{{ url_for('user.settings_twitter_nsfw') }}">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                            {% for account in sites.twitter_hashtag %}
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" name="account[{{ account.id }}]"
+                                               {% if account.enabled %}checked{% endif %}>
+                                        {{ account.username }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+
+                            <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                        </form>
+                    {% else %}
+                        <p>No Twitter accounts configured.</p>
+                    {% endif %}
+                </div>
+
+                {% if sites.twitter_hashtag | length > 0 %}
+                    <div class="mt-2">
+                        <p>Don't include image for adult submissions.</p>
+
+                        <form method="POST" action="{{ url_for('user.settings_twitter_noimage') }}">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                            {% for account in sites.twitter_noimage %}
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" name="account[{{ account.id }}]"
+                                               {% if account.enabled %}checked{% endif %}>
+                                        {{ account.username }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+
+                            <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                        </form>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>

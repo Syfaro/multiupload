@@ -325,6 +325,8 @@ def settings():
     sofurry = []
     furaffinity = []
     tumblr = []
+    twitter_hashtag = []
+    twitter_noimg = []
 
     for account in g.user.accounts:
         site = Sites(account.site_id)
@@ -335,7 +337,7 @@ def settings():
             sofurry.append({
                 'id': account.id,
                 'username': account.username,
-                'enabled': remap and remap.val == 'yes'
+                'enabled': remap and remap.val == 'yes',
             })
         elif site == Sites.FurAffinity:
             resolution = account['resolution_furaffinity']
@@ -343,7 +345,7 @@ def settings():
             furaffinity.append({
                 'id': account.id,
                 'username': account.username,
-                'enabled': not resolution or resolution.val == 'yes'
+                'enabled': not resolution or resolution.val == 'yes',
             })
         elif site == Sites.Tumblr:
             header = account['tumblr_title']
@@ -351,11 +353,32 @@ def settings():
             tumblr.append({
                 'id': account.id,
                 'username': account.username,
-                'enabled': header and header.val == 'yes'
+                'enabled': header and header.val == 'yes',
+            })
+        elif site == Sites.Twitter:
+            hashtag = account['nsfw_hashtag']
+
+            twitter_hashtag.append({
+                'id': account.id,
+                'username': account.username,
+                'enabled': hashtag and hashtag.val == 'yes',
             })
 
-    return render_template('user/settings.html',
-                           sofurry=sofurry, furaffinity=furaffinity, tumblr=tumblr, themes=get_themes())
+            noimage = account['twitter_noimage']
+
+            twitter_noimg.append({
+                'id': account.id,
+                'username': account.username,
+                'enabled': noimage and noimage.val == 'yes',
+            })
+
+    return render_template('user/settings.html', sites={
+        'sofurry': sofurry,
+        'furaffinity': furaffinity,
+        'tumblr': tumblr,
+        'twitter_hashtag': twitter_hashtag,
+        'twitter_noimage': twitter_noimg,
+    }, themes=get_themes())
 
 
 @app.route('/sofurry/remap', methods=['POST'])
@@ -419,6 +442,50 @@ def settings_tumblr_title_post():
             header.val = 'yes'
         else:
             header.val = 'no'
+
+    db.session.commit()
+
+    return redirect(url_for('user.settings'))
+
+
+@app.route('/twitter/nsfw', methods=['POST'])
+@login_required
+def settings_twitter_nsfw():
+    twitter_accounts = [account for account in g.user.accounts if account.site == Sites.Twitter]
+
+    for account in twitter_accounts:
+        hashtag = account['nsfw_hashtag']
+
+        if not hashtag:
+            hashtag = AccountConfig(account.id, 'nsfw_hashtag', 'no')
+            db.session.add(hashtag)
+
+        if request.form.get('account[{id}]'.format(id=account.id)) == 'on':
+            hashtag.val = 'yes'
+        else:
+            hashtag.val = 'no'
+
+    db.session.commit()
+
+    return redirect(url_for('user.settings'))
+
+
+@app.route('/twitter/noimage', methods=['POST'])
+@login_required
+def settings_twitter_noimage():
+    twitter_accounts = [account for account in g.user.accounts if account.site == Sites.Twitter]
+
+    for account in twitter_accounts:
+        hashtag = account['twitter_noimage']
+
+        if not hashtag:
+            hashtag = AccountConfig(account.id, 'twitter_noimage', 'no')
+            db.session.add(hashtag)
+
+        if request.form.get('account[{id}]'.format(id=account.id)) == 'on':
+            hashtag.val = 'yes'
+        else:
+            hashtag.val = 'no'
 
     db.session.commit()
 
