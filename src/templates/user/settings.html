@@ -164,7 +164,7 @@
                 <h2>Twitter settings</h2>
 
                 <div>
-                    <p>Include #NSFW hashtag on mature and adult submissions.</p>
+                    <p>Include #NSFW hashtag on mature and explicit submissions.</p>
 
                     {% if sites.twitter_hashtag | length > 0 %}
                         <form method="POST" action="{{ url_for('user.settings_twitter_nsfw') }}">
@@ -188,7 +188,7 @@
 
                 {% if sites.twitter_hashtag | length > 0 %}
                     <div class="mt-2">
-                        <p>Don't include image for adult submissions.</p>
+                        <p>Don't include image for explicit submissions.</p>
 
                         <form method="POST" action="{{ url_for('user.settings_twitter_noimage') }}">
                             <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
