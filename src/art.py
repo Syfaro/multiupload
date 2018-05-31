@@ -65,18 +65,19 @@ def record_stats(resp):
         if resp.content_type == 'text/html; charset=utf-8':
             resp.set_data(minify(resp.get_data(as_text=True)))
 
-    # sentry error reporter requires inline styles
-    resp.headers['Content-Security-Policy'] = "default-src 'none';" \
-                                              "script-src 'self' 'unsafe-inline' https: 'nonce-{1}' 'strict-dynamic';" \
-                                              "object-src 'none';" \
-                                              "style-src 'self' 'unsafe-inline' fonts.googleapis.com maxcdn.bootstrapcdn.com;" \
-                                              "img-src 'self' blob: data:;" \
-                                              "media-src 'none';" \
-                                              "frame-src 'self';" \
-                                              "font-src 'self' fonts.gstatic.com;" \
-                                              "connect-src 'self' sentry.io;" \
-                                              "base-uri 'none';" \
-                                              "report-uri {0}".format(app.config['SENTRY_REPORT'], nonce())
+    if 'SENTRY_REPORT' in app.config:
+        # sentry error reporter requires inline styles
+        resp.headers['Content-Security-Policy'] = "default-src 'none';" \
+                                                "script-src 'self' 'unsafe-inline' https: 'nonce-{1}' 'strict-dynamic';" \
+                                                "object-src 'none';" \
+                                                "style-src 'self' 'unsafe-inline' fonts.googleapis.com maxcdn.bootstrapcdn.com;" \
+                                                "img-src 'self' blob: data:;" \
+                                                "media-src 'none';" \
+                                                "frame-src 'self';" \
+                                                "font-src 'self' fonts.gstatic.com;" \
+                                                "connect-src 'self' sentry.io;" \
+                                                "base-uri 'none';" \
+                                                "report-uri {0}".format(app.config['SENTRY_REPORT'], nonce())
 
     influx = g.get('influx', None)
     start_time = g.get('start', None)
