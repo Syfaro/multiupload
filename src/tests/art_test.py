@@ -100,7 +100,7 @@ class TestDescriptionToWeasyl(unittest.TestCase):
         self.assertEqual(should_be, parse_description(unparsed, 2))
 
     def test_from_furaffinity(self):
-        should_be = "[Syfaro](https://www.furaffinity.net/user/Syfaro/)"
+        should_be = "<fa:Syfaro>"
 
         for t in range(0, 2):
             unparsed = "<|Syfaro,1,%d|>" % t
@@ -116,7 +116,7 @@ class TestDescriptionToWeasyl(unittest.TestCase):
             self.assertEqual(should_be, parse_description(unparsed, 2))
 
     def test_from_inkbunny(self):
-        should_be = "[Syfaro](https://inkbunny.net/Syfaro)"
+        should_be = "<ib:Syfaro>"
 
         for t in range(0, 2):
             unparsed = "<|Syfaro,4,%d|>" % t
@@ -124,13 +124,9 @@ class TestDescriptionToWeasyl(unittest.TestCase):
             self.assertEqual(should_be, parse_description(unparsed, 2))
 
     def test_from_sofurry(self):
-        should_be = "[Syfaro](https://syfaro.sofurry.com/)"
+        should_be = "<sf:Syfaro>"
 
         for t in range(0, 2):
             unparsed = "<|Syfaro,5,%d|>" % t
 
             self.assertEqual(should_be, parse_description(unparsed, 2))
-
-
-if __name__ == '__main__':
-    unittest.main()

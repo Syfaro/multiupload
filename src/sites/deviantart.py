@@ -122,6 +122,21 @@ class DeviantArt(Site):
 
         return account
 
+    @staticmethod
+    def _build_exception(resp) -> Exception:
+        desc = resp.get('error_description')
+        if not desc:
+            return SiteError('Unknown error')
+
+        details = resp.get('error_details')
+
+        msg = desc
+
+        if details:
+            msg += ': ' + ', '.join('{} - {}'.format(k, v) for k, v in details.items())
+
+        return SiteError(msg)
+
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         da = self.get_da()
 
@@ -142,7 +157,7 @@ class DeviantArt(Site):
         }).json()
 
         if sub['status'] != 'success':
-            raise SiteError(sub['error_description'])
+            raise DeviantArt._build_exception(sub)
 
         itemid = sub['itemid']
 
