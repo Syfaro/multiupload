@@ -1,6 +1,4 @@
-from typing import Generator
-from typing import List
-from typing import Tuple
+from typing import Generator, List, Tuple
 
 from sites.deviantart import DeviantArt
 from sites.furaffinity import FurAffinity

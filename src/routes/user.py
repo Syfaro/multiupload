@@ -5,22 +5,23 @@ from typing import Union
 import bcrypt
 import passwordmeter
 import requests
-import simplecrypt
-from flask import Blueprint, current_app, session
-from flask import flash
-from flask import g
-from flask import redirect
-from flask import render_template
-from flask import request
-from flask import url_for
+from flask import (
+    Blueprint,
+    current_app,
+    flash,
+    g,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 from sqlalchemy import func
 
+import simplecrypt
 from cache import cache
 from constant import Sites
-from models import Account, SavedSubmission, User
-from models import AccountConfig
-from models import NoticeViewed
-from models import db
+from models import Account, AccountConfig, NoticeViewed, SavedSubmission, User, db
 from utils import login_required
 
 app = Blueprint('user', __name__)

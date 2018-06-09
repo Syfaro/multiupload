@@ -3,22 +3,14 @@ import time
 from functools import wraps
 from random import SystemRandom
 from string import ascii_lowercase
-from subprocess import PIPE
-from subprocess import Popen
-from typing import List, Tuple
-from typing import Union
+from subprocess import PIPE, Popen
+from typing import List, Tuple, Union
 
 import requests
-from flask import current_app, flash
-from flask import g
-from flask import redirect
-from flask import request
-from flask import session
-from flask import url_for
+from flask import current_app, flash, g, redirect, request, session, url_for
 from werkzeug.datastructures import MultiDict
 
-from models import Notice
-from models import User
+from models import Notice, User
 from sentry import sentry
 
 rng = SystemRandom()

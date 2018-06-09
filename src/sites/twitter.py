@@ -2,23 +2,13 @@ import json
 from typing import Any, List
 
 import tweepy
-from flask import Response
-from flask import current_app
-from flask import g
-from flask import redirect
-from flask import request
-from flask import session
+from flask import Response, current_app, g, redirect, request, session
 
 from constant import Sites
-from models import Account, SubmissionGroup, SavedSubmission
-from models import db
+from models import Account, SavedSubmission, SubmissionGroup, db
 from sentry import sentry
-from sites import AccountExists
-from sites import BadCredentials
-from sites import Site
-from sites import SiteError
-from submission import Rating
-from submission import Submission
+from sites import AccountExists, BadCredentials, Site, SiteError
+from submission import Rating, Submission
 
 SHORT_NAMES = {
     Sites.FurAffinity: 'FA',
@@ -116,7 +106,7 @@ class Twitter(Site):
         use_custom_text = extra.get('twitter-custom', 'n')
         custom_text = extra.get('twitter-custom-text')
 
-        format: str = extra.get('twitter-format', '')
+        tw_format: str = extra.get('twitter-format', '')
         links: list = extra.get('twitter-links')
 
         if use_custom_text == 'y':
@@ -135,9 +125,9 @@ class Twitter(Site):
             )
 
         if links:
-            if format == 'single' or format == '':
+            if tw_format == 'single' or tw_format == '':
                 status = status + ' ' + links[0][1]
-            elif format == 'multi':
+            elif tw_format == 'multi':
                 status += '\n'
 
                 for link in links:
@@ -183,7 +173,7 @@ class Twitter(Site):
 
         use_custom_text = data.get('twitter-custom', 'n')
         custom_text = data.get('twitter-custom-text')
-        format: str = data.get('twitter-format', '')
+        tw_format: str = data.get('twitter-format', '')
 
         links: list = extra.get('twitter-links')
 
@@ -195,9 +185,9 @@ class Twitter(Site):
             ).strip()
 
         if links:
-            if format == 'single' or format == '':
+            if tw_format == 'single' or tw_format == '':
                 status = status + ' ' + links[0][1]
-            elif format == 'multi':
+            elif tw_format == 'multi':
                 status += '\n'
 
                 for link in links:

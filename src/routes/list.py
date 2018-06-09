@@ -1,25 +1,22 @@
+from os.path import join
 from typing import List
 
-from flask import Blueprint
-from flask import current_app
-from flask import flash
-from flask import g
-from flask import redirect
-from flask import render_template
-from flask import request
-from flask import url_for
-from os.path import join
+from flask import (
+    Blueprint,
+    current_app,
+    flash,
+    g,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
-from models import SavedSubmission
-from models import SubmissionGroup
-from models import db
+from models import SavedSubmission, SubmissionGroup, db
 from submission import Rating
-from utils import login_required
-from utils import random_string
-from utils import safe_ext
-from utils import save_multi_dict
+from utils import login_required, random_string, safe_ext, save_multi_dict
 
 app = Blueprint('list', __name__)
 

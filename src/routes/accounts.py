@@ -1,26 +1,24 @@
 import time
 from typing import List
 
-import simplecrypt
-from flask import Blueprint, session
-from flask import flash
-from flask import g
-from flask import redirect
-from flask import render_template
-from flask import request
-from flask import url_for
+from flask import (
+    Blueprint,
+    flash,
+    g,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 
+import simplecrypt
 from constant import Sites
-from models import Account
-from models import db
+from models import Account, db
 from sentry import sentry
-from sites import AccountExists
-from sites import BadCredentials
-from sites import SiteError
-from sites.known import KNOWN_SITES
-from sites.known import known_list
-from utils import login_required
-from utils import send_to_influx
+from sites import AccountExists, BadCredentials, SiteError
+from sites.known import KNOWN_SITES, known_list
+from utils import login_required, send_to_influx
 
 app = Blueprint('accounts', __name__)
 

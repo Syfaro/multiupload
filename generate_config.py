@@ -1,5 +1,8 @@
 #!/usr/bin/env python
-import base64, os, sys
+import base64
+import os
+import sys
+
 sys.stdout.write("""
 # URI to the database
 SQLALCHEMY_DATABASE_URI = "sqlite:///test.db"

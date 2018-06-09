@@ -1,21 +1,21 @@
 import passwordmeter
 import requests
-from flask import Blueprint, current_app
-from flask import flash
-from flask import g
-from flask import redirect
-from flask import render_template
-from flask import request
-from flask import session
-from flask import url_for
+from flask import (
+    Blueprint,
+    current_app,
+    flash,
+    g,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 from sqlalchemy import func
 
-from models import User, Notice
-from models import db
-from sites.known import known_names, KNOWN_SITES
-from utils import english_series
-from utils import get_active_notices
-from utils import send_to_influx
+from models import Notice, User, db
+from sites.known import KNOWN_SITES, known_names
+from utils import english_series, get_active_notices, send_to_influx
 
 app = Blueprint('home', __name__)
 

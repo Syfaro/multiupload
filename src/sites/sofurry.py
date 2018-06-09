@@ -1,21 +1,14 @@
 import json
-from typing import Any
-from typing import List
-from typing import Union
+from typing import Any, List, Union
 
 import cfscrape
 from bs4 import BeautifulSoup
 from flask import session
 
-from constant import HEADERS
-from constant import Sites
-from models import Account
-from models import db
-from sites import BadCredentials
-from sites import Site
-from sites import SiteError
-from submission import Rating
-from submission import Submission
+from constant import HEADERS, Sites
+from models import Account, db
+from sites import BadCredentials, Site, SiteError
+from submission import Rating, Submission
 from utils import write_site_response
 
 

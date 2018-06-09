@@ -1,21 +1,14 @@
 from typing import List
 
 import requests
-import simplecrypt
-from flask import Blueprint
-from flask import Response
-from flask import g
-from flask import jsonify
-from flask import request
-from flask import session
-from simplecrypt import decrypt
+from flask import Blueprint, Response, g, jsonify, request, session
 
+import simplecrypt
 from cache import cache
-from constant import HEADERS
-from constant import Sites
+from constant import HEADERS, Sites
 from description import parse_description
-from models import Account
-from models import db
+from models import Account, db
+from simplecrypt import decrypt
 from sites.deviantart import DeviantArt
 from sites.known import known_list
 from utils import login_required

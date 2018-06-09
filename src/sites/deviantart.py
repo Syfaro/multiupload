@@ -3,23 +3,12 @@ from typing import Any
 from urllib.parse import urlencode
 
 import requests
-from flask import Response, flash
-from flask import current_app
-from flask import g
-from flask import redirect
-from flask import request
-from flask import session
+from flask import Response, current_app, flash, g, redirect, request, session
 
-from constant import HEADERS
-from constant import Sites
-from models import Account, AccountData
-from models import db
-from sites import AccountExists
-from sites import BadCredentials
-from sites import Site
-from sites import SiteError
-from submission import Rating
-from submission import Submission
+from constant import HEADERS, Sites
+from models import Account, AccountData, db
+from sites import AccountExists, BadCredentials, Site, SiteError
+from submission import Rating, Submission
 
 AUTH_ENDPOINT = 'https://www.deviantart.com/oauth2/authorize'
 TOKEN_ENDPOINT = 'https://www.deviantart.com/oauth2/token'

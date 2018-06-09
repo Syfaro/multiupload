@@ -1,21 +1,12 @@
 import json
-from typing import Any
-from typing import List
+from typing import Any, List
 
 import tumblpy
-from flask import Response
-from flask import current_app
-from flask import flash
-from flask import redirect
-from flask import request
-from flask import session
+from flask import Response, current_app, flash, redirect, request, session
 
 from constant import Sites
-from models import Account, AccountData, SubmissionGroup
-from models import db
-from sites import BadCredentials
-from sites import Site
-from sites import SiteError
+from models import Account, AccountData, SubmissionGroup, db
+from sites import BadCredentials, Site, SiteError
 from submission import Submission
 from utils import tumblr_blog_name
 

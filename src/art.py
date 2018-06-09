@@ -2,24 +2,21 @@ import os
 import time
 
 import requests
-from flask import Flask
-from flask import g
-from flask import render_template
-from flask import request
-from influxdb import InfluxDBClient
-from raven import fetch_git_sha
+from flask import Flask, g, render_template, request
 from flask_migrate import Migrate
 from htmlmin.main import minify
+from influxdb import InfluxDBClient
+from raven import fetch_git_sha
 
+from csrf import csrf
 from models import db
 from routes.accounts import app as accounts_app
 from routes.api import app as api_app
 from routes.home import app as home_app
+from routes.list import app as list_app
 from routes.upload import app as upload_app
 from routes.user import app as user_app
-from routes.list import app as list_app
 from sentry import sentry
-from csrf import csrf
 from utils import random_string
 
 app = Flask(__name__)

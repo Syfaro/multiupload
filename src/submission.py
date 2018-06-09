@@ -1,11 +1,10 @@
 from enum import Enum
 from io import BytesIO
 from os.path import join
-from typing import List
-from typing import Tuple
+from typing import List, Tuple
 
-from PIL import Image
 from flask import current_app
+from PIL import Image
 from raven import breadcrumbs
 
 from constant import Sites

@@ -1,15 +1,12 @@
 from io import BytesIO
-from typing import Any
-from typing import List
-from typing import Union
-
-from PIL import Image
-from flask import current_app
 from os.path import join
+from typing import Any, List, Union
+
+from flask import current_app
+from PIL import Image
 
 from models import Account, SavedSubmission, SubmissionGroup
-from submission import Rating
-from submission import Submission
+from submission import Rating, Submission
 
 
 class BadCredentials(Exception):

@@ -4,15 +4,10 @@ from typing import Any
 import cfscrape
 from flask import session
 
-from constant import HEADERS
-from constant import Sites
-from models import Account, SubmissionGroup
-from models import db
-from sites import BadCredentials
-from sites import Site
-from sites import SiteError
-from submission import Rating
-from submission import Submission
+from constant import HEADERS, Sites
+from models import Account, SubmissionGroup, db
+from sites import BadCredentials, Site, SiteError
+from submission import Rating, Submission
 from utils import write_site_response
 
 

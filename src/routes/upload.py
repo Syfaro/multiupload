@@ -4,41 +4,43 @@ import shutil
 import time
 from csv import DictReader
 from io import StringIO
+from os.path import join
 from typing import List, Tuple
 from zipfile import ZipFile
 
 import magic
-import simplecrypt
 from chardet import UniversalDetector
-from flask import Blueprint, Response, stream_with_context
-from flask import current_app
-from flask import flash
-from flask import g
-from flask import redirect
-from flask import render_template
-from flask import request
-from flask import send_from_directory
-from flask import session
-from flask import url_for
-from os.path import join
+from flask import (
+    Blueprint,
+    Response,
+    current_app,
+    flash,
+    g,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+    session,
+    stream_with_context,
+    url_for,
+)
 from requests import HTTPError
 from werkzeug.utils import secure_filename
 
+import simplecrypt
 from constant import Sites
-from models import Account, SubmissionGroup
-from models import SavedSubmission
-from models import db
+from models import Account, SavedSubmission, SubmissionGroup, db
 from sites import BadCredentials, SiteError
-from sites.known import KNOWN_SITES
-from sites.known import known_list
-from submission import Rating
-from submission import Submission
-from utils import login_required
-from utils import parse_resize
-from utils import random_string
-from utils import safe_ext
-from utils import save_multi_dict
-from utils import write_upload_time
+from sites.known import KNOWN_SITES, known_list
+from submission import Rating, Submission
+from utils import (
+    login_required,
+    parse_resize,
+    random_string,
+    safe_ext,
+    save_multi_dict,
+    write_upload_time,
+)
 
 app = Blueprint('upload', __name__)
 

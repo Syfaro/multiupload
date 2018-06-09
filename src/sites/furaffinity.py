@@ -7,22 +7,13 @@ from typing import Any
 
 import cfscrape
 from bs4 import BeautifulSoup
-from flask import current_app
-from flask import flash
-from flask import g
-from flask import session
+from flask import current_app, flash, g, session
 from requests import HTTPError
 
-from constant import HEADERS
-from constant import Sites
-from models import Account, AccountData
-from models import db
-from sites import AccountExists
-from sites import BadCredentials
-from sites import Site
-from sites import SiteError
-from submission import Rating
-from submission import Submission
+from constant import HEADERS, Sites
+from models import Account, AccountData, db
+from sites import AccountExists, BadCredentials, Site, SiteError
+from submission import Rating, Submission
 from utils import write_site_response
 
 

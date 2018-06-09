@@ -30,6 +30,8 @@ Flask-SeaSurf = "~=0.2.2"
 pylint = "*"
 nose = "*"
 black = "*"
+"flake8" = "*"
+rope = "*"
 
 [requires]
 python_version = "3.6"

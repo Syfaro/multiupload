@@ -3,15 +3,13 @@ from random import SystemRandom
 from string import ascii_letters
 from typing import Any, List, Union
 
-from bcrypt import gensalt
-from bcrypt import hashpw
-from flask import g
-from flask import session
+from bcrypt import gensalt, hashpw
+from flask import g, session
 from flask_sqlalchemy import SQLAlchemy
-from simplecrypt import encrypt
 from sqlalchemy import func
 
 from constant import Sites
+from simplecrypt import encrypt
 from submission import Rating, Submission
 
 db = SQLAlchemy()
