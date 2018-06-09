@@ -26,12 +26,11 @@ WHOAMI = 'https://www.weasyl.com/api/whoami'
 
 class Weasyl(Site):
     """Weasyl."""
+
     SITE = Sites.Weasyl
 
     def parse_add_form(self, form) -> dict:
-        return {
-            'token': form.get('api_token', '').strip(),
-        }
+        return {'token': form.get('api_token', '').strip()}
 
     def add_account(self, data: dict) -> Account:
         sess = cfscrape.create_scraper()
@@ -51,12 +50,7 @@ class Weasyl(Site):
         if Account.lookup_username(self.SITE, g.user.id, j['login']):
             raise AccountExists()
 
-        account = Account(
-            self.SITE,
-            session['id'],
-            j['login'],
-            data['token'],
-        )
+        account = Account(self.SITE, session['id'], j['login'], data['token'])
 
         db.session.add(account)
         db.session.commit()
@@ -94,16 +88,19 @@ class Weasyl(Site):
             'title': submission.title,
             'content': submission.description_for_site(self.SITE),
             'tags': self.tag_str(submission.tags),
-            'rating': self.map_rating(submission.rating)
+            'rating': self.map_rating(submission.rating),
         }
 
         folder = extra.get('folder-{0}'.format(self.account.id))
         if folder and folder != 'None':
             data['folderid'] = folder
 
-        req = sess.post('https://www.weasyl.com/submit/visual', data=data, files={
-            'submitfile': submission.get_image(),
-        }, headers=auth_headers)
+        req = sess.post(
+            'https://www.weasyl.com/submit/visual',
+            data=data,
+            files={'submitfile': submission.get_image()},
+            headers=auth_headers,
+        )
         write_site_response(self.SITE.value, req)
 
         if req.status_code == 422:
@@ -159,10 +156,7 @@ class Weasyl(Site):
             except (IndexError, ValueError):
                 continue
 
-            all_folders.append({
-                'name': name,
-                'folder_id': folder_id,
-            })
+            all_folders.append({'name': name, 'folder_id': folder_id})
 
         if prev_folders:
             prev_folders.json = all_folders

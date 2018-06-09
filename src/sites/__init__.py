@@ -76,7 +76,9 @@ class Site(object):
     @staticmethod
     def collect_images(submissions: List[SavedSubmission], max_size=None, format=None):
         for sub in submissions:
-            with open(join(current_app.config['UPLOAD_FOLDER'], sub.image_filename), 'rb') as f:
+            with open(
+                join(current_app.config['UPLOAD_FOLDER'], sub.image_filename), 'rb'
+            ) as f:
                 image_bytes = BytesIO(f.read())
 
             if max_size:

@@ -84,11 +84,9 @@ def login_required(f):
             session['redir'] = request.path
             return redirect(url_for('home.home'))
 
-        sentry.client.user_context({
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-        })
+        sentry.client.user_context(
+            {'id': user.id, 'username': user.username, 'email': user.email}
+        )
 
         g.user = user
 
@@ -121,15 +119,12 @@ def safe_ext(name: str) -> Union[bool, str]:
     return split
 
 
-def write_upload_time(start_time, site: int = None, measurement: str = 'upload_time') -> None:
+def write_upload_time(
+    start_time, site: int = None, measurement: str = 'upload_time'
+) -> None:
     duration = time.time() - start_time
 
-    point = {
-        'measurement': measurement,
-        'fields': {
-            'duration': duration,
-        },
-    }
+    point = {'measurement': measurement, 'fields': {'duration': duration}}
 
     if site:
         point['tags'] = {'site': site}
@@ -140,9 +135,7 @@ def write_upload_time(start_time, site: int = None, measurement: str = 'upload_t
 def write_site_response(site: int, req: requests.Response) -> None:
     point = {
         'measurement': 'site_response',
-        'fields': {
-            'duration': req.elapsed.total_seconds(),
-        },
+        'fields': {'duration': req.elapsed.total_seconds()},
         'tags': {
             'site': site,
             'method': req.request.method,

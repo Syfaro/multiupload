@@ -22,9 +22,7 @@ class TestDeviantArtException(unittest.TestCase):
     def test_desc_and_detail(self):
         resp = {
             'error_description': 'Hello, world!',
-            'error_details': {
-                'username': 'not good',
-            },
+            'error_details': {'username': 'not good'},
         }
         ret = DeviantArt._build_exception(resp)
 
@@ -34,12 +32,11 @@ class TestDeviantArtException(unittest.TestCase):
     def test_desc_and_details(self):
         resp = {
             'error_description': 'Hello, world!',
-            'error_details': {
-                'username': 'not good',
-                'password': 'too good',
-            },
+            'error_details': {'username': 'not good', 'password': 'too good'},
         }
         ret = DeviantArt._build_exception(resp)
 
-        self.assertEqual(ret.message, 'Hello, world!: username - not good, password - too good')
+        self.assertEqual(
+            ret.message, 'Hello, world!: username - not good, password - too good'
+        )
         self.assertIsInstance(ret, SiteError)

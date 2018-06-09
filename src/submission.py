@@ -19,6 +19,7 @@ def is_hashtag(tag: str) -> bool:
 
 class Rating(Enum):
     """Rating is the rating for a submission."""
+
     general = 'general'
     mature = 'mature'
     explicit = 'explicit'
@@ -26,6 +27,7 @@ class Rating(Enum):
 
 class Submission(object):
     """Submission is a normalized representation of something to post."""
+
     title: str = None  # Title of submission
     description: str = None  # Description of submission
     tags: List[str] = None  # Tags of submission
@@ -51,7 +53,10 @@ class Submission(object):
             if image.original_filename:
                 self.image_filename = image.original_filename
                 self.image_mimetype = image.image_mimetype
-                with open(join(current_app.config['UPLOAD_FOLDER'], image.image_filename), 'rb') as f:
+                with open(
+                    join(current_app.config['UPLOAD_FOLDER'], image.image_filename),
+                    'rb',
+                ) as f:
                     self.image_bytes = BytesIO(f.read())
         else:
             self.image_filename = image.filename
@@ -72,7 +77,9 @@ class Submission(object):
         self.image_bytes.seek(0)
         return height, width
 
-    def resize_image(self, height: int, width: int, replace: bool = False) -> Tuple[str, BytesIO]:
+    def resize_image(
+        self, height: int, width: int, replace: bool = False
+    ) -> Tuple[str, BytesIO]:
         """Resize image to specified height and width with antialiasing"""
         image = Image.open(self.image_bytes)
 
@@ -89,8 +96,7 @@ class Submission(object):
         image.save(resized_image, image.format)
         resized_image.seek(0)
 
-        breadcrumbs.record(message='Resized image',
-                           category='furryapp', level='info')
+        breadcrumbs.record(message='Resized image', category='furryapp', level='info')
 
         if replace:
             self.image_bytes = resized_image

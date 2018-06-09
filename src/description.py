@@ -40,8 +40,7 @@ def parse_description(description, uploading_to) -> str:
                 elif link_type == 2:
                     new_text = '<!~%s>' % username
             elif uploading_to == 3:  # FurryNetwork
-                new_text = '[{0}](https://beta.furrynetwork.com/{0}/)'.format(
-                    username)
+                new_text = '[{0}](https://beta.furrynetwork.com/{0}/)'.format(username)
             elif uploading_to == 4:
                 if link_type == 0:
                     new_text = '[name]%s[/name]' % username
@@ -51,10 +50,10 @@ def parse_description(description, uploading_to) -> str:
                     new_text = '[iconname]%s[/iconname]' % username
             elif uploading_to == 5:
                 if link_type == 0:
-                    clean = username.lower().replace(
-                        ' ', '-').replace('_', '-')
+                    clean = username.lower().replace(' ', '-').replace('_', '-')
                     new_text = '[url=https://{clean}.sofurry.com/]{username}[/url]'.format(
-                        username=username, clean=clean)
+                        username=username, clean=clean
+                    )
                 elif link_type == 1:
                     new_text = ':%sicon:' % username
                 elif link_type == 2:
@@ -70,29 +69,36 @@ def parse_description(description, uploading_to) -> str:
             if uploading_to == 1:  # Uploading to FurAffinity
                 if linking_to == 2:
                     new_text = '[url=https://www.weasyl.com/~{0}]{0}[/url]'.format(
-                        username)
+                        username
+                    )
                 elif linking_to == 3:
                     new_text = '[url=https://beta.furrynetwork.com/{0}]{0}[/url]'.format(
-                        username)
+                        username
+                    )
                 elif linking_to == 4:
                     new_text = '[url=https://inkbunny.net/{0}]{0}[/url]'.format(
-                        username)
+                        username
+                    )
                 elif linking_to == 5:
-                    clean = username.lower().replace(
-                        ' ', '-').replace('_', '-')
+                    clean = username.lower().replace(' ', '-').replace('_', '-')
                     new_text = '[url=https://{clean}.sofurry.com/]{username}[/url]'.format(
-                        username=username, clean=clean)
+                        username=username, clean=clean
+                    )
                 elif linking_to == 100:
                     new_text = '[url=https://twitter.com/{0}]{0}[/url]'.format(username)
                 elif linking_to == 7:
                     new_text = '[url=https://{0}.tumblr.com/]{0}[/url]'.format(username)
                 elif linking_to == 8:
-                    new_text = '[url=https://{0}.deviantart.com/]{1}[/url]'.format(username.lower(), username)
+                    new_text = '[url=https://{0}.deviantart.com/]{1}[/url]'.format(
+                        username.lower(), username
+                    )
             elif uploading_to == 2:
                 if linking_to == 1:
                     new_text = '<fa:{0}>'.format(username)
                 elif linking_to == 3:  # FurryNetwork
-                    new_text = '[{0}](https://beta.furrynetwork.com/{0})'.format(username)
+                    new_text = '[{0}](https://beta.furrynetwork.com/{0})'.format(
+                        username
+                    )
                 elif linking_to == 4:
                     new_text = '<ib:{0}>'.format(username)
                 elif linking_to == 5:
@@ -100,33 +106,37 @@ def parse_description(description, uploading_to) -> str:
                 elif linking_to == 100:
                     new_text = '[{0}](https://twitter.com/{0})'.format(username)
                 elif linking_to == 7:
-                    new_text = '[{0}](https://{1}.tumblr.com/)'.format(username, username.lower())
+                    new_text = '[{0}](https://{1}.tumblr.com/)'.format(
+                        username, username.lower()
+                    )
                 elif linking_to == 8:
                     new_text = '<da:{0}>'.format(username)
             elif uploading_to in (3, 7):
                 if linking_to == 1:
                     new_text = '[{0}](https://www.furaffinity.net/user/{0}/)'.format(
-                        username)
+                        username
+                    )
                 elif linking_to == 2:  # Weasyl
-                    new_text = '[{0}](https://www.weasyl.com/~{0})'.format(
-                        username)
+                    new_text = '[{0}](https://www.weasyl.com/~{0})'.format(username)
                 elif linking_to == 3:  # FurryNetwork
                     new_text = '[{0}](https://beta.furrynetwork.com/{0})'.format(
-                        username)
+                        username
+                    )
                 elif linking_to == 4:
-                    new_text = '[{0}](https://inkbunny.net/{0})'.format(
-                        username)
+                    new_text = '[{0}](https://inkbunny.net/{0})'.format(username)
                 elif linking_to == 5:
-                    clean = username.lower().replace(
-                        ' ', '-').replace('_', '-')
+                    clean = username.lower().replace(' ', '-').replace('_', '-')
                     new_text = '[{username}](https://{clean}.sofurry.com/)'.format(
-                        username=username, clean=clean)
+                        username=username, clean=clean
+                    )
                 elif linking_to == 100:
                     new_text = '[{0}](https://twitter.com/{0})'.format(username)
                 elif linking_to == 7:
                     new_text = '[{0}](https://{0}.tumblr.com/)'.format(username)
                 elif linking_to == 8:
-                    new_text = '[{1}](https://{0}.deviantart.com/)'.format(username.lower(), username)
+                    new_text = '[{1}](https://{0}.deviantart.com/)'.format(
+                        username.lower(), username
+                    )
             elif uploading_to == 4:
                 if linking_to == 1:
                     new_text = '[fa]%s[/fa]' % username
@@ -134,7 +144,8 @@ def parse_description(description, uploading_to) -> str:
                     new_text = '[w]%s[/w]' % username
                 elif linking_to == 3:
                     new_text = '[url=https://beta.furrynetwork.com/{0}/]{0}[/url]'.format(
-                        username)
+                        username
+                    )
                 elif linking_to == 5:
                     new_text = '[sf]%s[/sf]' % username
                 elif linking_to == 100:
@@ -148,10 +159,12 @@ def parse_description(description, uploading_to) -> str:
                     new_text = 'fa!%s' % username
                 elif linking_to == 2:
                     new_text = '[url=https://www.weasyl.com/~{0}]{0}[/url]'.format(
-                        username)
+                        username
+                    )
                 elif linking_to == 3:
                     new_text = '[url=https://beta.furrynetwork.com/{0}]{0}[/url]'.format(
-                        username)
+                        username
+                    )
                 elif linking_to == 4:
                     new_text = 'ib!%s' % username
                 elif linking_to == 100:
@@ -159,22 +172,35 @@ def parse_description(description, uploading_to) -> str:
                 elif linking_to == 7:
                     new_text = '[url=https://{0}.tumblr.com/]{0}[/url]'.format(username)
                 elif linking_to == 8:
-                    new_text = '[url=https://{0}.deviantart.com/]{1}[/url]'.format(username.lower(), username)
+                    new_text = '[url=https://{0}.deviantart.com/]{1}[/url]'.format(
+                        username.lower(), username
+                    )
             elif uploading_to == 8:
                 if linking_to == 1:
-                    new_text = '<a href="https://www.furaffinity.net/user/{0}">{0}</a>'.format(username)
+                    new_text = '<a href="https://www.furaffinity.net/user/{0}">{0}</a>'.format(
+                        username
+                    )
                 elif linking_to == 2:
-                    new_text = '<a href="https://www.weasyl.com/~{0}">{0}</a>'.format(username)
+                    new_text = '<a href="https://www.weasyl.com/~{0}">{0}</a>'.format(
+                        username
+                    )
                 elif linking_to == 3:
-                    new_text = '<a href="https://beta.furrynetwork.com/{0}">{0}</a>'.format(username)
+                    new_text = '<a href="https://beta.furrynetwork.com/{0}">{0}</a>'.format(
+                        username
+                    )
                 elif linking_to == 4:
-                    new_text = '<a href="https://inkbunny.net/{0}">{0}</a>'.format(username)
+                    new_text = '<a href="https://inkbunny.net/{0}">{0}</a>'.format(
+                        username
+                    )
                 elif linking_to == 5:
                     clean = username.lower().replace(' ', '-').replace('_', '-')
-                    new_text = '<a href="https://{clean}.sofurry.com/">{username}</a>'.format(username=username,
-                                                                                              clean=clean)
+                    new_text = '<a href="https://{clean}.sofurry.com/">{username}</a>'.format(
+                        username=username, clean=clean
+                    )
                 elif linking_to == 7:
-                    new_text = '<a href="https://{1}.tumblr.com/">{0}</a>'.format(username, username.lower())
+                    new_text = '<a href="https://{1}.tumblr.com/">{0}</a>'.format(
+                        username, username.lower()
+                    )
 
         description = description[0:start] + new_text + description[end:]
 
@@ -206,21 +232,37 @@ def parse_description(description, uploading_to) -> str:
             match = url.search(description)
 
         if uploading_to == 8:
-            description = re.sub(r'([*_]{2})(.+)\1', r'<strong>\2</strong>', description)  # strong
+            description = re.sub(
+                r'([*_]{2})(.+)\1', r'<strong>\2</strong>', description
+            )  # strong
             description = re.sub(r'([*_])(.+)\1', r'<em>\2</em>', description)  # italic
-            description = re.sub(r'(~{2})(.+)\1', r'<strike>\2</strike>', description)  # strikethrough
+            description = re.sub(
+                r'(~{2})(.+)\1', r'<strike>\2</strike>', description
+            )  # strikethrough
             description = re.sub(r'`(.+)`', r'\1', description)  # inline code block
         else:
-            description = re.sub(r'([*_]{2})(.+)\1', r'[b]\2[/b]', description)  # strong
+            description = re.sub(
+                r'([*_]{2})(.+)\1', r'[b]\2[/b]', description
+            )  # strong
             description = re.sub(r'([*_])(.+)\1', r'[i]\2[/i]', description)  # italic
-            description = re.sub(r'(~{2})(.+)\1', r'[s]\2[/s]', description)  # strikethrough
-            description = re.sub(r'`(.+)`', r'[code]\1[/code]', description)  # inline code block
+            description = re.sub(
+                r'(~{2})(.+)\1', r'[s]\2[/s]', description
+            )  # strikethrough
+            description = re.sub(
+                r'`(.+)`', r'[code]\1[/code]', description
+            )  # inline code block
 
         if uploading_to == 1:
-            description = re.sub(r'\n-{5,}', r'\n[hr]', description)  # horizontal rule, FA style
+            description = re.sub(
+                r'\n-{5,}', r'\n[hr]', description
+            )  # horizontal rule, FA style
         elif uploading_to == 5:
-            description = re.sub(r'\n-{5,}', r'\n[rule]', description)  # horizontal rule, SF style
+            description = re.sub(
+                r'\n-{5,}', r'\n[rule]', description
+            )  # horizontal rule, SF style
         else:
-            description = re.sub(r'\n-{5,}', '', description)  # remove horizontal rule on other sites
+            description = re.sub(
+                r'\n-{5,}', '', description
+            )  # remove horizontal rule on other sites
 
     return description

@@ -30,7 +30,9 @@ def index():
     groups: List[SubmissionGroup] = SubmissionGroup.get_groups()
     ungrouped: List[SavedSubmission] = SubmissionGroup.get_ungrouped_submissions()
 
-    return render_template('review/list.html', user=g.user, groups=groups, ungrouped=ungrouped)
+    return render_template(
+        'review/list.html', user=g.user, groups=groups, ungrouped=ungrouped
+    )
 
 
 @app.route('/remove', methods=['POST'])

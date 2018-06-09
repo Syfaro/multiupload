@@ -4,7 +4,6 @@ from description import parse_description
 
 
 class TestDescriptionLinks(unittest.TestCase):
-
     def test_single(self):
         unparsed = "[a link](https://www.google.com)"
         should_be = "[url=https://www.google.com]a link[/url]"
@@ -12,7 +11,9 @@ class TestDescriptionLinks(unittest.TestCase):
         self.assertEqual(should_be, parse_description(unparsed, 1))
 
     def test_multiple(self):
-        unparsed = "[a link](https://www.google.com) with another [link](https://twitter.com)"
+        unparsed = (
+            "[a link](https://www.google.com) with another [link](https://twitter.com)"
+        )
         should_be = "[url=https://www.google.com]a link[/url] with another [url=https://twitter.com]link[/url]"
 
         self.assertEqual(should_be, parse_description(unparsed, 1))

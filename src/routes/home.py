@@ -124,20 +124,22 @@ def register_post():
 
     strength, improvements = passwordmeter.test(password)
 
-    send_to_influx({
-        "measurement": "password_strength",
-        "fields": {
-            "strength": strength,
-        },
-    })
+    send_to_influx(
+        {"measurement": "password_strength", "fields": {"strength": strength}}
+    )
 
     if strength < 0.3:
-        flash('Weak password. You may wish to try the following suggestions.<br><ul><li>%s</ul></ul>' %
-              ('</li><li>'.join(improvements.values())))
+        flash(
+            'Weak password. You may wish to try the following suggestions.<br><ul><li>%s</ul></ul>'
+            % ('</li><li>'.join(improvements.values()))
+        )
         return redirect(url_for('home.home'))
 
     # Ensure username is not in use
-    if User.query.filter(func.lower(User.username) == func.lower(username)).first() is not None:
+    if (
+        User.query.filter(func.lower(User.username) == func.lower(username)).first()
+        is not None
+    ):
         flash('Username is already in use.')
         return redirect(url_for('home.home'))
 
@@ -153,14 +155,22 @@ def register_post():
         with open('templates/email.txt') as f:
             email_body = f.read()
 
-        requests.post(current_app.config['MAILGUN_ENDPOINT'], auth=('api', current_app.config['MAILGUN_KEY']), data={
-            'from': current_app.config['MAILGUN_ADDRESS'],
-            'to': email,
-            'subject': 'Verify your Furry Art Multiuploader email address',
-            'h:Reply-To': 'syfaro@huefox.com',
-            'text': email_body.format(username=username,
-                                      link=current_app.config['MAILGUN_VERIFY'].format(user.email_verifier))
-        })
+        requests.post(
+            current_app.config['MAILGUN_ENDPOINT'],
+            auth=('api', current_app.config['MAILGUN_KEY']),
+            data={
+                'from': current_app.config['MAILGUN_ADDRESS'],
+                'to': email,
+                'subject': 'Verify your Furry Art Multiuploader email address',
+                'h:Reply-To': 'syfaro@huefox.com',
+                'text': email_body.format(
+                    username=username,
+                    link=current_app.config['MAILGUN_VERIFY'].format(
+                        user.email_verifier
+                    ),
+                ),
+            },
+        )
 
         flash('A link was sent to you to verify your email address.')
 

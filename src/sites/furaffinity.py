@@ -28,6 +28,7 @@ from utils import write_site_response
 
 class FurAffinity(Site):
     """FurAffinity."""
+
     SITE = Sites.FurAffinity
 
     def __init__(self, credentials=None, account=None):
@@ -38,7 +39,9 @@ class FurAffinity(Site):
     def pre_add_account(self) -> dict:
         sess = cfscrape.create_scraper()
 
-        req = sess.get('https://www.furaffinity.net/login/?mode=imagecaptcha', headers=HEADERS)
+        req = sess.get(
+            'https://www.furaffinity.net/login/?mode=imagecaptcha', headers=HEADERS
+        )
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
@@ -48,9 +51,7 @@ class FurAffinity(Site):
 
         captcha = sess.get('https://www.furaffinity.net' + src, headers=HEADERS)
 
-        return {
-            'captcha': base64.b64encode(captcha.content).decode('utf-8')
-        }
+        return {'captcha': base64.b64encode(captcha.content).decode('utf-8')}
 
     def add_account(self, data: dict) -> Account:
         sess = cfscrape.create_scraper()
@@ -58,21 +59,27 @@ class FurAffinity(Site):
         if Account.lookup_username(self.SITE, g.user.id, data['username']):
             raise AccountExists()
 
-        req = sess.get('https://www.furaffinity.net/login/?mode=imagecaptcha', cookies={
-            'b': session['fa_cookie_b'],
-        }, headers=HEADERS)
+        req = sess.get(
+            'https://www.furaffinity.net/login/?mode=imagecaptcha',
+            cookies={'b': session['fa_cookie_b']},
+            headers=HEADERS,
+        )
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
-        req = sess.post('https://www.furaffinity.net/login/', cookies={
-            'b': session['fa_cookie_b'],
-        }, data={
-            'action': 'login',
-            'name': data['username'],
-            'pass': data['password'],
-            'captcha': data['captcha'],
-            'use_old_captcha': '1',
-        }, allow_redirects=False, headers=HEADERS)
+        req = sess.post(
+            'https://www.furaffinity.net/login/',
+            cookies={'b': session['fa_cookie_b']},
+            data={
+                'action': 'login',
+                'name': data['username'],
+                'pass': data['password'],
+                'captcha': data['captcha'],
+                'use_old_captcha': '1',
+            },
+            allow_redirects=False,
+            headers=HEADERS,
+        )
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
@@ -81,19 +88,11 @@ class FurAffinity(Site):
         if not a:
             raise BadCredentials()
 
-        secure_data = {
-            'a': a,
-            'b': session.pop('fa_cookie_b'),
-        }
+        secure_data = {'a': a, 'b': session.pop('fa_cookie_b')}
 
         j = json.dumps(secure_data).encode('utf-8')
 
-        account = Account(
-            self.SITE.value,
-            session['id'],
-            data['username'],
-            j
-        )
+        account = Account(self.SITE.value, session['id'], data['username'], j)
 
         db.session.add(account)
         db.session.commit()
@@ -113,19 +112,27 @@ class FurAffinity(Site):
         height, width = submission.image_res()
         needs_resize = height > 1280 or width > 1280
 
-        req = sess.get('https://www.furaffinity.net/submit/', cookies=self.credentials, headers=HEADERS)
+        req = sess.get(
+            'https://www.furaffinity.net/submit/',
+            cookies=self.credentials,
+            headers=HEADERS,
+        )
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
-        req = sess.post('https://www.furaffinity.net/submit/', data={
-            'part': '2',
-            'submission_type': 'submission',
-        }, cookies=self.credentials, headers=HEADERS)
+        req = sess.post(
+            'https://www.furaffinity.net/submit/',
+            data={'part': '2', 'submission_type': 'submission'},
+            cookies=self.credentials,
+            headers=HEADERS,
+        )
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
         try:
-            key = BeautifulSoup(req.content, 'html.parser').select('input[name="key"]')[0]['value']
+            key = BeautifulSoup(req.content, 'html.parser').select('input[name="key"]')[
+                0
+            ]['value']
         except (ValueError, IndexError):
             raise SiteError('Unable to get FurAffinity upload token from part 2')
 
@@ -134,13 +141,13 @@ class FurAffinity(Site):
         else:
             image = submission.get_image()
 
-        req = sess.post('https://www.furaffinity.net/submit/', data={
-            'part': '3',
-            'submission_type': 'submission',
-            'key': key,
-        }, files={
-            'submission': image,
-        }, cookies=self.credentials, headers=HEADERS)
+        req = sess.post(
+            'https://www.furaffinity.net/submit/',
+            data={'part': '3', 'submission_type': 'submission', 'key': key},
+            files={'submission': image},
+            cookies=self.credentials,
+            headers=HEADERS,
+        )
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
@@ -151,7 +158,13 @@ class FurAffinity(Site):
         except (ValueError, IndexError):
             text = page.select('font')
             print(text)
-            with open(os.path.join(current_app.config['DEBUG_FOLDER'], '{0}.html'.format(int(time.time()))), 'wb') as f:
+            with open(
+                os.path.join(
+                    current_app.config['DEBUG_FOLDER'],
+                    '{0}.html'.format(int(time.time())),
+                ),
+                'wb',
+            ) as f:
                 f.write(req.content)
             if text:
                 message = text[-1].get_text()
@@ -173,14 +186,21 @@ class FurAffinity(Site):
         if folder and folder != 'None':
             data['folder_ids[]'] = folder
 
-        req = sess.post('https://www.furaffinity.net/submit/', data=data, cookies=self.credentials, headers=HEADERS)
+        req = sess.post(
+            'https://www.furaffinity.net/submit/',
+            data=data,
+            cookies=self.credentials,
+            headers=HEADERS,
+        )
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
         link = req.url
 
         if link == 'https://www.furaffinity.net/submit/submission/4/?msg=1':
-            raise SiteError('You must have a few submissions on FurAffinity before you can use this site.')
+            raise SiteError(
+                'You must have a few submissions on FurAffinity before you can use this site.'
+            )
 
         resolution = self.account['resolution_furaffinity']
         resolution = not resolution or resolution.val == 'yes'
@@ -188,12 +208,14 @@ class FurAffinity(Site):
         if needs_resize and resolution:
             match = re.search(r'view/(\d+)', link).group(1)
 
-            req = sess.post('https://www.furaffinity.net/controls/submissions/changesubmission/%s/' % match, data={
-                'update': 'yes',
-                'rebuild-thumbnail': '1',
-            }, files={
-                'newsubmission': submission.get_image(),
-            }, cookies=self.credentials, headers=HEADERS)
+            req = sess.post(
+                'https://www.furaffinity.net/controls/submissions/changesubmission/%s/'
+                % match,
+                data={'update': 'yes', 'rebuild-thumbnail': '1'},
+                files={'newsubmission': submission.get_image()},
+                cookies=self.credentials,
+                headers=HEADERS,
+            )
             write_site_response(self.SITE.value, req)
 
             try:
@@ -220,8 +242,11 @@ class FurAffinity(Site):
 
         sess = cfscrape.create_scraper()
 
-        req = sess.get('https://www.furaffinity.net/controls/folders/submissions/',
-                       cookies=self.credentials, headers=HEADERS)
+        req = sess.get(
+            'https://www.furaffinity.net/controls/folders/submissions/',
+            cookies=self.credentials,
+            headers=HEADERS,
+        )
 
         soup = BeautifulSoup(req.content, 'html.parser')
 
@@ -237,10 +262,7 @@ class FurAffinity(Site):
             except (IndexError, ValueError):
                 continue
 
-            folders.append({
-                'name': name,
-                'folder_id': folder_id,
-            })
+            folders.append({'name': name, 'folder_id': folder_id})
 
         if prev_folders:
             prev_folders.json = folders

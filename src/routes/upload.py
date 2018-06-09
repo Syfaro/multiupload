@@ -46,14 +46,16 @@ app = Blueprint('upload', __name__)
 @app.route('/art', methods=['GET'])
 @login_required
 def create_art():
-    accounts = map(lambda account: {
-        'account': account,
-        'selected': account.used_last,
-    }, g.user.accounts)
+    accounts = map(
+        lambda account: {'account': account, 'selected': account.used_last},
+        g.user.accounts,
+    )
 
     accounts = sorted(accounts, key=lambda a: a['account'].site.name)
 
-    return render_template('review/review.html', accounts=accounts, sub=SavedSubmission())
+    return render_template(
+        'review/review.html', accounts=accounts, sub=SavedSubmission()
+    )
 
 
 def submit_art(submission, account, saved=None, twitter_links=None) -> dict:
@@ -93,11 +95,15 @@ def submit_art(submission, account, saved=None, twitter_links=None) -> dict:
 
             return {
                 'link': link,
-                'name': '{site} - {account}'.format(site=site.SITE.name, account=account.username)
+                'name': '{site} - {account}'.format(
+                    site=site.SITE.name, account=account.username
+                ),
             }
 
 
-def upload_and_send(submission: SavedSubmission, accounts: List[Account], saved: SavedSubmission):
+def upload_and_send(
+    submission: SavedSubmission, accounts: List[Account], saved: SavedSubmission
+):
     twitter_account = saved.data.get('twitter-account')
     twitter_account_ids = []
     if twitter_account is not None:
@@ -119,30 +125,43 @@ def upload_and_send(submission: SavedSubmission, accounts: List[Account], saved:
             yield 'event: upload\ndata: {res}\n\n'.format(res=json.dumps(result))
 
             if account.id in twitter_account_ids:
-                twitter_links.append((account.site, result['link'],))
+                twitter_links.append((account.site, result['link']))
 
             upload_accounts.append(account)
         except BadCredentials:
             yield 'event: badcreds\ndata: {info}\n\n'.format(
-                info=json.dumps({'site': account.site.name, 'account': account.username}))
+                info=json.dumps(
+                    {'site': account.site.name, 'account': account.username}
+                )
+            )
             upload_error = True
         except SiteError as ex:
-            yield 'event: siteerror\ndata: {msg}\n\n'.format(msg=json.dumps({
-                'msg': ex.message,
-                'site': account.site.name,
-                'account': account.username,
-            }))
+            yield 'event: siteerror\ndata: {msg}\n\n'.format(
+                msg=json.dumps(
+                    {
+                        'msg': ex.message,
+                        'site': account.site.name,
+                        'account': account.username,
+                    }
+                )
+            )
             upload_error = True
         except HTTPError as ex:
-            yield 'event: httperror\ndata: {info}\n\n'.format(info=json.dumps({
-                'site': account.site.name,
-                'account': account.username,
-                'code': ex.response.status_code,
-            }))
+            yield 'event: httperror\ndata: {info}\n\n'.format(
+                info=json.dumps(
+                    {
+                        'site': account.site.name,
+                        'account': account.username,
+                        'code': ex.response.status_code,
+                    }
+                )
+            )
             upload_error = True
 
     if upload_error:
-        needs_upload = [account.id for account in accounts if account.id not in upload_accounts]
+        needs_upload = [
+            account.id for account in accounts if account.id not in upload_accounts
+        ]
         saved.set_accounts(needs_upload)  # remove accounts already uploaded to
     else:
         db.session.delete(saved)
@@ -161,7 +180,9 @@ def create_art_post_saved():
         flash('Unknown item.')
         return redirect(url_for('list.index'))
 
-    submission = Submission(saved.title, saved.description, saved.tags, saved.rating.value, saved)
+    submission = Submission(
+        saved.title, saved.description, saved.tags, saved.rating.value, saved
+    )
 
     for account in Account.all():
         account.used_last = 0
@@ -178,7 +199,10 @@ def create_art_post_saved():
 
     accounts: List[Account] = sorted(accounts, key=lambda x: x.site_id)
 
-    return Response(stream_with_context(upload_and_send(submission, accounts, saved)), mimetype='text/event-stream')
+    return Response(
+        stream_with_context(upload_and_send(submission, accounts, saved)),
+        mimetype='text/event-stream',
+    )
 
 
 @app.route('/art', methods=['POST'])
@@ -196,7 +220,9 @@ def create_art_post():
     saved_id = request.form.get('id')
 
     if saved_id:
-        saved: SavedSubmission = SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(id=saved_id).first()
+        saved: SavedSubmission = SavedSubmission.query.filter_by(
+            user_id=g.user.id
+        ).filter_by(id=saved_id).first()
         saved.title = title
         saved.description = description
         saved.tags = keywords
@@ -236,7 +262,9 @@ def create_art_post():
         has_error = True
 
     if has_error:
-        if all(v is None or v == '' for v in [title, description, keywords, rating, upload]):
+        if all(
+            v is None or v == '' for v in [title, description, keywords, rating, upload]
+        ):
             return redirect(url_for('upload.create_art'))
 
         if upload:
@@ -308,23 +336,33 @@ def create_art_post():
             uploaded_accounts.append(account)
 
             if account.id in twitter_account_ids:
-                twitter_links.append((account.site, result['link'],))
+                twitter_links.append((account.site, result['link']))
         except BadCredentials:
-            flash('Unable to upload on {site} to account {account}, you may need to log in again.'.format(
-                site=account.site.name, account=account.username))
+            flash(
+                'Unable to upload on {site} to account {account}, you may need to log in again.'.format(
+                    site=account.site.name, account=account.username
+                )
+            )
             upload_error = True
         except SiteError as ex:
-            flash('Unable to upload on {site} to account {account}: {msg}'.format(site=account.site.name,
-                                                                                  account=account.username,
-                                                                                  msg=ex.message))
+            flash(
+                'Unable to upload on {site} to account {account}: {msg}'.format(
+                    site=account.site.name, account=account.username, msg=ex.message
+                )
+            )
             upload_error = True
         except HTTPError:
-            flash('Unable to upload on {site} to account {account} due to a site issue.'.format(site=account.site.name,
-                                                                                                account=account.username))
+            flash(
+                'Unable to upload on {site} to account {account} due to a site issue.'.format(
+                    site=account.site.name, account=account.username
+                )
+            )
             upload_error = True
 
     if upload_error:
-        flash('As an error occured, the submission has not been removed from the pending review list.')
+        flash(
+            'As an error occured, the submission has not been removed from the pending review list.'
+        )
 
         needs_upload = [a for a in uploaded_accounts if a not in uploaded_accounts]
         saved.set_accounts(needs_upload)  # remove accounts already uploaded to
@@ -401,7 +439,10 @@ def parse_csv(f, known_files=None, base_files=None):
                         i = None
 
                         for a in user_accounts:
-                            folded = a.username.replace(' ', '_').casefold() == username.replace(' ', '_').casefold()
+                            folded = (
+                                a.username.replace(' ', '_').casefold()
+                                == username.replace(' ', '_').casefold()
+                            )
                             if a.site_id == siteid and folded:
                                 i = a.id
                                 break
@@ -476,7 +517,11 @@ def zip_post():
     with ZipFile(file) as z:
         for info in z.infolist():
             if info.file_size > 1000 * 1000 * 10:  # 10MB
-                flash('Rejecting {name} as it is larger than 10MB.'.format(name=info.filename))
+                flash(
+                    'Rejecting {name} as it is larger than 10MB.'.format(
+                        name=info.filename
+                    )
+                )
                 continue
 
             if info.filename.startswith('__MACOSX/'):
@@ -519,7 +564,9 @@ def review(id=None):
     sub: SavedSubmission = SavedSubmission.find(id)
 
     if sub:
-        return render_template('review/review.html', sub=sub, accounts=sub.all_selected_accounts(g.user))
+        return render_template(
+            'review/review.html', sub=sub, accounts=sub.all_selected_accounts(g.user)
+        )
 
     return redirect(url_for('list.index'))
 
@@ -547,7 +594,10 @@ def global_known_sites():
 @app.route('/group/create', methods=['GET'])
 @login_required
 def create_group():
-    accounts = map(lambda account: {'account': account, 'selected': account.used_last}, g.user.accounts)
+    accounts = map(
+        lambda account: {'account': account, 'selected': account.used_last},
+        g.user.accounts,
+    )
 
     accounts = sorted(accounts, key=lambda a: a['account'].site.name)
 
@@ -618,7 +668,9 @@ def create_group_post():
 def update_master(id):
     sub = SavedSubmission.find(id)
 
-    return render_template('review/master.html', sub=sub, accounts=sub.all_selected_accounts(g.user))
+    return render_template(
+        'review/master.html', sub=sub, accounts=sub.all_selected_accounts(g.user)
+    )
 
 
 @app.route('/master', methods=['POST'])
@@ -687,36 +739,51 @@ def perform_group_upload(group_id):
                     try:
                         link = s.upload_group(group, extra)
                     except BadCredentials:
-                        yield 'event: badcreds\ndata: {0}\n\n'.format(json.dumps({
-                            'site': account.site.name,
-                            'account': account.username,
-                        }))
+                        yield 'event: badcreds\ndata: {0}\n\n'.format(
+                            json.dumps(
+                                {'site': account.site.name, 'account': account.username}
+                            )
+                        )
                         had_error = True
                         continue
                     except SiteError as ex:
-                        yield 'event: siteerror\ndata: {msg}\n\n'.format(msg=json.dumps({
-                            'msg': ex.message,
-                            'site': account.site.name,
-                            'account': account.username,
-                        }))
+                        yield 'event: siteerror\ndata: {msg}\n\n'.format(
+                            msg=json.dumps(
+                                {
+                                    'msg': ex.message,
+                                    'site': account.site.name,
+                                    'account': account.username,
+                                }
+                            )
+                        )
                         had_error = True
                         continue
                     except HTTPError as ex:
-                        yield 'event: httperror\ndata: {info}\n\n'.format(info=json.dumps({
-                            'site': account.site.name,
-                            'account': account.username,
-                            'code': ex.response.status_code,
-                        }))
+                        yield 'event: httperror\ndata: {info}\n\n'.format(
+                            info=json.dumps(
+                                {
+                                    'site': account.site.name,
+                                    'account': account.username,
+                                    'code': ex.response.status_code,
+                                }
+                            )
+                        )
                         had_error = True
                         continue
 
-                    yield 'event: upload\ndata: {0}\n\n'.format(json.dumps({
-                        'link': link,
-                        'name': '{site} - {account}'.format(site=site.SITE.name, account=account.username)
-                    }))
+                    yield 'event: upload\ndata: {0}\n\n'.format(
+                        json.dumps(
+                            {
+                                'link': link,
+                                'name': '{site} - {account}'.format(
+                                    site=site.SITE.name, account=account.username
+                                ),
+                            }
+                        )
+                    )
 
                     if account.id in twitter_account_ids:
-                        twitter_links.append((account.site, link,))
+                        twitter_links.append((account.site, link))
                 else:
                     submissions = group.submissions
                     sub_count = len(submissions)
@@ -725,47 +792,69 @@ def perform_group_upload(group_id):
                         errors = s.validate_submission(sub)
                         if errors:
                             for error in errors:
-                                yield 'event: validationerror\ndata: {0}\n\n'.format(json.dumps({
-                                    'msg': error,
-                                    'site': account.site.name,
-                                    'account': account.username,
-                                }))
+                                yield 'event: validationerror\ndata: {0}\n\n'.format(
+                                    json.dumps(
+                                        {
+                                            'msg': error,
+                                            'site': account.site.name,
+                                            'account': account.username,
+                                        }
+                                    )
+                                )
                                 continue
 
                         try:
                             link = s.submit_artwork(sub.submission, extra)
                         except BadCredentials:
-                            yield 'event: badcreds\ndata: {0}\n\n'.format(json.dumps({
-                                'site': account.site.name,
-                                'account': account.username,
-                            }))
+                            yield 'event: badcreds\ndata: {0}\n\n'.format(
+                                json.dumps(
+                                    {
+                                        'site': account.site.name,
+                                        'account': account.username,
+                                    }
+                                )
+                            )
                             had_error = True
                             continue
                         except SiteError as ex:
-                            yield 'event: siteerror\ndata: {msg}\n\n'.format(msg=json.dumps({
-                                'msg': ex.message,
-                                'site': account.site.name,
-                                'account': account.username,
-                            }))
+                            yield 'event: siteerror\ndata: {msg}\n\n'.format(
+                                msg=json.dumps(
+                                    {
+                                        'msg': ex.message,
+                                        'site': account.site.name,
+                                        'account': account.username,
+                                    }
+                                )
+                            )
                             had_error = True
                             continue
                         except HTTPError as ex:
-                            yield 'event: httperror\ndata: {info}\n\n'.format(info=json.dumps({
-                                'site': account.site.name,
-                                'account': account.username,
-                                'code': ex.response.status_code,
-                            }))
+                            yield 'event: httperror\ndata: {info}\n\n'.format(
+                                info=json.dumps(
+                                    {
+                                        'site': account.site.name,
+                                        'account': account.username,
+                                        'code': ex.response.status_code,
+                                    }
+                                )
+                            )
                             had_error = True
                             continue
 
-                        yield 'event: upload\ndata: {0}\n\n'.format(json.dumps({
-                            'link': link,
-                            'name': '{site} - {account}'.format(site=site.SITE.name, account=account.username)
-                        }))
+                        yield 'event: upload\ndata: {0}\n\n'.format(
+                            json.dumps(
+                                {
+                                    'link': link,
+                                    'name': '{site} - {account}'.format(
+                                        site=site.SITE.name, account=account.username
+                                    ),
+                                }
+                            )
+                        )
 
                         if account.id in twitter_account_ids:
                             if extra.get('twitter-image') == str(idx + 1):
-                                twitter_links.append((account.site, link,))
+                                twitter_links.append((account.site, link))
 
                         if 1 < sub_count != idx + 1:
                             yield 'event: delay\ndata: start\n\n'
@@ -791,4 +880,7 @@ def perform_group_upload(group_id):
 def group_upload():
     group_id = request.args.get('id')
 
-    return Response(stream_with_context(perform_group_upload(group_id)), mimetype='text/event-stream')
+    return Response(
+        stream_with_context(perform_group_upload(group_id)),
+        mimetype='text/event-stream',
+    )

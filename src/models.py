@@ -37,7 +37,9 @@ class User(db.Model):
         self.username = username
         if email:
             self.email = email
-        self.email_verifier = ''.join(SystemRandom().choice(ascii_letters) for _ in range(16))
+        self.email_verifier = ''.join(
+            SystemRandom().choice(ascii_letters) for _ in range(16)
+        )
         self.password = hashpw(password.encode('utf-8'), gensalt())
 
     def verify(self, password: str) -> bool:
@@ -49,7 +51,9 @@ class User(db.Model):
     @classmethod
     def by_name_or_email(cls, s: str):
         return cls.query.filter(
-            (func.lower(cls.email) == func.lower(s)) | (func.lower(cls.username) == func.lower(s))).first()
+            (func.lower(cls.email) == func.lower(s))
+            | (func.lower(cls.username) == func.lower(s))
+        ).first()
 
 
 class Site(db.Model):
@@ -77,7 +81,9 @@ class Account(db.Model):
     config = db.relationship('AccountConfig', lazy='dynamic', cascade='delete')
     data = db.relationship('AccountData', lazy='dynamic', cascade='delete')
 
-    def __init__(self, site: Union[Sites, int], user_id: int, username: str, credentials: str):
+    def __init__(
+        self, site: Union[Sites, int], user_id: int, username: str, credentials: str
+    ):
         if isinstance(site, Sites):
             self.site_id = site.value
         else:
@@ -102,18 +108,26 @@ class Account(db.Model):
 
     @classmethod
     def all(cls):
-        return cls.query.filter_by(user_id=g.user.id).order_by(cls.site_id.asc()).order_by(cls.username.asc()).all()
+        return (
+            cls.query.filter_by(user_id=g.user.id)
+            .order_by(cls.site_id.asc())
+            .order_by(cls.username.asc())
+            .all()
+        )
 
     @classmethod
     def lookup_username(cls, site: Sites, uid: int, username: str):
-        return cls.query.filter_by(site_id=site.value) \
-            .filter_by(user_id=uid) \
-            .filter(func.lower(Account.username) == func.lower(username)) \
+        return (
+            cls.query.filter_by(site_id=site.value)
+            .filter_by(user_id=uid)
+            .filter(func.lower(Account.username) == func.lower(username))
             .first()
+        )
 
 
 class AccountConfig(db.Model):
     """A setting for an account. Uses short string key/value pairs."""
+
     id = db.Column(db.Integer, primary_key=True)
     account_id = db.Column(db.Integer, db.ForeignKey('account.id'), nullable=False)
 
@@ -129,15 +143,13 @@ class AccountConfig(db.Model):
 
     def __repr__(self):
         return '<AccountConfig {id}, {account_id}, {key}: {value}>'.format(
-            id=self.id,
-            account_id=self.account_id,
-            key=self.key,
-            value=self.val,
+            id=self.id, account_id=self.account_id, key=self.key, value=self.val
         )
 
 
 class AccountData(db.Model):
     """Data associated to an account. Uses a short key with a JSON value."""
+
     id = db.Column(db.Integer, primary_key=True)
     account_id = db.Column(db.Integer, db.ForeignKey('account.id'), nullable=False)
 
@@ -206,11 +218,19 @@ class SavedSubmission(db.Model):
     account_ids = db.Column(db.String(1000), nullable=True)
     site_data = db.Column(db.Text, nullable=True)  # arbitrary data stored as JSON
 
-    group_id = db.Column(db.Integer, db.ForeignKey('submission_group.id'), nullable=True)
+    group_id = db.Column(
+        db.Integer, db.ForeignKey('submission_group.id'), nullable=True
+    )
     master = db.Column(db.Boolean, default=False, nullable=False)
 
-    def __init__(self, user: User = None, title: str = None, description: str = None, tags: str = None,
-                 rating: str = None):
+    def __init__(
+        self,
+        user: User = None,
+        title: str = None,
+        description: str = None,
+        tags: str = None,
+        rating: str = None,
+    ):
         if user:
             self.user_id = user.id
         self.title = title
@@ -223,7 +243,11 @@ class SavedSubmission(db.Model):
 
     @property
     def group(self):
-        return SubmissionGroup.query.filter_by(user_id=g.user.id).filter_by(id=self.group_id).first()
+        return (
+            SubmissionGroup.query.filter_by(user_id=g.user.id)
+            .filter_by(id=self.group_id)
+            .first()
+        )
 
     @property
     def accounts(self):
@@ -241,10 +265,7 @@ class SavedSubmission(db.Model):
         result = []
 
         for a in all_accounts:
-            result.append({
-                'account': a,
-                'selected': a in accounts,
-            })
+            result.append({'account': a, 'selected': a in accounts})
 
         result = sorted(result, key=lambda a: a['account'].site.name)
 
@@ -252,16 +273,26 @@ class SavedSubmission(db.Model):
 
     @property
     def submission(self) -> Submission:
-        return Submission(self.title, self.description, self.tags, self.rating.value, self)
+        return Submission(
+            self.title, self.description, self.tags, self.rating.value, self
+        )
 
     @property
     def data(self) -> dict:
         return json.loads(self.site_data) if self.site_data else {}
 
     def has_all(self, ignore_sites: bool = False) -> bool:
-        return all(i is not None and i != '' for i in
-                   [self.title, self.description, self.tags, self.rating,
-                    self.account_ids if not ignore_sites else 'hi', self.image_filename])
+        return all(
+            i is not None and i != ''
+            for i in [
+                self.title,
+                self.description,
+                self.tags,
+                self.rating,
+                self.account_ids if not ignore_sites else 'hi',
+                self.image_filename,
+            ]
+        )
 
     @data.setter
     def data(self, value: dict) -> None:
@@ -269,8 +300,14 @@ class SavedSubmission(db.Model):
 
     @classmethod
     def get_grouped(cls):
-        return cls.query.filter_by(user_id=g.user.id).filter_by(master=False).group_by(cls.group_id).order_by(
-            cls.group_id.asc()).order_by(cls.id.asc()).all()
+        return (
+            cls.query.filter_by(user_id=g.user.id)
+            .filter_by(master=False)
+            .group_by(cls.group_id)
+            .order_by(cls.group_id.asc())
+            .order_by(cls.id.asc())
+            .all()
+        )
 
     @classmethod
     def find(cls, sub_id: int):
@@ -294,8 +331,12 @@ class SubmissionGroup(db.Model):
 
     @staticmethod
     def get_ungrouped_submissions() -> List[SavedSubmission]:
-        return SavedSubmission.query.filter_by(user_id=g.user.id).filter_by(group_id=None).order_by(
-            SavedSubmission.id.asc()).all()
+        return (
+            SavedSubmission.query.filter_by(user_id=g.user.id)
+            .filter_by(group_id=None)
+            .order_by(SavedSubmission.id.asc())
+            .all()
+        )
 
     @property
     def submittable(self) -> bool:
@@ -303,12 +344,20 @@ class SubmissionGroup(db.Model):
 
     @property
     def submissions(self) -> List[SavedSubmission]:
-        return SavedSubmission.query.filter_by(group_id=self.id).filter_by(master=False).order_by(
-            SavedSubmission.id.asc()).all()
+        return (
+            SavedSubmission.query.filter_by(group_id=self.id)
+            .filter_by(master=False)
+            .order_by(SavedSubmission.id.asc())
+            .all()
+        )
 
     @property
     def master(self) -> SavedSubmission:
-        return SavedSubmission.query.filter_by(group_id=self.id).filter_by(master=True).first()
+        return (
+            SavedSubmission.query.filter_by(group_id=self.id)
+            .filter_by(master=True)
+            .first()
+        )
 
     @classmethod
     def find(cls, group_id: int):

@@ -22,6 +22,7 @@ from utils import tumblr_blog_name
 
 class Tumblr(Site):
     """Tumblr."""
+
     SITE = Sites.Tumblr
 
     def __init__(self, credentials=None, account=None):
@@ -30,8 +31,12 @@ class Tumblr(Site):
             self.credentials = json.loads(credentials)
 
     def pre_add_account(self) -> Response:
-        tumblr = tumblpy.Tumblpy(current_app.config['TUMBLR_KEY'], current_app.config['TUMBLR_SECRET'])
-        auth_props = tumblr.get_authentication_tokens(current_app.config['TUMBLR_CALLBACK'])
+        tumblr = tumblpy.Tumblpy(
+            current_app.config['TUMBLR_KEY'], current_app.config['TUMBLR_SECRET']
+        )
+        auth_props = tumblr.get_authentication_tokens(
+            current_app.config['TUMBLR_CALLBACK']
+        )
 
         session['tumblr_token'] = auth_props['oauth_token_secret']
 
@@ -41,8 +46,12 @@ class Tumblr(Site):
         verifier = request.args.get('oauth_verifier', None)
         token = request.args.get('oauth_token', None)
 
-        tumblr = tumblpy.Tumblpy(current_app.config['TUMBLR_KEY'], current_app.config['TUMBLR_SECRET'],
-                                 token, session['tumblr_token'])
+        tumblr = tumblpy.Tumblpy(
+            current_app.config['TUMBLR_KEY'],
+            current_app.config['TUMBLR_SECRET'],
+            token,
+            session['tumblr_token'],
+        )
 
         try:
             authorized_tokens = tumblr.get_authorized_tokens(verifier)
@@ -52,19 +61,25 @@ class Tumblr(Site):
         session['tumblr_token'] = authorized_tokens['oauth_token']
         session['tumblr_secret'] = authorized_tokens['oauth_token_secret']
 
-        tumblr = tumblpy.Tumblpy(current_app.config['TUMBLR_KEY'], current_app.config['TUMBLR_SECRET'],
-                                 session['tumblr_token'], session['tumblr_secret'])
+        tumblr = tumblpy.Tumblpy(
+            current_app.config['TUMBLR_KEY'],
+            current_app.config['TUMBLR_SECRET'],
+            session['tumblr_token'],
+            session['tumblr_secret'],
+        )
 
         try:
-            return {
-                'user': tumblr.post('user/info'),
-            }
+            return {'user': tumblr.post('user/info')}
         except tumblpy.TumblpyAuthError as ex:
             raise SiteError(ex.msg)
 
     def add_account(self, data: dict) -> List[Account]:
-        t = tumblpy.Tumblpy(current_app.config['TUMBLR_KEY'], current_app.config['TUMBLR_SECRET'],
-                            session['tumblr_token'], session['tumblr_secret'])
+        t = tumblpy.Tumblpy(
+            current_app.config['TUMBLR_KEY'],
+            current_app.config['TUMBLR_SECRET'],
+            session['tumblr_token'],
+            session['tumblr_secret'],
+        )
 
         resp = t.post('user/info')
 
@@ -81,10 +96,12 @@ class Tumblr(Site):
                 self.SITE,
                 session['id'],
                 tumblr_blog_name(url),
-                json.dumps({
-                    'token': session['tumblr_token'],
-                    'secret': session['tumblr_secret'],
-                })
+                json.dumps(
+                    {
+                        'token': session['tumblr_token'],
+                        'secret': session['tumblr_secret'],
+                    }
+                ),
             )
             accounts.append(account)
             db.session.add(account)
@@ -100,21 +117,31 @@ class Tumblr(Site):
         return accounts
 
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
-        t = tumblpy.Tumblpy(current_app.config['TUMBLR_KEY'], current_app.config['TUMBLR_SECRET'],
-                            self.credentials['token'], self.credentials['secret'])
+        t = tumblpy.Tumblpy(
+            current_app.config['TUMBLR_KEY'],
+            current_app.config['TUMBLR_SECRET'],
+            self.credentials['token'],
+            self.credentials['secret'],
+        )
 
         if self.account['tumblr_title'] and self.account['tumblr_title'].val == 'yes':
-            submission.description = '## ' + submission.title + '\n\n' + submission.description
+            submission.description = (
+                '## ' + submission.title + '\n\n' + submission.description
+            )
 
         try:
-            res = t.post('post', blog_url=self.account.username, params={
-                'type': 'photo',
-                'caption': submission.description_for_site(self.SITE),
-                'data': submission.image_bytes,
-                'state': 'published',
-                'format': 'markdown',
-                'tags': self.tag_str(submission.tags),
-            })
+            res = t.post(
+                'post',
+                blog_url=self.account.username,
+                params={
+                    'type': 'photo',
+                    'caption': submission.description_for_site(self.SITE),
+                    'data': submission.image_bytes,
+                    'state': 'published',
+                    'format': 'markdown',
+                    'tags': self.tag_str(submission.tags),
+                },
+            )
         except tumblpy.TumblpyError as ex:
             raise SiteError(ex.msg)
 
@@ -135,8 +162,12 @@ class Tumblr(Site):
         return ' ,'.join(tags)
 
     def upload_group(self, group: SubmissionGroup, extra: Any = None) -> str:
-        t = tumblpy.Tumblpy(current_app.config['TUMBLR_KEY'], current_app.config['TUMBLR_SECRET'],
-                            self.credentials['token'], self.credentials['secret'])
+        t = tumblpy.Tumblpy(
+            current_app.config['TUMBLR_KEY'],
+            current_app.config['TUMBLR_SECRET'],
+            self.credentials['token'],
+            self.credentials['secret'],
+        )
 
         master = group.master
         s = master.submission

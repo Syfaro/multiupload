@@ -36,10 +36,15 @@ class SoFurry(Site):
     def add_account(self, data: dict) -> Account:
         sess = cfscrape.create_scraper()
 
-        req = sess.post('https://www.sofurry.com/user/login', data={
-            'LoginForm[sfLoginUsername]': data['username'],
-            'LoginForm[sfLoginPassword]': data['password'],
-        }, headers=HEADERS, allow_redirects=False)
+        req = sess.post(
+            'https://www.sofurry.com/user/login',
+            data={
+                'LoginForm[sfLoginUsername]': data['username'],
+                'LoginForm[sfLoginPassword]': data['password'],
+            },
+            headers=HEADERS,
+            allow_redirects=False,
+        )
         write_site_response(self.SITE.value, req)
 
         if 'sfuser' not in req.cookies:
@@ -49,10 +54,7 @@ class SoFurry(Site):
             self.SITE,
             session['id'],
             data['username'],
-            json.dumps({
-                'username': data['username'],
-                'password': data['password'],
-            })
+            json.dumps({'username': data['username'], 'password': data['password']}),
         )
 
         db.session.add(account)
@@ -63,16 +65,23 @@ class SoFurry(Site):
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         sess = cfscrape.create_scraper()
 
-        req = sess.post('https://www.sofurry.com/user/login', data={
-            'LoginForm[sfLoginUsername]': self.credentials['username'],
-            'LoginForm[sfLoginPassword]': self.credentials['password'],
-        }, headers=HEADERS, allow_redirects=False)
+        req = sess.post(
+            'https://www.sofurry.com/user/login',
+            data={
+                'LoginForm[sfLoginUsername]': self.credentials['username'],
+                'LoginForm[sfLoginPassword]': self.credentials['password'],
+            },
+            headers=HEADERS,
+            allow_redirects=False,
+        )
         write_site_response(self.SITE.value, req)
 
         if 'sfuser' not in req.cookies:
             raise BadCredentials()
 
-        req = sess.get('https://www.sofurry.com/upload/details?contentType=1', headers=HEADERS)
+        req = sess.get(
+            'https://www.sofurry.com/upload/details?contentType=1', headers=HEADERS
+        )
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
@@ -83,16 +92,19 @@ class SoFurry(Site):
         except (IndexError, ValueError):
             raise SiteError('Unable to load upload page for SoFurry')
 
-        req = sess.post('https://www.sofurry.com/upload/details?contentType=1', data={
-            'UploadForm[P_title]': submission.title,
-            'UploadForm[contentLevel]': self.map_rating(submission.rating),
-            'UploadForm[description]': submission.description_for_site(self.SITE),
-            'UploadForm[formtags]': self.tag_str(submission.tags),
-            'YII_CSRF_TOKEN': key,
-            'UploadForm[P_id]': key2,
-        }, files={
-            'UploadForm[binarycontent]': submission.get_image(),
-        }, headers=HEADERS)
+        req = sess.post(
+            'https://www.sofurry.com/upload/details?contentType=1',
+            data={
+                'UploadForm[P_title]': submission.title,
+                'UploadForm[contentLevel]': self.map_rating(submission.rating),
+                'UploadForm[description]': submission.description_for_site(self.SITE),
+                'UploadForm[formtags]': self.tag_str(submission.tags),
+                'YII_CSRF_TOKEN': key,
+                'UploadForm[P_id]': key2,
+            },
+            files={'UploadForm[binarycontent]': submission.get_image()},
+            headers=HEADERS,
+        )
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 

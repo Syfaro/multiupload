@@ -65,11 +65,11 @@ def email_verify():
 @app.route('/email/subscribe')
 @login_required
 def email_subscribe():
-    requests.post(current_app.config['MAILGUN_LIST_ENDPOINT'], auth=('api', current_app.config['MAILGUN_KEY']), data={
-        'subscribed': True,
-        'address': g.user.email,
-        'name': g.user.username,
-    })
+    requests.post(
+        current_app.config['MAILGUN_LIST_ENDPOINT'],
+        auth=('api', current_app.config['MAILGUN_KEY']),
+        data={'subscribed': True, 'address': g.user.email, 'name': g.user.username},
+    )
 
     g.user.email_subscribed = True
     db.session.commit()
@@ -81,8 +81,10 @@ def email_subscribe():
 @app.route('/email/unsubscribe')
 @login_required
 def email_unsubscribe():
-    requests.delete(current_app.config['MAILGUN_LIST_ENDPOINT'] + '/' + g.user.email,
-                    auth=('api', current_app.config['MAILGUN_KEY']))
+    requests.delete(
+        current_app.config['MAILGUN_LIST_ENDPOINT'] + '/' + g.user.email,
+        auth=('api', current_app.config['MAILGUN_KEY']),
+    )
 
     g.user.email_subscribed = False
     db.session.commit()
@@ -113,19 +115,27 @@ def change_email_post():
 
     g.user.email = email
     g.user.email_verified = 0
-    g.user.email_verifier = ''.join(SystemRandom().choice(ascii_letters) for _ in range(16))
+    g.user.email_verifier = ''.join(
+        SystemRandom().choice(ascii_letters) for _ in range(16)
+    )
 
     with open('templates/email.txt') as f:
         email_body = f.read()
 
-    requests.post(current_app.config['MAILGUN_ENDPOINT'], auth=('api', current_app.config['MAILGUN_KEY']), data={
-        'from': current_app.config['MAILGUN_ADDRESS'],
-        'to': email,
-        'subject': 'Verify your Furry Art Multiuploader email address',
-        'h:Reply-To': 'syfaro@huefox.com',
-        'text': email_body.format(username=g.user.username,
-                                  link=current_app.config['MAILGUN_VERIFY'].format(g.user.email_verifier))
-    })
+    requests.post(
+        current_app.config['MAILGUN_ENDPOINT'],
+        auth=('api', current_app.config['MAILGUN_KEY']),
+        data={
+            'from': current_app.config['MAILGUN_ADDRESS'],
+            'to': email,
+            'subject': 'Verify your Furry Art Multiuploader email address',
+            'h:Reply-To': 'syfaro@huefox.com',
+            'text': email_body.format(
+                username=g.user.username,
+                link=current_app.config['MAILGUN_VERIFY'].format(g.user.email_verifier),
+            ),
+        },
+    )
 
     flash('A link was sent to you to verify your email address.')
 
@@ -154,7 +164,10 @@ def change_username_post():
         flash('Incorrect password.')
         return redirect(url_for('user.change_username'))
 
-    if User.by_name_or_email(username) and username.casefold() != g.user.username.casefold():
+    if (
+        User.by_name_or_email(username)
+        and username.casefold() != g.user.username.casefold()
+    ):
         flash('Username is already in use.')
         return redirect(url_for('user.change_username'))
 
@@ -192,16 +205,17 @@ def change_password_post():
 
     strength, improvements = passwordmeter.test(new_password)
     if strength < 0.3:
-        flash('Weak password. You may wish to try the following suggestions.<br><ul><li>%s</ul></ul>' %
-              ('</li><li>'.join(improvements.values())))
+        flash(
+            'Weak password. You may wish to try the following suggestions.<br><ul><li>%s</ul></ul>'
+            % ('</li><li>'.join(improvements.values()))
+        )
         return redirect(url_for('user.change_password_form'))
 
     if not g.user.verify(current_password):
         flash('Current password is incorrect.')
         return redirect(url_for('user.change_password_form'))
 
-    g.user.password = bcrypt.hashpw(
-        new_password.encode('utf-8'), bcrypt.gensalt())
+    g.user.password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
 
     for account in Account.query.filter_by(user_id=g.user.id).all():
         decrypted = simplecrypt.decrypt(current_password, account.credentials)
@@ -236,20 +250,30 @@ def password_reset_post():
         flash('Email was not verified')
         return redirect(url_for('user.password_reset'))
 
-    user.email_reset_verifier = ''.join(SystemRandom().choice(ascii_letters) for _ in range(16))
+    user.email_reset_verifier = ''.join(
+        SystemRandom().choice(ascii_letters) for _ in range(16)
+    )
     db.session.commit()
 
     with open('templates/user/reset.txt') as f:
         email_body = f.read()
 
-    requests.post(current_app.config['MAILGUN_ENDPOINT'], auth=('api', current_app.config['MAILGUN_KEY']), data={
-        'from': current_app.config['MAILGUN_ADDRESS'],
-        'to': user.email,
-        'subject': 'Reset your Furry Art Multiuploader password',
-        'h:Reply-To': 'syfaro@huefox.com',
-        'text': email_body.format(username=user.username,
-                                  link=current_app.config['MAILGUN_RESET'].format(user.email_reset_verifier))
-    })
+    requests.post(
+        current_app.config['MAILGUN_ENDPOINT'],
+        auth=('api', current_app.config['MAILGUN_KEY']),
+        data={
+            'from': current_app.config['MAILGUN_ADDRESS'],
+            'to': user.email,
+            'subject': 'Reset your Furry Art Multiuploader password',
+            'h:Reply-To': 'syfaro@huefox.com',
+            'text': email_body.format(
+                username=user.username,
+                link=current_app.config['MAILGUN_RESET'].format(
+                    user.email_reset_verifier
+                ),
+            ),
+        },
+    )
 
     flash('An email was sent to reset your password!')
     return redirect(url_for('user.password_reset'))
@@ -334,57 +358,73 @@ def settings():
         if site == Sites.SoFurry:
             remap = account['remap_sofurry']
 
-            sofurry.append({
-                'id': account.id,
-                'username': account.username,
-                'enabled': remap and remap.val == 'yes',
-            })
+            sofurry.append(
+                {
+                    'id': account.id,
+                    'username': account.username,
+                    'enabled': remap and remap.val == 'yes',
+                }
+            )
         elif site == Sites.FurAffinity:
             resolution = account['resolution_furaffinity']
 
-            furaffinity.append({
-                'id': account.id,
-                'username': account.username,
-                'enabled': not resolution or resolution.val == 'yes',
-            })
+            furaffinity.append(
+                {
+                    'id': account.id,
+                    'username': account.username,
+                    'enabled': not resolution or resolution.val == 'yes',
+                }
+            )
         elif site == Sites.Tumblr:
             header = account['tumblr_title']
 
-            tumblr.append({
-                'id': account.id,
-                'username': account.username,
-                'enabled': header and header.val == 'yes',
-            })
+            tumblr.append(
+                {
+                    'id': account.id,
+                    'username': account.username,
+                    'enabled': header and header.val == 'yes',
+                }
+            )
         elif site == Sites.Twitter:
             hashtag = account['nsfw_hashtag']
 
-            twitter_hashtag.append({
-                'id': account.id,
-                'username': account.username,
-                'enabled': hashtag and hashtag.val == 'yes',
-            })
+            twitter_hashtag.append(
+                {
+                    'id': account.id,
+                    'username': account.username,
+                    'enabled': hashtag and hashtag.val == 'yes',
+                }
+            )
 
             noimage = account['twitter_noimage']
 
-            twitter_noimg.append({
-                'id': account.id,
-                'username': account.username,
-                'enabled': noimage and noimage.val == 'yes',
-            })
+            twitter_noimg.append(
+                {
+                    'id': account.id,
+                    'username': account.username,
+                    'enabled': noimage and noimage.val == 'yes',
+                }
+            )
 
-    return render_template('user/settings.html', sites={
-        'sofurry': sofurry,
-        'furaffinity': furaffinity,
-        'tumblr': tumblr,
-        'twitter_hashtag': twitter_hashtag,
-        'twitter_noimage': twitter_noimg,
-    }, themes=get_themes())
+    return render_template(
+        'user/settings.html',
+        sites={
+            'sofurry': sofurry,
+            'furaffinity': furaffinity,
+            'tumblr': tumblr,
+            'twitter_hashtag': twitter_hashtag,
+            'twitter_noimage': twitter_noimg,
+        },
+        themes=get_themes(),
+    )
 
 
 @app.route('/sofurry/remap', methods=['POST'])
 @login_required
 def settings_sofurry_remap_post():
-    sofurry_accounts = [account for account in g.user.accounts if account.site == Sites.SoFurry]
+    sofurry_accounts = [
+        account for account in g.user.accounts if account.site == Sites.SoFurry
+    ]
 
     for account in sofurry_accounts:
         remap = account['remap_sofurry']
@@ -406,14 +446,15 @@ def settings_sofurry_remap_post():
 @app.route('/furaffinity/resolution', methods=['POST'])
 @login_required
 def settings_furaffinity_resolution_post():
-    furaffinity_accounts = [account for account in g.user.accounts if account.site == Sites.FurAffinity]
+    furaffinity_accounts = [
+        account for account in g.user.accounts if account.site == Sites.FurAffinity
+    ]
 
     for account in furaffinity_accounts:
         resolution = account['resolution_furaffinity']
 
         if not resolution:
-            resolution = AccountConfig(
-                account.id, 'resolution_furaffinity', 'yes')
+            resolution = AccountConfig(account.id, 'resolution_furaffinity', 'yes')
             db.session.add(resolution)
 
         if request.form.get('account[{id}]'.format(id=account.id)) == 'on':
@@ -429,7 +470,9 @@ def settings_furaffinity_resolution_post():
 @app.route('/tumblr/title', methods=['POST'])
 @login_required
 def settings_tumblr_title_post():
-    tumblr_accounts = [account for account in g.user.accounts if account.site == Sites.Tumblr]
+    tumblr_accounts = [
+        account for account in g.user.accounts if account.site == Sites.Tumblr
+    ]
 
     for account in tumblr_accounts:
         header = account['tumblr_title']
@@ -451,7 +494,9 @@ def settings_tumblr_title_post():
 @app.route('/twitter/nsfw', methods=['POST'])
 @login_required
 def settings_twitter_nsfw():
-    twitter_accounts = [account for account in g.user.accounts if account.site == Sites.Twitter]
+    twitter_accounts = [
+        account for account in g.user.accounts if account.site == Sites.Twitter
+    ]
 
     for account in twitter_accounts:
         hashtag = account['nsfw_hashtag']
@@ -473,7 +518,9 @@ def settings_twitter_nsfw():
 @app.route('/twitter/noimage', methods=['POST'])
 @login_required
 def settings_twitter_noimage():
-    twitter_accounts = [account for account in g.user.accounts if account.site == Sites.Twitter]
+    twitter_accounts = [
+        account for account in g.user.accounts if account.site == Sites.Twitter
+    ]
 
     for account in twitter_accounts:
         hashtag = account['twitter_noimage']

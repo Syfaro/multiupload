@@ -18,6 +18,7 @@ from utils import write_site_response
 
 class Inkbunny(Site):
     """Inkbunny."""
+
     SITE = Sites.Inkbunny
 
     def __init__(self, credentials=None, account=None):
@@ -34,10 +35,11 @@ class Inkbunny(Site):
     def add_account(self, data: dict) -> Account:
         sess = cfscrape.create_scraper()
 
-        req = sess.post('https://inkbunny.net/api_login.php', params={
-            'username': data['username'],
-            'password': data['password'],
-        }, headers=HEADERS)
+        req = sess.post(
+            'https://inkbunny.net/api_login.php',
+            params={'username': data['username'], 'password': data['password']},
+            headers=HEADERS,
+        )
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
@@ -50,10 +52,7 @@ class Inkbunny(Site):
             self.SITE,
             session['id'],
             data['username'],
-            json.dumps({
-                'username': data['username'],
-                'password': data['password'],
-            })
+            json.dumps({'username': data['username'], 'password': data['password']}),
         )
 
         db.session.add(account)
@@ -64,7 +63,9 @@ class Inkbunny(Site):
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         sess = cfscrape.create_scraper()
 
-        req = sess.post('https://inkbunny.net/api_login.php', data=self.credentials, headers=HEADERS)
+        req = sess.post(
+            'https://inkbunny.net/api_login.php', data=self.credentials, headers=HEADERS
+        )
         req.raise_for_status()
 
         j = req.json()
@@ -72,11 +73,12 @@ class Inkbunny(Site):
         if 'error_message' in j:
             raise SiteError(j['error_message'])
 
-        req = sess.post('https://inkbunny.net/api_upload.php', data={
-            'sid': j['sid'],
-        }, files={
-            'uploadedfile[]': submission.get_image(),
-        }, headers=HEADERS)
+        req = sess.post(
+            'https://inkbunny.net/api_upload.php',
+            data={'sid': j['sid']},
+            files={'uploadedfile[]': submission.get_image()},
+            headers=HEADERS,
+        )
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
@@ -99,7 +101,9 @@ class Inkbunny(Site):
         elif submission.rating == Rating.explicit:
             data['tag[4]'] = 'yes'
 
-        req = sess.post('https://inkbunny.net/api_editsubmission.php', data=data, headers=HEADERS)
+        req = sess.post(
+            'https://inkbunny.net/api_editsubmission.php', data=data, headers=HEADERS
+        )
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
@@ -108,12 +112,16 @@ class Inkbunny(Site):
         if 'error_message' in j:
             raise SiteError(j['error_message'])
 
-        return 'https://inkbunny.net/submissionview.php?id={id}'.format(id=j['submission_id'])
+        return 'https://inkbunny.net/submissionview.php?id={id}'.format(
+            id=j['submission_id']
+        )
 
     def upload_group(self, group: SubmissionGroup, extra: Any = None):
         sess = cfscrape.create_scraper()
 
-        req = sess.post('https://inkbunny.net/api_login.php', data=self.credentials, headers=HEADERS)
+        req = sess.post(
+            'https://inkbunny.net/api_login.php', data=self.credentials, headers=HEADERS
+        )
         req.raise_for_status()
 
         j = req.json()
@@ -125,12 +133,20 @@ class Inkbunny(Site):
         s = master.submission
         submissions = group.submissions
 
-        images = [('uploadedfile[]', (image['original_filename'], image['bytes'], image['mimetype'])) for image in
-                  self.collect_images(submissions)]
+        images = [
+            (
+                'uploadedfile[]',
+                (image['original_filename'], image['bytes'], image['mimetype']),
+            )
+            for image in self.collect_images(submissions)
+        ]
 
-        req = sess.post('https://inkbunny.net/api_upload.php', data={
-            'sid': j['sid'],
-        }, files=images, headers=HEADERS)
+        req = sess.post(
+            'https://inkbunny.net/api_upload.php',
+            data={'sid': j['sid']},
+            files=images,
+            headers=HEADERS,
+        )
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
@@ -153,7 +169,9 @@ class Inkbunny(Site):
         elif master.rating == Rating.explicit:
             data['tag[4]'] = 'yes'
 
-        req = sess.post('https://inkbunny.net/api_editsubmission.php', data=data, headers=HEADERS)
+        req = sess.post(
+            'https://inkbunny.net/api_editsubmission.php', data=data, headers=HEADERS
+        )
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
@@ -162,7 +180,9 @@ class Inkbunny(Site):
         if 'error_message' in j:
             raise SiteError(j['error_message'])
 
-        return 'https://inkbunny.net/submissionview.php?id={id}'.format(id=j['submission_id'])
+        return 'https://inkbunny.net/submissionview.php?id={id}'.format(
+            id=j['submission_id']
+        )
 
     @staticmethod
     def supports_group():

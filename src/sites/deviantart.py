@@ -41,40 +41,51 @@ class DeviantArtAPI(object):
         self.scope = scope
 
     def auth_url(self, state=''):
-        return AUTH_ENDPOINT + '?' + urlencode({
-            'response_type': 'code',
-            'client_id': self.client_id,
-            'redirect_uri': self.redirect,
-            'scope': self.scope,
-            'state': state,
-        })
+        return (
+            AUTH_ENDPOINT
+            + '?'
+            + urlencode(
+                {
+                    'response_type': 'code',
+                    'client_id': self.client_id,
+                    'redirect_uri': self.redirect,
+                    'scope': self.scope,
+                    'state': state,
+                }
+            )
+        )
 
     def access_token(self, code):
-        return requests.post(TOKEN_ENDPOINT, data={
-            'client_id': self.client_id,
-            'client_secret': self.client_secret,
-            'grant_type': 'authorization_code',
-            'code': code,
-            'redirect_uri': self.redirect,
-        }).json()
+        return requests.post(
+            TOKEN_ENDPOINT,
+            data={
+                'client_id': self.client_id,
+                'client_secret': self.client_secret,
+                'grant_type': 'authorization_code',
+                'code': code,
+                'redirect_uri': self.redirect,
+            },
+        ).json()
 
     def refresh_token(self, refresh):
-        return requests.post(TOKEN_ENDPOINT, data={
-            'client_id': self.client_id,
-            'client_secret': self.client_secret,
-            'grant_type': 'refresh_token',
-            'refresh_token': refresh,
-        }).json()
+        return requests.post(
+            TOKEN_ENDPOINT,
+            data={
+                'client_id': self.client_id,
+                'client_secret': self.client_secret,
+                'grant_type': 'refresh_token',
+                'refresh_token': refresh,
+            },
+        ).json()
 
     @staticmethod
     def validate_token(token):
-        return requests.post(PLACEBO_CALL, data={
-            'access_token': token,
-        }).json()
+        return requests.post(PLACEBO_CALL, data={'access_token': token}).json()
 
 
 class DeviantArt(Site):
     """DeviantArt."""
+
     SITE = Sites.DeviantArt
 
     def pre_add_account(self) -> Response:
@@ -90,9 +101,11 @@ class DeviantArt(Site):
         if r['status'] == 'success':
             session['da_refresh'] = r['refresh_token']
 
-            user = requests.post('https://www.deviantart.com/api/v1/oauth2/user/whoami', headers=HEADERS, data={
-                'access_token': r['access_token']
-            }).json()
+            user = requests.post(
+                'https://www.deviantart.com/api/v1/oauth2/user/whoami',
+                headers=HEADERS,
+                data={'access_token': r['access_token']},
+            ).json()
 
             return {'user': user['username']}
 
@@ -103,18 +116,17 @@ class DeviantArt(Site):
 
         r = da.refresh_token(session['da_refresh'])
 
-        user = requests.post('https://www.deviantart.com/api/v1/oauth2/user/whoami', headers=HEADERS, data={
-            'access_token': r['access_token'],
-        }).json()
+        user = requests.post(
+            'https://www.deviantart.com/api/v1/oauth2/user/whoami',
+            headers=HEADERS,
+            data={'access_token': r['access_token']},
+        ).json()
 
         if Account.lookup_username(self.SITE, g.user.id, user['username']):
             raise AccountExists()
 
         account = Account(
-            self.SITE,
-            session['id'],
-            user['username'],
-            r['refresh_token']
+            self.SITE, session['id'], user['username'], r['refresh_token']
         )
 
         db.session.add(account)
@@ -147,14 +159,17 @@ class DeviantArt(Site):
         if r['status'] != 'success':
             raise BadCredentials()
 
-        sub = requests.post('https://www.deviantart.com/api/v1/oauth2/stash/submit', headers=HEADERS, data={
-            'access_token': r['access_token'],
-            'title': submission.title,
-            'artist_comments': submission.description_for_site(self.SITE),
-            'tags': self.tag_str(submission.tags),
-        }, files={
-            'image': submission.get_image(),
-        }).json()
+        sub = requests.post(
+            'https://www.deviantart.com/api/v1/oauth2/stash/submit',
+            headers=HEADERS,
+            data={
+                'access_token': r['access_token'],
+                'title': submission.title,
+                'artist_comments': submission.description_for_site(self.SITE),
+                'tags': self.tag_str(submission.tags),
+            },
+            files={'image': submission.get_image()},
+        ).json()
 
         if sub['status'] != 'success':
             raise DeviantArt._build_exception(sub)
@@ -201,7 +216,7 @@ class DeviantArt(Site):
         pub = requests.post(
             'https://www.deviantart.com/api/v1/oauth2/stash/publish',
             headers=HEADERS,
-            data=data
+            data=data,
         ).json()
 
         if pub['status'] != 'success':
@@ -223,10 +238,7 @@ class DeviantArt(Site):
         all_folders = []
 
         while True:
-            data = {
-                'access_token': r['access_token'],
-                'limit': 50,
-            }
+            data = {'access_token': r['access_token'], 'limit': 50}
 
             if all_folders:
                 data['next_offset'] = all_folders[-1].get('folderid')
@@ -262,8 +274,12 @@ class DeviantArt(Site):
 
     @staticmethod
     def get_da():
-        return DeviantArtAPI(current_app.config['DEVIANTART_KEY'], current_app.config['DEVIANTART_SECRET'],
-                             current_app.config['DEVIANTART_CALLBACK'], current_app.config['DEVIANTART_SCOPES'])
+        return DeviantArtAPI(
+            current_app.config['DEVIANTART_KEY'],
+            current_app.config['DEVIANTART_SECRET'],
+            current_app.config['DEVIANTART_CALLBACK'],
+            current_app.config['DEVIANTART_SCOPES'],
+        )
 
     @staticmethod
     def supports_folder():

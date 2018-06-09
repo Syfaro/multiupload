@@ -18,8 +18,12 @@ depends_on = None
 def upgrade():
     with op.batch_alter_table('user', schema=None) as batch_op:
         batch_op.add_column(sa.Column('email_verified', sa.Boolean(), nullable=True))
-        batch_op.add_column(sa.Column('email_verifier', sa.String(length=16), nullable=True))
-        batch_op.add_column(sa.Column('email_subscribed', sa.Boolean(), nullable=False, default=False))
+        batch_op.add_column(
+            sa.Column('email_verifier', sa.String(length=16), nullable=True)
+        )
+        batch_op.add_column(
+            sa.Column('email_subscribed', sa.Boolean(), nullable=False, default=False)
+        )
         batch_op.create_unique_constraint(None, ['email_verifier'])
 
 

@@ -19,7 +19,7 @@ KNOWN_SITES = [
     SoFurry,
     Tumblr,
     Twitter,
-    Weasyl
+    Weasyl,
 ]
 
 
@@ -33,6 +33,6 @@ def known_list() -> List[Tuple[int, str]]:
     sites = []
 
     for site in KNOWN_SITES:
-        sites.append((site.SITE.value, site.SITE.name, ))
+        sites.append((site.SITE.value, site.SITE.name))
 
     return sites

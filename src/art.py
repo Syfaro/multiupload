@@ -25,7 +25,9 @@ from utils import random_string
 app = Flask(__name__)
 
 app.config.from_object('config')
-app.config['SENTRY_RELEASE'] = fetch_git_sha(os.path.join(os.path.dirname(__file__), '..'))
+app.config['SENTRY_RELEASE'] = fetch_git_sha(
+    os.path.join(os.path.dirname(__file__), '..')
+)
 
 app.logger.propagate = True
 
@@ -67,17 +69,19 @@ def record_stats(resp):
 
     if 'SENTRY_REPORT' in app.config:
         # sentry error reporter requires inline styles
-        resp.headers['Content-Security-Policy'] = "default-src 'none';" \
-                                                "script-src 'self' 'unsafe-inline' https: 'nonce-{1}' 'strict-dynamic';" \
-                                                "object-src 'none';" \
-                                                "style-src 'self' 'unsafe-inline' fonts.googleapis.com maxcdn.bootstrapcdn.com;" \
-                                                "img-src 'self' blob: data:;" \
-                                                "media-src 'none';" \
-                                                "frame-src 'self';" \
-                                                "font-src 'self' fonts.gstatic.com;" \
-                                                "connect-src 'self' sentry.io;" \
-                                                "base-uri 'none';" \
-                                                "report-uri {0}".format(app.config['SENTRY_REPORT'], nonce())
+        resp.headers['Content-Security-Policy'] = (
+            "default-src 'none';"
+            "script-src 'self' 'unsafe-inline' https: 'nonce-{1}' 'strict-dynamic';"
+            "object-src 'none';"
+            "style-src 'self' 'unsafe-inline' fonts.googleapis.com maxcdn.bootstrapcdn.com;"
+            "img-src 'self' blob: data:;"
+            "media-src 'none';"
+            "frame-src 'self';"
+            "font-src 'self' fonts.gstatic.com;"
+            "connect-src 'self' sentry.io;"
+            "base-uri 'none';"
+            "report-uri {0}".format(app.config['SENTRY_REPORT'], nonce())
+        )
 
     influx = g.get('influx', None)
     start_time = g.get('start', None)
@@ -89,16 +93,15 @@ def record_stats(resp):
         return resp
 
     try:
-        influx.write_points([{
-            'measurement': 'request',
-            'tags': {
-                'status_code': resp.status_code,
-                'path': request.path,
-            },
-            'fields': {
-                'duration': time.time() - start_time,
-            },
-        }])
+        influx.write_points(
+            [
+                {
+                    'measurement': 'request',
+                    'tags': {'status_code': resp.status_code, 'path': request.path},
+                    'fields': {'duration': time.time() - start_time},
+                }
+            ]
+        )
     except requests.exceptions.ConnectionError:
         pass
 
@@ -125,6 +128,7 @@ with app.app_context():
 
     from models import Site
     from sites.known import known_list
+
     for site in known_list():
         s = Site.query.get(site[0])
         if not s:

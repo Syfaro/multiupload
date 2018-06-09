@@ -28,23 +28,15 @@ def sites():
     s = []
 
     for site in known_list():
-        s.append({
-            'id': site[0],
-            'name': site[1],
-        })
+        s.append({'id': site[0], 'name': site[1]})
 
-    return jsonify({
-        'sites': s,
-    })
+    return jsonify({'sites': s})
 
 
 @app.route('/whoami')
 @login_required
 def whoami():
-    return jsonify({
-        'id': g.user.id,
-        'username': g.user.username,
-    })
+    return jsonify({'id': g.user.id, 'username': g.user.username})
 
 
 @app.route('/accounts')
@@ -52,16 +44,16 @@ def whoami():
 def accounts():
     accts: List[dict] = []
     for account in Account.all():
-        accts.append({
-            'id': account.id,
-            'site_id': account.site_id,
-            'site_name': account.site.name,
-            'username': account.username,
-        })
+        accts.append(
+            {
+                'id': account.id,
+                'site_id': account.site_id,
+                'site_name': account.site.name,
+                'username': account.username,
+            }
+        )
 
-    return jsonify({
-        'accounts': accts,
-    })
+    return jsonify({'accounts': accts})
 
 
 @app.route('/description', methods=['POST'])
@@ -73,9 +65,7 @@ def description():
     desc = data.get('description')
 
     if not accts or not desc:
-        return jsonify({
-            'error': 'missing data'
-        })
+        return jsonify({'error': 'missing data'})
 
     descriptions = []
     done = []
@@ -83,19 +73,18 @@ def description():
     for site in accts.split(','):
         s = Sites(int(site))
 
-        if s.value in done or s == Sites.Twitter:  # each site only needs to be done once, twitter doesn't get a preview
+        if (
+            s.value in done or s == Sites.Twitter
+        ):  # each site only needs to be done once, twitter doesn't get a preview
             continue
 
-        descriptions.append({
-            'site': s.name,
-            'description': parse_description(desc, s.value),
-        })
+        descriptions.append(
+            {'site': s.name, 'description': parse_description(desc, s.value)}
+        )
 
         done.append(s.value)
 
-    return jsonify({
-        'descriptions': descriptions,
-    })
+    return jsonify({'descriptions': descriptions})
 
 
 @app.route('/preview/description', methods=['POST'])
@@ -113,19 +102,23 @@ def preview():
         except ValueError:
             continue
 
-        if not account or account.site.value in sites_done or account.site == Sites.Twitter:
+        if (
+            not account
+            or account.site.value in sites_done
+            or account.site == Sites.Twitter
+        ):
             continue
 
-        descriptions.append({
-            'site': account.site.name,
-            'description': parse_description(orig_description, account.site.value),
-        })
+        descriptions.append(
+            {
+                'site': account.site.name,
+                'description': parse_description(orig_description, account.site.value),
+            }
+        )
 
         sites_done.append(account.site.value)
 
-    return jsonify({
-        'descriptions': descriptions,
-    })
+    return jsonify({'descriptions': descriptions})
 
 
 @app.route('/deviantart/category', methods=['GET'])
@@ -140,21 +133,22 @@ def get_deviantart_category():
     try:
         account: Account = Account.find(int(account_id))
     except ValueError:
-        return jsonify({
-            'error': 'bad account'
-        })
+        return jsonify({'error': 'bad account'})
 
     da = DeviantArt.get_da()
     r = da.refresh_token(decrypt(session['password'], account.credentials))
     account.update_credentials(r['refresh_token'])
     db.session.commit()
 
-    sub = requests.get('https://www.deviantart.com/api/v1/oauth2/stash/publish/categorytree', headers=HEADERS, params={
-        'access_token': r['access_token'],
-        'catpath': path,
-    }).content
+    sub = requests.get(
+        'https://www.deviantart.com/api/v1/oauth2/stash/publish/categorytree',
+        headers=HEADERS,
+        params={'access_token': r['access_token'], 'catpath': path},
+    ).content
 
-    cache.set('deviantart-' + path, sub, timeout=60 * 60 * 24)  # keep cached for 24 hours
+    cache.set(
+        'deviantart-' + path, sub, timeout=60 * 60 * 24
+    )  # keep cached for 24 hours
 
     return Response(sub, mimetype='application/json')
 
@@ -167,13 +161,9 @@ def get_deviantart_folders():
     try:
         account: Account = Account.find(int(account_id))
     except ValueError:
-        return jsonify({
-            'error': 'bad account'
-        })
+        return jsonify({'error': 'bad account'})
 
     decrypted = simplecrypt.decrypt(session['password'], account.credentials)
     da = DeviantArt(decrypted, account)
 
-    return jsonify({
-        'folders': da.get_folders(),
-    })
+    return jsonify({'folders': da.get_folders()})

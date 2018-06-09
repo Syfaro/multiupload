@@ -34,6 +34,7 @@ SHORT_NAMES = {
 
 class Twitter(Site):
     """Twitter."""
+
     SITE = Sites.Twitter
 
     def __init__(self, credentials=None, account=None):
@@ -80,9 +81,7 @@ class Twitter(Site):
         api = tweepy.API(auth)
         me = api.me()
 
-        return {
-            'me': me,
-        }
+        return {'me': me}
 
     def add_account(self, data: dict) -> Account:
         auth = self._get_oauth_handler()
@@ -98,10 +97,9 @@ class Twitter(Site):
             self.SITE,
             session['id'],
             me.screen_name,
-            json.dumps({
-                'token': session.pop('taccess'),
-                'secret': session.pop('tsecret'),
-            })
+            json.dumps(
+                {'token': session.pop('taccess'), 'secret': session.pop('tsecret')}
+            ),
         )
 
         db.session.add(account)
@@ -132,8 +130,9 @@ class Twitter(Site):
 
             hashtags_str = self.tag_str(hashtags)
 
-            status = '{title} {hashtags}'.format(title=submission.title,
-                                                 hashtags=hashtags_str.strip())
+            status = '{title} {hashtags}'.format(
+                title=submission.title, hashtags=hashtags_str.strip()
+            )
 
         if links:
             if format == 'single' or format == '':
@@ -148,16 +147,25 @@ class Twitter(Site):
         try:
             noimage = self.account['twitter_noimage']
 
-            if submission.rating == Rating.explicit and (noimage and noimage.val == 'yes'):
+            if submission.rating == Rating.explicit and (
+                noimage and noimage.val == 'yes'
+            ):
                 tweet = api.update_status(status=status, possibly_sensitive=True)
             else:
-                tweet = api.update_with_media(filename=submission.image_filename,
-                                              file=submission.image_bytes, status=status,
-                                              possibly_sensitive=False if submission.rating == Rating.general else True)
+                tweet = api.update_with_media(
+                    filename=submission.image_filename,
+                    file=submission.image_bytes,
+                    status=status,
+                    possibly_sensitive=False
+                    if submission.rating == Rating.general
+                    else True,
+                )
         except tweepy.TweepError as ex:
             raise SiteError(ex.reason)
 
-        return 'https://twitter.com/{username}/status/{id}'.format(username=tweet.user.screen_name, id=tweet.id_str)
+        return 'https://twitter.com/{username}/status/{id}'.format(
+            username=tweet.user.screen_name, id=tweet.id_str
+        )
 
     def upload_group(self, group: SubmissionGroup, extra: Any = None):
         master: SavedSubmission = group.master
@@ -182,8 +190,9 @@ class Twitter(Site):
         if use_custom_text == 'y':
             status = custom_text.strip()
         else:
-            status = '{title} {hashtags}'.format(title=master.title,
-                                                 hashtags=self.tag_str(s.hashtags)).strip()
+            status = '{title} {hashtags}'.format(
+                title=master.title, hashtags=self.tag_str(s.hashtags)
+            ).strip()
 
         if links:
             if format == 'single' or format == '':
@@ -198,16 +207,23 @@ class Twitter(Site):
         try:
             media_ids = []
             for image in images:
-                res = api.media_upload(filename=image['original_filename'], file=image['bytes'])
+                res = api.media_upload(
+                    filename=image['original_filename'], file=image['bytes']
+                )
                 media_ids.append(res.media_id)
 
-            tweet = api.update_status(status=status, media_ids=media_ids,
-                                      possibly_sensitive=False if s.rating == Rating.general else True)
+            tweet = api.update_status(
+                status=status,
+                media_ids=media_ids,
+                possibly_sensitive=False if s.rating == Rating.general else True,
+            )
 
         except tweepy.TweepError as ex:
             raise SiteError(ex.reason)
 
-        return 'https://twitter.com/{username}/status/{id}'.format(username=tweet.user.screen_name, id=tweet.id_str)
+        return 'https://twitter.com/{username}/status/{id}'.format(
+            username=tweet.user.screen_name, id=tweet.id_str
+        )
 
     @staticmethod
     def supports_group() -> bool:

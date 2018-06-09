@@ -57,7 +57,12 @@ def add(site_id):
                 else:
                     return pre
 
-    return render_template('accounts/add_site/%d.html' % site_id, site=site, extra_data=extra_data, user=g.user)
+    return render_template(
+        'accounts/add_site/%d.html' % site_id,
+        site=site,
+        extra_data=extra_data,
+        user=g.user,
+    )
 
 
 @app.route('/add/<int:site_id>/callback', methods=['GET'])
@@ -86,7 +91,12 @@ def add_callback(site_id):
                 else:
                     return callback
 
-    return render_template('accounts/add_site/%d.html' % site_id, site=site, extra_data=extra_data, user=g.user)
+    return render_template(
+        'accounts/add_site/%d.html' % site_id,
+        site=site,
+        extra_data=extra_data,
+        user=g.user,
+    )
 
 
 @app.route('/add/<int:site_id>', methods=['POST'])
@@ -108,12 +118,16 @@ def add_post(site_id):
                 accounts = s.add_account(data)
                 if isinstance(accounts, list):
                     for account in accounts:
-                        decrypted = simplecrypt.decrypt(session['password'], account.credentials)
+                        decrypted = simplecrypt.decrypt(
+                            session['password'], account.credentials
+                        )
 
                         s = known_site(decrypted, account)
                         s.get_folders()
                 else:
-                    decrypted = simplecrypt.decrypt(session['password'], accounts.credentials)
+                    decrypted = simplecrypt.decrypt(
+                        session['password'], accounts.credentials
+                    )
                     s = known_site(decrypted, accounts)
                     s.get_folders()
 
@@ -125,15 +139,13 @@ def add_post(site_id):
         flash('Account already exists.')
         return redirect(url_for('accounts.manage'))
 
-    send_to_influx({
-        'measurement': 'account_time_add',
-        'fields': {
-            'duration': time.time() - start_time,
-        },
-        'tags': {
-            'site': site.value,
-        },
-    })
+    send_to_influx(
+        {
+            'measurement': 'account_time_add',
+            'fields': {'duration': time.time() - start_time},
+            'tags': {'site': site.value},
+        }
+    )
 
     return redirect(url_for('accounts.manage'))
 
@@ -182,7 +194,9 @@ def refresh_folders():
                 if not known_site.supports_folder():
                     continue
 
-                decrypted = simplecrypt.decrypt(session['password'], account.credentials)
+                decrypted = simplecrypt.decrypt(
+                    session['password'], account.credentials
+                )
 
                 s = known_site(decrypted, account)
                 s.get_folders(update=True)

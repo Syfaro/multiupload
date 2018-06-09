@@ -29,6 +29,10 @@ Flask-SeaSurf = "~=0.2.2"
 [dev-packages]
 pylint = "*"
 nose = "*"
+black = "*"
 
 [requires]
 python_version = "3.6"
+
+[pipenv]
+allow_prereleases = true
