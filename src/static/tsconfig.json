@@ -6,7 +6,10 @@
     "lib": ["dom", "es2017"],
     "target": "es2017",
     "strictNullChecks": true,
-    "module": "es6"
+    "module": "es6",
+    "jsx": "react",
+    "jsxFactory": "h",
+    "moduleResolution": "node"
   },
   "include": [
     "ts/**/*"
