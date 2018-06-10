@@ -7,7 +7,7 @@ import simplecrypt
 from cache import cache
 from constant import HEADERS, Sites
 from description import parse_description
-from models import Account, db
+from models import Account, SavedTemplate, db
 from simplecrypt import decrypt
 from sites.deviantart import DeviantArt
 from sites.known import known_list
@@ -160,3 +160,11 @@ def get_deviantart_folders():
     da = DeviantArt(decrypted, account)
 
     return jsonify({'folders': da.get_folders()})
+
+
+@app.route('/templates', methods=['GET'])
+@login_required
+def get_templates():
+    templates = SavedTemplate.query.filter_by(user_id=g.user.id).all()
+
+    return jsonify({'templates': list(map(lambda t: t.as_dict(), templates))})

@@ -360,3 +360,22 @@ class SubmissionGroup(db.Model):
     @classmethod
     def find(cls, group_id: int):
         return cls.query.filter_by(user_id=g.user.id).filter_by(id=group_id).first()
+
+
+class SavedTemplate(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+    content = db.Column(db.String(1024), nullable=False)
+
+    def __init__(self, user: Union[int, User], name: str, content: str):
+        if isinstance(user, User):
+            self.user_id = user.id
+        else:
+            self.user_id = user
+
+        self.name = name
+        self.content = content
+
+    def as_dict(self):
+        return {'id': self.id, 'name': self.name, 'content': self.content}

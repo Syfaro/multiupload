@@ -29,7 +29,7 @@ from werkzeug.utils import secure_filename
 
 import simplecrypt
 from constant import Sites
-from models import Account, SavedSubmission, SubmissionGroup, db
+from models import Account, SavedSubmission, SavedTemplate, SubmissionGroup, db
 from sites import BadCredentials, SiteError
 from sites.known import KNOWN_SITES, known_list
 from submission import Rating, Submission
@@ -55,8 +55,13 @@ def create_art():
 
     accounts = sorted(accounts, key=lambda a: a['account'].site.name)
 
+    templates = SavedTemplate.query.filter_by(user_id=g.user.id).all()
+
     return render_template(
-        'review/review.html', accounts=accounts, sub=SavedSubmission()
+        'review/review.html',
+        accounts=accounts,
+        sub=SavedSubmission(),
+        templates=templates,
     )
 
 

@@ -92,6 +92,8 @@
             csrf: {{ csrf_token() | tojson }},
             sentry: {{ (config.SENTRY_PUBLIC if config.SENTRY_PUBLIC else None) | tojson }},
             endpoints: {
+                description: {{ url_for('api.description') | tojson }},
+                templates: {{ url_for('api.get_templates') | tojson }},
                 review: {
                     description: {{ url_for('api.preview') | tojson }},
                 },
@@ -144,6 +146,10 @@
 
                     <li class="nav-item{{ ' active' if page == 'accounts' }}">
                         <a class="nav-link" href="{{ url_for('accounts.manage') }}">Manage Accounts</a>
+                    </li>
+
+                    <li class="nav-item{{ ' active' if page == 'template' }}">
+                        <a class="nav-link" href="{{ url_for('user.get_template') }}">Templates</a>
                     </li>
 
                     <li class="nav-item{{ ' active' if page == 'features' }}">

@@ -58,6 +58,18 @@
                         </p>
 
                         <p class="form-text">
+                            <div>
+                                <label>Description Templates</label>
+                            </div>
+
+                            {% for template in templates %}
+                                <button type="button" class="btn btn-info btn-sm mb-1 template-btn" data-id="{{ template.id }}">{{ template.name }}</button>
+                            {% else %}
+                                <a href="{{ url_for('user.get_template') }}">Add a template</a>
+                            {% endfor %}
+                        </p>
+
+                        <p class="form-text">
                             In addition to site specific user links, the other Markdown conversions are documented <a
                                 href="https://git.huefox.com/syfaro/multiupload/wiki/Supported-Markdown-Conversions"
                                 target="_blank">here</a>.
@@ -196,6 +208,7 @@
     <script src="{{ url_for('static', filename='js/upload/userlink.js') }}" nonce="{{ nonce() }}"></script>
     <script src="{{ url_for('static', filename='js/upload/preview.js') }}" nonce="{{ nonce() }}"></script>
     <script src="{{ url_for('static', filename='js/upload/folders.js') }}" nonce="{{ nonce() }}"></script>
+    <script src="{{ url_for('static', filename='js/upload/templates.js') }}" nonce="{{ nonce() }}"></script>
 
     {% if not sub.group.grouped %}
         {{ getSiteScripts() }}

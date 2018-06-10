@@ -1,3 +1,4 @@
+import re
 from random import SystemRandom
 from string import ascii_letters
 from typing import Union
@@ -16,15 +17,39 @@ from flask import (
     session,
     url_for,
 )
+from jinja2 import Markup, escape, evalcontextfilter
 from sqlalchemy import func
 
 import simplecrypt
 from cache import cache
 from constant import Sites
-from models import Account, AccountConfig, NoticeViewed, SavedSubmission, User, db
+from models import (
+    Account,
+    AccountConfig,
+    NoticeViewed,
+    SavedSubmission,
+    SavedTemplate,
+    User,
+    db,
+)
 from utils import login_required
 
 app = Blueprint('user', __name__)
+
+
+_paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
+
+
+@app.app_template_filter('nl2br')
+@evalcontextfilter
+def nl2br(eval_ctx, value):
+    result = u'\n\n'.join(
+        u'<p>%s</p>' % p.replace('\n', Markup('<br>\n'))
+        for p in _paragraph_re.split(escape(value))
+    )
+    if eval_ctx.autoescape:
+        result = Markup(result)
+    return result
 
 
 @app.route('/dismiss', methods=['POST'])
@@ -580,3 +605,53 @@ def get_themes() -> dict:
     cache.set('theme', r)
 
     return r
+
+
+@app.route('/template', methods=['GET'])
+@login_required
+def get_template():
+    templates = SavedTemplate.query.filter_by(user_id=g.user.id).all()
+
+    return render_template('user/template.html', templates=templates)
+
+
+@app.route('/template', methods=['POST'])
+@login_required
+def post_template():
+    name = request.form.get('name')
+    content = request.form.get('content')
+
+    if not name or not content:
+        flash('Missing name or content.')
+        return redirect(url_for('user.get_template'))
+
+    template = SavedTemplate(g.user, name, content)
+
+    db.session.add(template)
+    db.session.commit()
+
+    flash('Added template!')
+
+    return redirect(url_for('user.get_template'))
+
+
+@app.route('/template/remove', methods=['POST'])
+@login_required
+def post_template_remove():
+    template_id = request.form.get('id')
+
+    template = (
+        SavedTemplate.query.filter_by(user_id=g.user.id)
+        .filter_by(id=template_id)
+        .first()
+    )
+
+    if not template:
+        flash('Unknown template.')
+        return redirect(url_for('user.get_template'))
+
+    db.session.delete(template)
+    db.session.commit()
+
+    flash('Removed template!')
+    return redirect(url_for('user.get_template'))
