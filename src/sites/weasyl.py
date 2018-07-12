@@ -1,12 +1,12 @@
-from typing import Any, List, Union
+from typing import Any, List
 
 import cfscrape
 from bs4 import BeautifulSoup
 from flask import g, session
 
 from constant import HEADERS, Sites
-from models import Account, AccountData, SavedSubmission, db
-from sites import AccountExists, BadCredentials, Site, SiteError
+from models import Account, AccountData, db
+from sites import AccountExists, BadCredentials, Site, SiteError, SomeSubmission
 from submission import Rating, Submission
 from utils import write_site_response
 
@@ -106,16 +106,8 @@ class Weasyl(Site):
 
         return req.url
 
-    def validate_submission(self, submission: Submission) -> Union[None, List[str]]:
+    def validate_submission(self, submission: SomeSubmission) -> List[str]:
         errors: List[str] = []
-
-        if isinstance(submission, Submission) and not submission.image_bytes:
-            errors.append('Missing image')
-        elif isinstance(submission, SavedSubmission) and not submission.image_filename:
-            errors.append('Missing image')
-
-        if not submission.image_bytes:
-            errors.append('Missing image.')
 
         if len(submission.tags) < 2:
             errors.append('Weasyl requires at least 2 tags')

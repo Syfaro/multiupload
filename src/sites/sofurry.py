@@ -1,5 +1,5 @@
 import json
-from typing import Any, List, Union
+from typing import Any, List
 
 import cfscrape
 from bs4 import BeautifulSoup
@@ -123,13 +123,10 @@ class SoFurry(Site):
     def tag_str(self, tags: List[str]) -> str:
         return ', '.join(tags)
 
-    def validate_submission(self, submission: Submission) -> Union[None, List[str]]:
+    def validate_submission(self, submission: Submission) -> List[str]:
         errors: List[str] = []
-
-        if not submission.image_bytes:
-            errors.append('Missing image.')
 
         if len(submission.tags) < 2:
             errors.append('SoFurry requires at least 2 tags')
 
-        return None
+        return errors

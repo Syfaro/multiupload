@@ -9,6 +9,9 @@ from models import Account, SavedSubmission, SubmissionGroup
 from submission import Rating, Submission
 
 
+SomeSubmission = Union[Submission, SavedSubmission]
+
+
 class BadCredentials(Exception):
     pass
 
@@ -47,11 +50,8 @@ class Site(object):
     def map_rating(self, rating: Rating) -> Union[None, str]:
         return None
 
-    def validate_submission(self, submission: Submission) -> Union[None, List[str]]:
-        if not submission.image_bytes:
-            return ['Missing image.']
-
-        return None
+    def validate_submission(self, submission: SomeSubmission) -> List[str]:
+        return []
 
     def tag_str(self, tags: List[str]) -> str:
         return ' '.join(tags)
