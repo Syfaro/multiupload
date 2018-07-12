@@ -320,7 +320,7 @@ def password_reset_verify():
     if not user:
         return 'Unknown verifier'
 
-    return render_template('user/reset_password.html')
+    return render_template('user/reset_password.html', verifier=verifier)
 
 
 @app.route('/reset/verify', methods=['POST'])
