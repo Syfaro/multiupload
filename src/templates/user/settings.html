@@ -53,7 +53,9 @@
                     <div class="form-group">
                         <label for="theme">Theme name</label>
                         <select class="form-control" id="theme" name="theme">
-                            <option value="Default" {{ 'selected' if not g.user.theme or g.user.theme == 'Default' }}>Default</option>
+                            <option value="Default" {{ 'selected' if not g.user.theme or g.user.theme == 'Default' }}>
+                                Default
+                            </option>
 
                             <optgroup label="Other Themes">
                                 {% for theme in themes.themes %}
@@ -206,6 +208,31 @@
                         </form>
                     </div>
                 {% endif %}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 offset-md-4">
+                <h2>Debug</h2>
+
+                <div>
+                    <form method="POST" action="{{ url_for('user.settings_debug') }}">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
+                        <button class="btn btn-primary">
+                            {% if g.user.save_errors %}
+                                Disable site error logging
+                            {% else %}
+                                Enable site error logging
+                            {% endif %}
+                        </button>
+                    </form>
+
+                    <p>
+                        This allows for easier debugging of site issues when they occur. It is not enabled by default as
+                        it could log personal information without encryption.
+                    </p>
+                </div>
             </div>
         </div>
     </div>

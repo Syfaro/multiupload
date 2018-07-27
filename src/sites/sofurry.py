@@ -9,7 +9,7 @@ from constant import HEADERS, Sites
 from models import Account, db
 from sites import BadCredentials, Site, SiteError
 from submission import Rating, Submission
-from utils import write_site_response
+from utils import write_site_response, record_page, clear_recorded_pages
 
 
 class SoFurry(Site):
@@ -58,6 +58,8 @@ class SoFurry(Site):
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         sess = cfscrape.create_scraper()
 
+        clear_recorded_pages()
+
         req = sess.post(
             'https://www.sofurry.com/user/login',
             data={
@@ -67,6 +69,7 @@ class SoFurry(Site):
             headers=HEADERS,
             allow_redirects=False,
         )
+        record_page(req)
         write_site_response(self.SITE.value, req)
 
         if 'sfuser' not in req.cookies:
@@ -75,6 +78,7 @@ class SoFurry(Site):
         req = sess.get(
             'https://www.sofurry.com/upload/details?contentType=1', headers=HEADERS
         )
+        record_page(req)
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
@@ -98,6 +102,7 @@ class SoFurry(Site):
             files={'UploadForm[binarycontent]': submission.get_image()},
             headers=HEADERS,
         )
+        record_page(req)
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 

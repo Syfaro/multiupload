@@ -40,6 +40,7 @@ from utils import (
     safe_ext,
     save_multi_dict,
     write_upload_time,
+save_debug_pages,
 )
 
 app = Blueprint('upload', __name__)
@@ -136,6 +137,7 @@ def upload_and_send(
 
             upload_accounts.append(account)
         except BadCredentials:
+            save_debug_pages()
             yield 'event: badcreds\ndata: {info}\n\n'.format(
                 info=json.dumps(
                     {'site': account.site.name, 'account': account.username}
@@ -143,6 +145,7 @@ def upload_and_send(
             )
             upload_error = True
         except SiteError as ex:
+            save_debug_pages()
             yield 'event: siteerror\ndata: {msg}\n\n'.format(
                 msg=json.dumps(
                     {
@@ -154,6 +157,7 @@ def upload_and_send(
             )
             upload_error = True
         except HTTPError as ex:
+            save_debug_pages()
             yield 'event: httperror\ndata: {info}\n\n'.format(
                 info=json.dumps(
                     {
@@ -345,6 +349,7 @@ def create_art_post():
             if account.id in twitter_account_ids:
                 twitter_links.append((account.site, result['link']))
         except BadCredentials:
+            save_debug_pages()
             flash(
                 'Unable to upload on {site} to account {account}, you may need to log in again.'.format(
                     site=account.site.name, account=account.username
@@ -352,6 +357,7 @@ def create_art_post():
             )
             upload_error = True
         except SiteError as ex:
+            save_debug_pages()
             flash(
                 'Unable to upload on {site} to account {account}: {msg}'.format(
                     site=account.site.name, account=account.username, msg=ex.message
@@ -359,6 +365,7 @@ def create_art_post():
             )
             upload_error = True
         except HTTPError:
+            save_debug_pages()
             flash(
                 'Unable to upload on {site} to account {account} due to a site issue.'.format(
                     site=account.site.name, account=account.username
@@ -746,6 +753,7 @@ def perform_group_upload(group_id):
                     try:
                         link = s.upload_group(group, extra)
                     except BadCredentials:
+                        save_debug_pages()
                         yield 'event: badcreds\ndata: {0}\n\n'.format(
                             json.dumps(
                                 {'site': account.site.name, 'account': account.username}
@@ -754,6 +762,7 @@ def perform_group_upload(group_id):
                         had_error = True
                         continue
                     except SiteError as ex:
+                        save_debug_pages()
                         yield 'event: siteerror\ndata: {msg}\n\n'.format(
                             msg=json.dumps(
                                 {
@@ -766,6 +775,7 @@ def perform_group_upload(group_id):
                         had_error = True
                         continue
                     except HTTPError as ex:
+                        save_debug_pages()
                         yield 'event: httperror\ndata: {info}\n\n'.format(
                             info=json.dumps(
                                 {
@@ -813,6 +823,7 @@ def perform_group_upload(group_id):
                         try:
                             link = s.submit_artwork(sub.submission, extra)
                         except BadCredentials:
+                            save_debug_pages()
                             yield 'event: badcreds\ndata: {0}\n\n'.format(
                                 json.dumps(
                                     {
@@ -824,6 +835,7 @@ def perform_group_upload(group_id):
                             had_error = True
                             continue
                         except SiteError as ex:
+                            save_debug_pages()
                             yield 'event: siteerror\ndata: {msg}\n\n'.format(
                                 msg=json.dumps(
                                     {
@@ -836,6 +848,7 @@ def perform_group_upload(group_id):
                             had_error = True
                             continue
                         except HTTPError as ex:
+                            save_debug_pages()
                             yield 'event: httperror\ndata: {info}\n\n'.format(
                                 info=json.dumps(
                                     {

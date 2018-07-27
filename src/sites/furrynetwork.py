@@ -10,7 +10,7 @@ from constant import HEADERS, Sites
 from models import Account, AccountData, db
 from sites import BadCredentials, Site, SiteError
 from submission import Rating, Submission
-from utils import write_site_response
+from utils import write_site_response, clear_recorded_pages, record_page
 
 
 class FurryNetwork(Site):
@@ -110,6 +110,8 @@ class FurryNetwork(Site):
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         sess = cfscrape.create_scraper()
 
+        clear_recorded_pages()
+
         character_id = self.credentials['character_id']
 
         req = sess.post(
@@ -121,6 +123,7 @@ class FurryNetwork(Site):
             },
             headers=HEADERS,
         )
+        record_page(req)
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
@@ -138,6 +141,7 @@ class FurryNetwork(Site):
             data={'user_id': j['user_id']},
             headers=auth_headers,
         )
+        record_page(req)
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
@@ -173,6 +177,7 @@ class FurryNetwork(Site):
             headers=auth_headers,
             params=params,
         )
+        record_page(req)
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
@@ -184,6 +189,7 @@ class FurryNetwork(Site):
             params=params,
             data=submission.image_bytes,
         )
+        record_page(req)
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
@@ -213,6 +219,7 @@ class FurryNetwork(Site):
             ),
             headers=auth_headers,
         )
+        record_page(req)
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 

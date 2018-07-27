@@ -14,7 +14,7 @@ from constant import HEADERS, Sites
 from models import Account, AccountData, db
 from sites import AccountExists, BadCredentials, Site, SiteError
 from submission import Rating, Submission
-from utils import write_site_response
+from utils import write_site_response, record_page, save_debug_pages, clear_recorded_pages
 
 
 class FurAffinity(Site):
@@ -103,11 +103,14 @@ class FurAffinity(Site):
         height, width = submission.image_res()
         needs_resize = height > 1280 or width > 1280
 
+        clear_recorded_pages()
+
         req = sess.get(
             'https://www.furaffinity.net/submit/',
             cookies=self.credentials,
             headers=HEADERS,
         )
+        record_page(req)
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
@@ -117,6 +120,7 @@ class FurAffinity(Site):
             cookies=self.credentials,
             headers=HEADERS,
         )
+        record_page(req)
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
@@ -139,6 +143,7 @@ class FurAffinity(Site):
             cookies=self.credentials,
             headers=HEADERS,
         )
+        record_page(req)
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
@@ -150,11 +155,11 @@ class FurAffinity(Site):
             text = page.select('font')
             print(text)
             with open(
-                os.path.join(
-                    current_app.config['DEBUG_FOLDER'],
-                    '{0}.html'.format(int(time.time())),
-                ),
-                'wb',
+                    os.path.join(
+                        current_app.config['DEBUG_FOLDER'],
+                        '{0}.html'.format(int(time.time())),
+                    ),
+                    'wb',
             ) as f:
                 f.write(req.content)
             if text:
@@ -183,6 +188,7 @@ class FurAffinity(Site):
             cookies=self.credentials,
             headers=HEADERS,
         )
+        record_page(req)
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
@@ -207,6 +213,7 @@ class FurAffinity(Site):
                 cookies=self.credentials,
                 headers=HEADERS,
             )
+            record_page(req)
             write_site_response(self.SITE.value, req)
 
             try:

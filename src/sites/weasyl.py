@@ -8,7 +8,7 @@ from constant import HEADERS, Sites
 from models import Account, AccountData, db
 from sites import AccountExists, BadCredentials, Site, SiteError, SomeSubmission
 from submission import Rating, Submission
-from utils import write_site_response
+from utils import write_site_response, clear_recorded_pages, record_page
 
 AUTH_HEADER = 'X-Weasyl-API-Key'
 
@@ -64,7 +64,10 @@ class Weasyl(Site):
 
         sess = cfscrape.create_scraper()
 
+        clear_recorded_pages()
+
         req = sess.get('https://www.weasyl.com/submit/visual', headers=auth_headers)
+        record_page(req)
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
@@ -92,6 +95,7 @@ class Weasyl(Site):
             files={'submitfile': submission.get_image()},
             headers=auth_headers,
         )
+        record_page(req)
         write_site_response(self.SITE.value, req)
 
         if req.status_code == 422:

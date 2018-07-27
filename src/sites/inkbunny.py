@@ -8,7 +8,7 @@ from constant import HEADERS, Sites
 from models import Account, SubmissionGroup, db
 from sites import BadCredentials, Site, SiteError
 from submission import Rating, Submission
-from utils import write_site_response
+from utils import write_site_response, record_page, clear_recorded_pages
 
 
 class Inkbunny(Site):
@@ -58,9 +58,12 @@ class Inkbunny(Site):
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         sess = cfscrape.create_scraper()
 
+        clear_recorded_pages()
+
         req = sess.post(
             'https://inkbunny.net/api_login.php', data=self.credentials, headers=HEADERS
         )
+        record_page(req)
         req.raise_for_status()
 
         j = req.json()
@@ -74,6 +77,7 @@ class Inkbunny(Site):
             files={'uploadedfile[]': submission.get_image()},
             headers=HEADERS,
         )
+        record_page(req)
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
@@ -99,6 +103,7 @@ class Inkbunny(Site):
         req = sess.post(
             'https://inkbunny.net/api_editsubmission.php', data=data, headers=HEADERS
         )
+        record_page(req)
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
@@ -113,6 +118,8 @@ class Inkbunny(Site):
 
     def upload_group(self, group: SubmissionGroup, extra: Any = None):
         sess = cfscrape.create_scraper()
+
+        clear_recorded_pages()
 
         req = sess.post(
             'https://inkbunny.net/api_login.php', data=self.credentials, headers=HEADERS
@@ -142,6 +149,7 @@ class Inkbunny(Site):
             files=images,
             headers=HEADERS,
         )
+        record_page(req)
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
@@ -167,6 +175,7 @@ class Inkbunny(Site):
         req = sess.post(
             'https://inkbunny.net/api_editsubmission.php', data=data, headers=HEADERS
         )
+        record_page(req)
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 

@@ -141,6 +141,8 @@ class DeviantArt(Site):
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         da = self.get_da()
 
+
+
         r = da.refresh_token(self.credentials)
         self.account.update_credentials(r['refresh_token'])
         db.session.commit()

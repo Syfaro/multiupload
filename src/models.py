@@ -29,6 +29,8 @@ class User(db.Model):
     theme = db.Column(db.String(255), nullable=True)
     theme_url = db.Column(db.String(255), nullable=True)
 
+    save_errors = db.Column(db.Boolean, nullable=False, default=False)
+
     accounts = db.relationship('Account', backref='user', lazy='dynamic')
 
     def __init__(self, username: str, password: str, email: str = None):
@@ -39,6 +41,7 @@ class User(db.Model):
             SystemRandom().choice(ascii_letters) for _ in range(16)
         )
         self.password = hashpw(password.encode('utf-8'), gensalt())
+        self.save_errors = False
 
     def verify(self, password: str) -> bool:
         self_password = self.password

@@ -1,5 +1,7 @@
+import os
 import re
 import time
+import uuid
 from functools import wraps
 from random import SystemRandom
 from string import ascii_lowercase
@@ -112,7 +114,7 @@ def safe_ext(name: str) -> Union[bool, str]:
 
 
 def write_upload_time(
-    start_time, site: int = None, measurement: str = 'upload_time'
+        start_time, site: int = None, measurement: str = 'upload_time'
 ) -> None:
     duration = time.time() - start_time
 
@@ -150,3 +152,74 @@ def parse_resize(s: str) -> Union[None, Tuple[int, int]]:
         return None
 
     return height, width
+
+
+def clear_recorded_pages() -> None:
+    """
+    clear recorded pages, if there are any.
+    """
+    if hasattr(g, 'debug_pages'):
+        g.debug_pages = []
+
+
+def record_page(page: requests.Response) -> None:
+    """
+    record a page for debugging later.
+    :param page: the page to record
+    """
+    if not hasattr(g, 'debug_pages'):
+        g.debug_pages = []
+
+    g.debug_pages.append(page)
+
+
+def save_debug_pages() -> None:
+    """
+    if the user has saving page responses enabled, save them to the debug folder.
+    record the page url, status code, and content.
+
+    if there is history, also record the same data for all pages in history.
+    :param pages: the pages to save data for
+    """
+    if not g.user.save_errors:
+        return
+
+    request_uuid = str(uuid.uuid4())
+    folder = os.path.join(current_app.config['DEBUG_FOLDER'], request_uuid)
+
+    os.mkdir(folder)
+
+    pages = g.debug_pages
+
+    with open(os.path.join(folder, 'info.txt'), 'w') as f:
+        f.write('Recorded At: %d\n\n' % time.time())
+
+        f.write('User ID: %d\n' % g.user.id)
+        f.write('User Name: %s\n' % g.user.username)
+        if g.user.email:
+            f.write('User Email: %s\n' % g.user.email)
+
+    idx = 1
+    for page in pages:
+        with open(os.path.join(folder, '%02d.txt' % idx), 'w') as f:
+            f.write('URL: %s\n' % page.url)
+            f.write('Status Code: %d\n' % page.status_code)
+
+        with open(os.path.join(folder, '%02d.html' % idx), 'wb') as f:
+            f.write(page.content)
+
+        if page.history:
+            h_idx = 1
+            for history in page.history:
+                with open(os.path.join(folder, '%02d-%02d.txt' % (idx, h_idx)), 'w') as h:
+                    h.write('URL: %s\n' % history.url)
+                    h.write('Status Code: %d\n' % history.status_code)
+
+                with open(os.path.join(folder, '%02d-%02d.html' % (idx, h_idx)), 'wb') as h:
+                    h.write(history.content)
+
+                h_idx += 1
+
+        idx += 1
+
+    g.debug_pages = []

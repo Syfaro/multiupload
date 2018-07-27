@@ -445,6 +445,21 @@ def settings():
     )
 
 
+@app.route('/debug', methods=['POST'])
+@login_required
+def settings_debug():
+    if not g.user.save_errors:
+        g.user.save_errors = True
+        flash('Now logging site errors, thank you!')
+    else:
+        g.user.save_errors = False
+        flash('Disabled logging site errors')
+
+    db.session.commit()
+
+    return redirect(url_for('user.settings'))
+
+
 @app.route('/sofurry/remap', methods=['POST'])
 @login_required
 def settings_sofurry_remap_post():
