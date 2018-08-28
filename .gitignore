@@ -1,4 +1,6 @@
 __pycache__/
+.DS_Store
+*.iml
 venv/
 node_modules/
 dist/

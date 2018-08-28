@@ -29,7 +29,7 @@ Flask-SeaSurf = "~=0.2.2"
 [dev-packages]
 pylint = "*"
 nose = "*"
-black = "*"
+black = "==18.6b4"
 flake8 = "*"
 rope = "*"
 
