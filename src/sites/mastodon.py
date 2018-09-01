@@ -15,9 +15,9 @@ from submission import Rating, Submission
 class MastodonApp(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
-    url = db.Column(db.String, unique=True)
-    client_id = db.Column(db.String)
-    client_secret = db.Column(db.String)
+    url = db.Column(db.String(255), unique=True)
+    client_id = db.Column(db.String(255))
+    client_secret = db.Column(db.String(255))
 
     def __init__(self, url, client_id, client_secret):
         self.url = url.lower()
