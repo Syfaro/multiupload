@@ -4,6 +4,7 @@ from sites.deviantart import DeviantArt
 from sites.furaffinity import FurAffinity
 from sites.furrynetwork import FurryNetwork
 from sites.inkbunny import Inkbunny
+from sites.mastodon import Mastodon
 from sites.sofurry import SoFurry
 from sites.tumblr import Tumblr
 from sites.twitter import Twitter
@@ -14,6 +15,7 @@ KNOWN_SITES = [
     FurAffinity,
     FurryNetwork,
     Inkbunny,
+    Mastodon,
     SoFurry,
     Tumblr,
     Twitter,

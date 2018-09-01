@@ -25,6 +25,7 @@ Pillow = "~=5.2.0"
 PyMySQL = "~=0.7.11"
 Flask-Migrate = "~=2.1.1"
 Flask-SeaSurf = "~=0.2.2"
+"mastodon.py" = "*"
 
 [dev-packages]
 pylint = "*"
