@@ -1,11 +1,11 @@
 import json
-
-from mastodon import Mastodon as MastodonAPI
-from flask import current_app, redirect, request, session
 from urllib.parse import urlparse
 
+from flask import current_app, flash, redirect, request, session, url_for
+from mastodon import Mastodon as MastodonAPI
+
 from constant import Sites
-from models import db, Account
+from models import Account, db
 from sites import Site
 
 
@@ -35,7 +35,10 @@ class Mastodon(Site):
             self.credentials = json.loads(credentials)
 
     def pre_add_account(self):
-        url = 'https://foxesare.sexy'
+        url = request.args.get('domain')
+        if not url:
+            flash('Missing domain name')
+            return redirect(url_for('accounts.manage'))
 
         app = MastodonApp.get_for_url(url)
         if not app:
@@ -57,14 +60,19 @@ class Mastodon(Site):
             api_base_url=url,
         )
 
+        session['MASTODON_URL'] = url
+
         return redirect(api.auth_request_url(
             redirect_uris=current_app.config['MASTODON_CALLBACK'],
             scopes=current_app.config['MASTODON_SCOPES'],
         ))
 
     def add_account_callback(self) -> dict:
-        url = 'https://foxesare.sexy'
+        url = session.pop('MASTODON_URL', None)
         app = MastodonApp.get_for_url(url)
+        if not app:
+            flash('Server issue, please try again')
+            return redirect(url_for('accounts.manage'))
 
         verifier_code = request.args.get('code')
 
