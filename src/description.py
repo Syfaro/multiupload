@@ -1,6 +1,11 @@
 import re
 
 
+def get_mastodon_link(username) -> str:
+    handle, domain = username.rsplit('@', 1)
+    return 'https://{domain}/users/{handle}'.format(domain=domain, handle=handle.strip('@'))
+
+
 def parse_description(description, uploading_to) -> str:
     """Attempt to parse a description into a format valid for each site."""
     exp = r'<\|(\S+?),(\d+?),(\d)\|>'
@@ -21,6 +26,8 @@ def parse_description(description, uploading_to) -> str:
             link_type = int(match.group(3))
         except ValueError:
             return False
+
+        masto_link = get_mastodon_link(username)
 
         new_text = ''
 
@@ -86,6 +93,8 @@ def parse_description(description, uploading_to) -> str:
                     )
                 elif linking_to == 100:
                     new_text = '[url=https://twitter.com/{0}]{0}[/url]'.format(username)
+                elif linking_to == 101:
+                    new_text = '[url={0}]{1}[/url]'.format(masto_link, username)
                 elif linking_to == 7:
                     new_text = '[url=https://{0}.tumblr.com/]{0}[/url]'.format(username)
                 elif linking_to == 8:
@@ -105,6 +114,8 @@ def parse_description(description, uploading_to) -> str:
                     new_text = '<sf:{0}>'.format(username)
                 elif linking_to == 100:
                     new_text = '[{0}](https://twitter.com/{0})'.format(username)
+                elif linking_to == 101:
+                    new_text = '[{0}]({1})'.format(username, masto_link)
                 elif linking_to == 7:
                     new_text = '[{0}](https://{1}.tumblr.com/)'.format(
                         username, username.lower()
@@ -131,6 +142,8 @@ def parse_description(description, uploading_to) -> str:
                     )
                 elif linking_to == 100:
                     new_text = '[{0}](https://twitter.com/{0})'.format(username)
+                elif linking_to == 101:
+                    new_text = '[{0}]({1})'.format(username, masto_link)
                 elif linking_to == 7:
                     new_text = '[{0}](https://{0}.tumblr.com/)'.format(username)
                 elif linking_to == 8:
@@ -150,6 +163,8 @@ def parse_description(description, uploading_to) -> str:
                     new_text = '[sf]%s[/sf]' % username
                 elif linking_to == 100:
                     new_text = '[url=https://twitter.com/{0}]{0}[/url]'.format(username)
+                elif linking_to == 101:
+                    new_text = '[url={0}]{1}[/url]'.format(masto_link, username)
                 elif linking_to == 7:
                     new_text = '[url=https://{0}.tumblr.com/]{0}[/url]'.format(username)
                 elif linking_to == 8:
@@ -169,6 +184,8 @@ def parse_description(description, uploading_to) -> str:
                     new_text = 'ib!%s' % username
                 elif linking_to == 100:
                     new_text = '[url=https://twitter.com/{0}]{0}[/url]'.format(username)
+                elif linking_to == 101:
+                    new_text = '[url={0}]{1}[/url]'.format(masto_link, username)
                 elif linking_to == 7:
                     new_text = '[url=https://{0}.tumblr.com/]{0}[/url]'.format(username)
                 elif linking_to == 8:

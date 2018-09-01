@@ -67,7 +67,7 @@ def description():
         s = Sites(int(site))
 
         if (
-            s.value in done or s == Sites.Twitter
+            s.value in done or s == Sites.Twitter or s == Sites.Mastodon
         ):  # each site only needs to be done once, twitter doesn't get a preview
             continue
 
@@ -99,6 +99,7 @@ def preview():
             not account
             or account.site.value in sites_done
             or account.site == Sites.Twitter
+            or account.site == Sites.Mastodon
         ):
             continue
 

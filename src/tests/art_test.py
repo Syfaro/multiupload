@@ -1,6 +1,13 @@
 import unittest
 
-from description import parse_description
+from description import get_mastodon_link, parse_description
+
+
+class TestMastodonLink(unittest.TestCase):
+    def test_extraction(self):
+        res = get_mastodon_link('@Syfaro@foxesare.sexy')
+
+        self.assertEqual(res, 'https://foxesare.sexy/users/Syfaro')
 
 
 class TestDescriptionLinks(unittest.TestCase):

@@ -164,9 +164,9 @@ class Mastodon(Site):
         if submission.rating == Rating.explicit and (
             noimage and noimage.val == 'yes'
         ):
-            status = api.status_post(status=status, sensitive=is_sensitive, visibility='private')
+            status = api.status_post(status=status, sensitive=is_sensitive, visibility='public')
         else:
             media = api.media_post(submission.image_bytes, mime_type=submission.image_mimetype)
-            status = api.status_post(status=status, sensitive=is_sensitive, visibility='private', media_ids=media)
+            status = api.status_post(status=status, sensitive=is_sensitive, visibility='public', media_ids=media)
 
         return status['url']
