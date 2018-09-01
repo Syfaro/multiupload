@@ -12,7 +12,7 @@ const updateTwitterLinks = () => {
     let hasTwitterSelected = false;
 
     for (let i = 0; i < sites.length; i++) {
-        if (sites[i].dataset.site === '100' && sites[i].checked) {
+        if ((sites[i].dataset.site === '100' || sites[i].dataset.site === '101') && sites[i].checked) {
             hasTwitterSelected = true;
             break;
         }
@@ -33,7 +33,7 @@ const updateTwitterLinks = () => {
     }
 
     for (let i = 0; i < sites.length; i++) {
-        if (!sites[i].checked || sites[i].dataset.site === '100') {
+        if (!sites[i].checked || sites[i].dataset.site === '100' || sites[i].dataset.site === '101') {
             continue;
         }
 

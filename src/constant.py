@@ -15,5 +15,5 @@ class Sites(Enum):
     SoFurry = 5
     Tumblr = 7
     DeviantArt = 8
-    Mastodon = 9
     Twitter = 100
+    Mastodon = 101

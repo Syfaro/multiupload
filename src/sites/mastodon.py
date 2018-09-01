@@ -1,4 +1,5 @@
 import json
+from typing import Any
 from urllib.parse import urlparse
 
 from flask import current_app, flash, redirect, request, session, url_for
@@ -7,6 +8,8 @@ from mastodon import Mastodon as MastodonAPI
 from constant import Sites
 from models import Account, db
 from sites import Site
+from sites.twitter import SHORT_NAMES
+from submission import Rating, Submission
 
 
 class MastodonApp(db.Model):
@@ -68,7 +71,7 @@ class Mastodon(Site):
         ))
 
     def add_account_callback(self) -> dict:
-        url = session.pop('MASTODON_URL', None)
+        url = session.get('MASTODON_URL')
         app = MastodonApp.get_for_url(url)
         if not app:
             flash('Server issue, please try again')
@@ -101,11 +104,14 @@ class Mastodon(Site):
         }
 
     def add_account(self, data: dict) -> Account:
+        url = session.pop('MASTODON_URL')
+
         username = request.form.get('username')
         access_token = request.form.get('access_token')
 
         account = Account(self.SITE, session['id'], username, json.dumps({
             'access_token': access_token,
+            'url': url,
         }))
 
         db.session.add(account)
@@ -113,6 +119,54 @@ class Mastodon(Site):
 
         return account
 
-    @staticmethod
-    def supports_group() -> bool:
-        return True
+    def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
+        url = self.credentials['url']
+        app = MastodonApp.get_for_url(url)
+
+        api = MastodonAPI(
+            app.client_id,
+            app.client_secret,
+            api_base_url=url,
+            access_token=self.credentials['access_token'],
+        )
+
+        use_custom_text = extra.get('twitter-custom', 'n')
+        custom_text = extra.get('twitter-custom-text')
+
+        tw_format: str = extra.get('twitter-format', '')
+        links: list = extra.get('twitter-links')
+
+        is_sensitive = True if submission.rating in (Rating.mature, Rating.explicit) else False
+
+        if use_custom_text == 'y':
+            status = custom_text.strip()
+        else:
+            hashtags = submission.hashtags
+
+            hashtags_str = self.tag_str(hashtags)
+
+            status = '{title} {hashtags}'.format(
+                title=submission.title, hashtags=hashtags_str.strip()
+            )
+
+        if links:
+            if tw_format == 'single' or tw_format == '':
+                status = status + ' ' + links[0][1]
+            elif tw_format == 'multi':
+                status += '\n'
+
+                for link in links:
+                    name = SHORT_NAMES[link[0]]
+                    status += '\n{name}: {link}'.format(name=name, link=link[1])
+
+        noimage = self.account['twitter_noimage']
+
+        if submission.rating == Rating.explicit and (
+            noimage and noimage.val == 'yes'
+        ):
+            status = api.status_post(status=status, sensitive=is_sensitive, visibility='private')
+        else:
+            media = api.media_post(submission.image_bytes, mime_type=submission.image_mimetype)
+            status = api.status_post(status=status, sensitive=is_sensitive, visibility='private', media_ids=media)
+
+        return status['url']

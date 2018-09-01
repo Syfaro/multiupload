@@ -21,7 +21,7 @@
                 <h1>Add Account</h1>
 
                 {% for site in sites %}
-                    {% if site[0] == 9 %}
+                    {% if site[0] == 101 %}
                         <button type="button" class="btn btn-primary mb-1" data-toggle="modal" data-target="#mastodon-domain">{{ site[1] }}</button>
                     {% else %}
                         <a href="{{ url_for('accounts.add', site_id=site[0]) }}"
@@ -56,7 +56,7 @@
 
     <div class="modal fade" id="mastodon-domain">
         <div class="modal-dialog">
-            <form method="GET" action="{{ url_for('accounts.add', site_id=9) }}">
+            <form method="GET" action="{{ url_for('accounts.add', site_id=101) }}">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Mastodon Domain</h5>
