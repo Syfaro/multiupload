@@ -6,8 +6,16 @@ from description import get_mastodon_link, parse_description
 class TestMastodonLink(unittest.TestCase):
     def test_extraction(self):
         res = get_mastodon_link('@Syfaro@foxesare.sexy')
-
         self.assertEqual(res, 'https://foxesare.sexy/users/Syfaro')
+
+        res = get_mastodon_link('asdf')
+        self.assertEqual(res, None)
+
+        res = get_mastodon_link('@asdf')
+        self.assertEqual(res, None)
+
+        res = get_mastodon_link('@asdf@test')
+        self.assertEqual(res, 'https://test/users/asdf')
 
 
 class TestDescriptionLinks(unittest.TestCase):

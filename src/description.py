@@ -2,6 +2,9 @@ import re
 
 
 def get_mastodon_link(username) -> str:
+    if username.count('@') != 2:
+        return None
+
     handle, domain = username.rsplit('@', 1)
     return 'https://{domain}/users/{handle}'.format(domain=domain, handle=handle.strip('@'))
 
