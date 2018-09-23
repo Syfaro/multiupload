@@ -161,12 +161,21 @@ class Mastodon(Site):
 
         noimage = self.account['twitter_noimage']
 
+        content_warning: str = extra.get('mastodon-warning', None)
+        image_desc: str = extra.get('mastodon-image-desc', None)
+
+        if content_warning == '':
+            content_warning = None
+
+        if image_desc == '':
+            image_desc = None
+
         if submission.rating == Rating.explicit and (
             noimage and noimage.val == 'yes'
         ):
-            status = api.status_post(status=status, sensitive=is_sensitive, visibility='public')
+            status = api.status_post(status=status, sensitive=is_sensitive, visibility='public', spoiler_text=content_warning)
         else:
-            media = api.media_post(submission.image_bytes, mime_type=submission.image_mimetype)
-            status = api.status_post(status=status, sensitive=is_sensitive, visibility='public', media_ids=media)
+            media = api.media_post(submission.image_bytes, mime_type=submission.image_mimetype, description=image_desc)
+            status = api.status_post(status=status, sensitive=is_sensitive, visibility='public', media_ids=media, spoiler_text=content_warning)
 
         return status['url']

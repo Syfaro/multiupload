@@ -1,0 +1,11 @@
+<div class="d-none mastodon-link mt-2">
+    <div class="form-group">
+        <label for="mastodon-warning">Mastodon Content Warning</label>
+        <input id="mastodon-warning" type="text" name="mastodon-warning" class="form-control" placeholder="Content Warning" value="{{ sub.data.get('mastodon-warning') or '' if sub else '' }}">
+    </div>
+
+    <div class="form-group">
+        <label for="mastodon-image-desc">Mastodon Image Description</label>
+        <input id="mastodon-image-desc" type="text" name="mastodon-image-desc" class="form-control" placeholder="Image Description" value="{{ sub.data.get('mastodon-image-desc') or '' if sub else '' }}">
+    </div>
+</div>

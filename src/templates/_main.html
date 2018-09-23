@@ -33,7 +33,7 @@
     {% endif %}
 {%- endmacro %}
 
-{% set siteTemplatesToLoad = ['deviantart', 'inkbunny', 'twitter'] %} {# TODO: this needs to be dynamic #}
+{% set siteTemplatesToLoad = ['deviantart', 'inkbunny', 'twitter', 'mastodon'] %} {# TODO: this needs to be dynamic #}
 
 {% macro getSiteTemplates(location) -%}
     {% for site in siteTemplatesToLoad %}
