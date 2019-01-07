@@ -1,4 +1,5 @@
 from typing import List
+import json
 
 import requests
 from flask import Blueprint, Response, g, jsonify, request, session
@@ -7,7 +8,7 @@ import simplecrypt
 from cache import cache
 from constant import HEADERS, Sites
 from description import parse_description
-from models import Account, SavedTemplate, db
+from models import Account, SavedTemplate, SavedSubmission, User, db
 from simplecrypt import decrypt
 from sites.deviantart import DeviantArt
 from sites.known import known_list
@@ -27,9 +28,14 @@ def sites():
 
 
 @app.route('/whoami')
-@login_required
 def whoami():
-    return jsonify({'id': g.user.id, 'username': g.user.username})
+    session_id = session.get('id')
+    if session_id:
+        user: User = User.query.get(session['id'])
+        if user:
+            return jsonify({'id': user.id, 'username': user.username})
+
+    return jsonify({'id': None, 'username': None})
 
 
 @app.route('/accounts')
@@ -47,6 +53,28 @@ def accounts():
         )
 
     return jsonify({'accounts': accts})
+
+
+@app.route('/submissions')
+@login_required
+def submissions():
+    subs = SavedSubmission.query.filter_by(user_id=g.user.id).all()
+
+    subs = list(map(lambda sub: {
+        'id': sub.id,
+        'title': sub.title,
+        'description': sub.description,
+        'tags': sub.tags,
+        'original_filename': sub.original_filename,
+        'image_filename': sub.image_filename,
+        'image_mimetype': sub.image_mimetype,
+        'account_ids': sub.account_ids,
+        'site_data': json.loads(sub.site_data),
+        'group_id': sub.group_id,
+        'master': sub.master,
+    }, subs))
+
+    return jsonify(subs)
 
 
 @app.route('/description', methods=['POST'])

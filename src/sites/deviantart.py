@@ -141,14 +141,16 @@ class DeviantArt(Site):
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         da = self.get_da()
 
-
-
         r = da.refresh_token(self.credentials)
         self.account.update_credentials(r['refresh_token'])
         db.session.commit()
 
         if r['status'] != 'success':
             raise BadCredentials()
+
+        tags = {}
+        for idx, tag in enumerate(submission.tags):
+            tags['tags[{idx}]'.format(idx=idx)] = tag
 
         sub = requests.post(
             'https://www.deviantart.com/api/v1/oauth2/stash/submit',
@@ -157,7 +159,7 @@ class DeviantArt(Site):
                 'access_token': r['access_token'],
                 'title': submission.title,
                 'artist_comments': submission.description_for_site(self.SITE),
-                'tags': self.tag_str(submission.tags),
+                **tags,
             },
             files={'image': submission.get_image()},
         ).json()

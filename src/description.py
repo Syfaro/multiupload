@@ -221,6 +221,10 @@ def parse_description(description, uploading_to) -> str:
                     new_text = '<a href="https://{1}.tumblr.com/">{0}</a>'.format(
                         username, username.lower()
                     )
+                elif linking_to == 100:
+                    new_text = '<a href="https://twitter.com/{0}">{0}</a>'.format(username)
+                elif linking_to == 101:
+                    new_text = '<a href="{0}">{1}</a>'.format(masto_link, username)
 
         description = description[0:start] + new_text + description[end:]
 
