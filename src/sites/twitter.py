@@ -142,9 +142,11 @@ class Twitter(Site):
             ):
                 tweet = api.update_status(status=status, possibly_sensitive=True)
             else:
+                filename, bytes = submission.resize_image(1280, 1280)
+
                 tweet = api.update_with_media(
-                    filename=submission.image_filename,
-                    file=submission.image_bytes,
+                    filename=filename,
+                    file=bytes,
                     status=status,
                     possibly_sensitive=False
                     if submission.rating == Rating.general
