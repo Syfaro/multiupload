@@ -92,7 +92,10 @@ def submit_art(submission, account, saved=None, twitter_links=None) -> dict:
             extra = {}
 
             if saved:
-                extra = saved.data
+                try:
+                    extra = saved.data
+                except:
+                    pass
 
             if twitter_links:
                 extra['twitter-links'] = twitter_links

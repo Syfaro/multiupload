@@ -82,6 +82,8 @@ class Submission(object):
         """Resize image to specified height and width with antialiasing"""
         image = Image.open(self.image_bytes)
 
+        print('attempting image resize')
+
         if image.height <= height and image.width <= width:
             self.image_bytes.seek(0)
             return self.image_filename, self.image_bytes
@@ -91,8 +93,17 @@ class Submission(object):
 
         image.thumbnail((height, width), Image.ANTIALIAS)
 
+        # need to get extension from name due to bytes not having a name
+        # when resizing this causes an issue as it cannot determine type
+        try:
+            f = self.image_filename.split('.')[-1]
+        except:
+            f = None
+
+        breadcrumbs.record(message=f'Attempting to resize image with extension {f}', category='furryapp', level='info')
+
         resized_image = BytesIO()
-        image.save(resized_image, image.format)
+        image.save(resized_image, f)
         resized_image.seek(0)
 
         breadcrumbs.record(message='Resized image', category='furryapp', level='info')
