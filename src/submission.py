@@ -98,7 +98,10 @@ class Submission(object):
         try:
             f = self.image_filename.split('.')[-1]
         except:
-            f = None
+            if image.format:
+                f = image.format
+            else:
+                f = None
 
         breadcrumbs.record(message=f'Attempting to resize image with extension {f}', category='furryapp', level='info')
 
