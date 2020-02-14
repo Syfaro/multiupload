@@ -16,7 +16,7 @@ python-tumblpy = "~=1.1.4"
 raven = "~=6.9.0"
 requests = "~=2.18.4"
 simple-crypt = {git = "https://github.com/Syfaro/simple-crypt",ref = "6a6456eee622af44a5662e96e501f9c8315c35a7",editable = true}
-tweepy = "~=3.5.0"
+tweepy = "~=3.8.0"
 htmlmin = "~=0.1.12"
 Flask = "~=0.12.2"
 Flask-Bootstrap = "~=3.3.7.1"
@@ -26,6 +26,7 @@ PyMySQL = "~=0.7.11"
 Flask-Migrate = "~=2.1.1"
 Flask-SeaSurf = "~=0.2.2"
 "mastodon.py" = "*"
+cachelib = "*"
 
 [dev-packages]
 pylint = "*"
@@ -35,6 +36,7 @@ flake8 = "*"
 rope = "*"
 mypy = "*"
 sqlalchemy-stubs = "*"
+pytest = "*"
 
 [requires]
 python_version = "3.8"
