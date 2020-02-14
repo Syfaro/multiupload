@@ -109,7 +109,11 @@ class Submission(object):
 
         image.thumbnail((height, width), Image.ANTIALIAS)
 
-        breadcrumbs.record(message=f'Attempting to resize image with extension {f}', category='furryapp', level='info')
+        breadcrumbs.record(
+            message=f'Attempting to resize image with extension {f}',
+            category='furryapp',
+            level='info',
+        )
 
         resized_image = BytesIO()
         image.save(resized_image, f)

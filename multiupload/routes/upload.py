@@ -29,7 +29,13 @@ from werkzeug.utils import secure_filename
 
 import simplecrypt
 from multiupload.constant import Sites
-from multiupload.models import Account, SavedSubmission, SavedTemplate, SubmissionGroup, db
+from multiupload.models import (
+    Account,
+    SavedSubmission,
+    SavedTemplate,
+    SubmissionGroup,
+    db,
+)
 from multiupload.sites import BadCredentials, SiteError
 from multiupload.sites.known import KNOWN_SITES, known_list
 from multiupload.submission import Rating, Submission
@@ -40,7 +46,7 @@ from multiupload.utils import (
     safe_ext,
     save_multi_dict,
     write_upload_time,
-save_debug_pages,
+    save_debug_pages,
 )
 
 app = Blueprint('upload', __name__)

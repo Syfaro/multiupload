@@ -60,19 +60,24 @@ def accounts():
 def submissions():
     subs = SavedSubmission.query.filter_by(user_id=g.user.id).all()
 
-    subs = list(map(lambda sub: {
-        'id': sub.id,
-        'title': sub.title,
-        'description': sub.description,
-        'tags': sub.tags,
-        'original_filename': sub.original_filename,
-        'image_filename': sub.image_filename,
-        'image_mimetype': sub.image_mimetype,
-        'account_ids': sub.account_ids,
-        'site_data': json.loads(sub.site_data),
-        'group_id': sub.group_id,
-        'master': sub.master,
-    }, subs))
+    subs = list(
+        map(
+            lambda sub: {
+                'id': sub.id,
+                'title': sub.title,
+                'description': sub.description,
+                'tags': sub.tags,
+                'original_filename': sub.original_filename,
+                'image_filename': sub.image_filename,
+                'image_mimetype': sub.image_mimetype,
+                'account_ids': sub.account_ids,
+                'site_data': json.loads(sub.site_data),
+                'group_id': sub.group_id,
+                'master': sub.master,
+            },
+            subs,
+        )
+    )
 
     return jsonify(subs)
 

@@ -114,7 +114,7 @@ def safe_ext(name: str) -> Union[bool, str]:
 
 
 def write_upload_time(
-        start_time, site: int = None, measurement: str = 'upload_time'
+    start_time, site: int = None, measurement: str = 'upload_time'
 ) -> None:
     duration = time.time() - start_time
 
@@ -211,11 +211,15 @@ def save_debug_pages() -> None:
         if page.history:
             h_idx = 1
             for history in page.history:
-                with open(os.path.join(folder, '%02d-%02d.txt' % (idx, h_idx)), 'w') as h:
+                with open(
+                    os.path.join(folder, '%02d-%02d.txt' % (idx, h_idx)), 'w'
+                ) as h:
                     h.write('URL: %s\n' % history.url)
                     h.write('Status Code: %d\n' % history.status_code)
 
-                with open(os.path.join(folder, '%02d-%02d.html' % (idx, h_idx)), 'wb') as h:
+                with open(
+                    os.path.join(folder, '%02d-%02d.html' % (idx, h_idx)), 'wb'
+                ) as h:
                     h.write(history.content)
 
                 h_idx += 1

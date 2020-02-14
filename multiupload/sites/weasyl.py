@@ -6,7 +6,13 @@ from flask import g, session
 
 from multiupload.constant import HEADERS, Sites
 from multiupload.models import Account, AccountData, db
-from multiupload.sites import AccountExists, BadCredentials, Site, SiteError, SomeSubmission
+from multiupload.sites import (
+    AccountExists,
+    BadCredentials,
+    Site,
+    SiteError,
+    SomeSubmission,
+)
 from multiupload.submission import Rating, Submission
 from multiupload.utils import write_site_response, clear_recorded_pages, record_page
 

@@ -7,7 +7,9 @@ def get_mastodon_link(username) -> Optional[str]:
         return None
 
     handle, domain = username.rsplit('@', 1)
-    return 'https://{domain}/users/{handle}'.format(domain=domain, handle=handle.strip('@'))
+    return 'https://{domain}/users/{handle}'.format(
+        domain=domain, handle=handle.strip('@')
+    )
 
 
 def parse_description(description, uploading_to) -> Optional[str]:
@@ -223,7 +225,9 @@ def parse_description(description, uploading_to) -> Optional[str]:
                         username, username.lower()
                     )
                 elif linking_to == 100:
-                    new_text = '<a href="https://twitter.com/{0}">{0}</a>'.format(username)
+                    new_text = '<a href="https://twitter.com/{0}">{0}</a>'.format(
+                        username
+                    )
                 elif linking_to == 101:
                     new_text = '<a href="{0}">{1}</a>'.format(masto_link, username)
 

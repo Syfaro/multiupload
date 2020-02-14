@@ -15,7 +15,7 @@ from multiupload.submission import Rating, Submission
 db = SQLAlchemy()
 
 
-class User(db.Model): # type: ignore
+class User(db.Model):  # type: ignore
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(16), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
@@ -57,7 +57,7 @@ class User(db.Model): # type: ignore
         ).first()
 
 
-class Site(db.Model): # type: ignore
+class Site(db.Model):  # type: ignore
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), unique=True, nullable=False)
 
@@ -69,7 +69,7 @@ class Site(db.Model): # type: ignore
         return [site.name for site in cls.query.all()]
 
 
-class Account(db.Model): # type: ignore
+class Account(db.Model):  # type: ignore
     id = db.Column(db.Integer, primary_key=True)
     site_id = db.Column(db.Integer, db.ForeignKey('site.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -126,7 +126,7 @@ class Account(db.Model): # type: ignore
         )
 
 
-class AccountConfig(db.Model): # type: ignore
+class AccountConfig(db.Model):  # type: ignore
     """A setting for an account. Uses short string key/value pairs."""
 
     id = db.Column(db.Integer, primary_key=True)
@@ -148,7 +148,7 @@ class AccountConfig(db.Model): # type: ignore
         )
 
 
-class AccountData(db.Model): # type: ignore
+class AccountData(db.Model):  # type: ignore
     """Data associated to an account. Uses a short key with a JSON value."""
 
     id = db.Column(db.Integer, primary_key=True)
@@ -177,7 +177,7 @@ class AccountData(db.Model): # type: ignore
         self.data = json.dumps(data)
 
 
-class Notice(db.Model): # type: ignore
+class Notice(db.Model):  # type: ignore
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.String(500), nullable=False)
     active = db.Column(db.Boolean, default=1, nullable=False)
@@ -193,7 +193,7 @@ class Notice(db.Model): # type: ignore
         return cls.query.filter_by(active=True).order_by(cls.id.asc())
 
 
-class NoticeViewed(db.Model): # type: ignore
+class NoticeViewed(db.Model):  # type: ignore
     id = db.Column(db.Integer, primary_key=True)
 
     notice_id = db.Column(db.Integer, db.ForeignKey('notice.id'), nullable=False)
@@ -204,7 +204,7 @@ class NoticeViewed(db.Model): # type: ignore
         self.user_id = user
 
 
-class SavedSubmission(db.Model): # type: ignore
+class SavedSubmission(db.Model):  # type: ignore
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
@@ -297,7 +297,7 @@ class SavedSubmission(db.Model): # type: ignore
 
     # This gets ignored because mypy conflicts the data from the setter and
     # the method.
-    @data.setter # type: ignore
+    @data.setter  # type: ignore
     def data(self, value: dict) -> None:
         self.site_data = json.dumps(value)
 
@@ -317,7 +317,7 @@ class SavedSubmission(db.Model): # type: ignore
         return cls.query.filter_by(user_id=g.user.id).filter_by(id=sub_id).first()
 
 
-class SubmissionGroup(db.Model): # type: ignore
+class SubmissionGroup(db.Model):  # type: ignore
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     name = db.Column(db.String(255), nullable=False)
@@ -367,7 +367,7 @@ class SubmissionGroup(db.Model): # type: ignore
         return cls.query.filter_by(user_id=g.user.id).filter_by(id=group_id).first()
 
 
-class SavedTemplate(db.Model): # type: ignore
+class SavedTemplate(db.Model):  # type: ignore
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     name = db.Column(db.String(255), nullable=False)

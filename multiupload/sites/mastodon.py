@@ -57,18 +57,16 @@ class Mastodon(Site):
             db.session.add(app)
             db.session.commit()
 
-        api = MastodonAPI(
-            app.client_id,
-            app.client_secret,
-            api_base_url=url,
-        )
+        api = MastodonAPI(app.client_id, app.client_secret, api_base_url=url)
 
         session['MASTODON_URL'] = url
 
-        return redirect(api.auth_request_url(
-            redirect_uris=current_app.config['MASTODON_CALLBACK'],
-            scopes=current_app.config['MASTODON_SCOPES'],
-        ))
+        return redirect(
+            api.auth_request_url(
+                redirect_uris=current_app.config['MASTODON_CALLBACK'],
+                scopes=current_app.config['MASTODON_SCOPES'],
+            )
+        )
 
     def add_account_callback(self) -> dict:
         url = session.get('MASTODON_URL')
@@ -79,11 +77,7 @@ class Mastodon(Site):
 
         verifier_code = request.args.get('code')
 
-        api = MastodonAPI(
-            app.client_id,
-            app.client_secret,
-            api_base_url=url,
-        )
+        api = MastodonAPI(app.client_id, app.client_secret, api_base_url=url)
 
         access_token = api.log_in(
             code=verifier_code,
@@ -98,9 +92,8 @@ class Mastodon(Site):
         return {
             'access_token': access_token,
             'user': '@{username}@{domain}'.format(
-                username=user_info['username'],
-                domain=parsed.netloc,
-            )
+                username=user_info['username'], domain=parsed.netloc
+            ),
         }
 
     def add_account(self, data: dict) -> Account:
@@ -109,10 +102,12 @@ class Mastodon(Site):
         username = request.form['username']
         access_token = request.form.get('access_token')
 
-        account = Account(self.SITE, session['id'], username, json.dumps({
-            'access_token': access_token,
-            'url': url,
-        }))
+        account = Account(
+            self.SITE,
+            session['id'],
+            username,
+            json.dumps({'access_token': access_token, 'url': url}),
+        )
 
         db.session.add(account)
         db.session.commit()
@@ -142,7 +137,7 @@ class Mastodon(Site):
         tw_format: str = extra.get('twitter-format', '')
         links: Optional[List[str]] = extra.get('twitter-links')
 
-        is_sensitive = True if submission.rating in (Rating.mature, Rating.explicit) else False
+        is_sensitive = submission.rating in (Rating.mature, Rating.explicit)
 
         if use_custom_text == 'y':
             status = custom_text.strip()
@@ -176,12 +171,25 @@ class Mastodon(Site):
         if image_desc == '':
             image_desc = None
 
-        if submission.rating == Rating.explicit and (
-            noimage and noimage.val == 'yes'
-        ):
-            status = api.status_post(status=status, sensitive=is_sensitive, visibility='public', spoiler_text=content_warning)
+        if submission.rating == Rating.explicit and (noimage and noimage.val == 'yes'):
+            status = api.status_post(
+                status=status,
+                sensitive=is_sensitive,
+                visibility='public',
+                spoiler_text=content_warning,
+            )
         else:
-            media = api.media_post(submission.image_bytes, mime_type=submission.image_mimetype, description=image_desc)
-            status = api.status_post(status=status, sensitive=is_sensitive, visibility='public', media_ids=media, spoiler_text=content_warning)
+            media = api.media_post(
+                submission.image_bytes,
+                mime_type=submission.image_mimetype,
+                description=image_desc,
+            )
+            status = api.status_post(
+                status=status,
+                sensitive=is_sensitive,
+                visibility='public',
+                media_ids=media,
+                spoiler_text=content_warning,
+            )
 
         return status['url']

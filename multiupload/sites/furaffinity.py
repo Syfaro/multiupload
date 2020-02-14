@@ -14,7 +14,12 @@ from multiupload.constant import HEADERS, Sites
 from multiupload.models import Account, AccountData, db
 from multiupload.sites import AccountExists, BadCredentials, Site, SiteError
 from multiupload.submission import Rating, Submission
-from multiupload.utils import write_site_response, record_page, save_debug_pages, clear_recorded_pages
+from multiupload.utils import (
+    write_site_response,
+    record_page,
+    save_debug_pages,
+    clear_recorded_pages,
+)
 
 
 class FurAffinity(Site):
@@ -155,11 +160,11 @@ class FurAffinity(Site):
             text = page.select('font')
             print(text)
             with open(
-                    os.path.join(
-                        current_app.config['DEBUG_FOLDER'],
-                        '{0}.html'.format(int(time.time())),
-                    ),
-                    'wb',
+                os.path.join(
+                    current_app.config['DEBUG_FOLDER'],
+                    '{0}.html'.format(int(time.time())),
+                ),
+                'wb',
             ) as f:
                 f.write(req.content)
             if text:

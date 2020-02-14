@@ -2,6 +2,7 @@ import unittest
 
 from multiupload.submission import Submission
 
+
 class TestTagParsing(unittest.TestCase):
     TAGS_NO_COMMA = 'hello world #test extra tag'
     TAGS_WITH_COMMA = 'hello, world, #test, extra tag'
