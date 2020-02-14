@@ -1,7 +1,8 @@
+from typing import Optional
 import re
 
 
-def get_mastodon_link(username) -> str:
+def get_mastodon_link(username) -> Optional[str]:
     if username.count('@') != 2:
         return None
 
@@ -9,7 +10,7 @@ def get_mastodon_link(username) -> str:
     return 'https://{domain}/users/{handle}'.format(domain=domain, handle=handle.strip('@'))
 
 
-def parse_description(description, uploading_to) -> str:
+def parse_description(description, uploading_to) -> Optional[str]:
     """Attempt to parse a description into a format valid for each site."""
     exp = r'<\|(\S+?),(\d+?),(\d)\|>'
     match = re.search(exp, description)
@@ -28,7 +29,7 @@ def parse_description(description, uploading_to) -> str:
             linking_to = int(match.group(2))
             link_type = int(match.group(3))
         except ValueError:
-            return False
+            return None
 
         masto_link = get_mastodon_link(username)
 

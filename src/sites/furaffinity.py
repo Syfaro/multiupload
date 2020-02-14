@@ -168,6 +168,10 @@ class FurAffinity(Site):
                 raise SiteError('Got error: {0}'.format(message))
             raise SiteError('Unable to get FurAffinity upload token from part 3')
 
+        rating = submission.rating
+        if not rating:
+            raise SiteError('Unable to parse Submission rating')
+
         data = {
             'part': '5',
             'submission_type': 'submission',
@@ -175,10 +179,14 @@ class FurAffinity(Site):
             'title': submission.title,
             'message': submission.description_for_site(self.SITE),
             'keywords': self.tag_str(submission.tags),
-            'rating': self.map_rating(submission.rating),
+            'rating': self.map_rating(rating),
         }
 
-        folder = extra.get('folder-{0}'.format(self.account.id))
+        if isinstance(extra, dict):
+            folder = extra.get('folder-{0}'.format(self.account.id))
+        else:
+            folder = None
+
         if folder and folder != 'None':
             data['folder_ids[]'] = folder
 
@@ -203,7 +211,10 @@ class FurAffinity(Site):
         resolution = not resolution or resolution.val == 'yes'
 
         if needs_resize and resolution:
-            match = re.search(r'view/(\d+)', link).group(1)
+            search = re.search(r'view/(\d+)', link)
+            if not search:
+                raise SiteError('Unable to find FurAffinity ID from URL')
+            match = search.group(1)
 
             req = sess.post(
                 'https://www.furaffinity.net/controls/submissions/changesubmission/%s/'

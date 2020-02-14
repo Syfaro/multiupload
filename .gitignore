@@ -16,3 +16,4 @@ config.py
 *.sql
 package-lock.json
 *.map
+.mypy_cache/

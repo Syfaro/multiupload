@@ -1,5 +1,5 @@
 import json
-from typing import Any
+from typing import Any, Optional, List
 from urllib.parse import urlparse
 
 from flask import current_app, flash, redirect, request, session, url_for
@@ -7,7 +7,7 @@ from mastodon import Mastodon as MastodonAPI
 
 from constant import Sites
 from models import Account, db
-from sites import Site
+from sites import Site, SiteError
 from sites.twitter import SHORT_NAMES
 from submission import Rating, Submission
 
@@ -106,7 +106,7 @@ class Mastodon(Site):
     def add_account(self, data: dict) -> Account:
         url = session.pop('MASTODON_URL')
 
-        username = request.form.get('username')
+        username = request.form['username']
         access_token = request.form.get('access_token')
 
         account = Account(self.SITE, session['id'], username, json.dumps({
@@ -120,6 +120,12 @@ class Mastodon(Site):
         return account
 
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
+        if not isinstance(self.credentials, dict):
+            raise SiteError('Bad saved credentials')
+
+        if not isinstance(extra, dict):
+            raise SiteError('Incorrect extra data')
+
         url = self.credentials['url']
         app = MastodonApp.get_for_url(url)
 
@@ -131,10 +137,10 @@ class Mastodon(Site):
         )
 
         use_custom_text = extra.get('twitter-custom', 'n')
-        custom_text = extra.get('twitter-custom-text')
+        custom_text = extra.get('twitter-custom-text', '')
 
         tw_format: str = extra.get('twitter-format', '')
-        links: list = extra.get('twitter-links')
+        links: Optional[List[str]] = extra.get('twitter-links')
 
         is_sensitive = True if submission.rating in (Rating.mature, Rating.explicit) else False
 
@@ -161,8 +167,8 @@ class Mastodon(Site):
 
         noimage = self.account['twitter_noimage']
 
-        content_warning: str = extra.get('mastodon-warning', None)
-        image_desc: str = extra.get('mastodon-image-desc', None)
+        content_warning: Optional[str] = extra.get('mastodon-warning', None)
+        image_desc: Optional[str] = extra.get('mastodon-image-desc', None)
 
         if content_warning == '':
             content_warning = None

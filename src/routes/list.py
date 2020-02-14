@@ -1,5 +1,5 @@
 from os.path import join
-from typing import List
+from typing import List, Optional
 
 from flask import (
     Blueprint,
@@ -60,10 +60,10 @@ def remove():
 @login_required
 def save():
     sub_id: str = request.form.get('id')
-    title: [None, str] = request.form.get('title')
-    description: [None, str] = request.form.get('description')
-    tags: [None, str] = request.form.get('keywords')
-    rating: [None, str] = request.form.get('rating')
+    title: Optional[str] = request.form.get('title')
+    description: Optional[str] = request.form.get('description')
+    tags: Optional[str] = request.form.get('keywords')
+    rating: Optional[str] = request.form.get('rating')
     if rating:
         rating = Rating(rating)
     accounts: List[str] = request.form.getlist('account')

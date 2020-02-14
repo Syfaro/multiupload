@@ -6,7 +6,7 @@ from functools import wraps
 from random import SystemRandom
 from string import ascii_lowercase
 from subprocess import PIPE, Popen
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Optional
 
 import requests
 from flask import current_app, flash, g, redirect, request, session, url_for
@@ -41,11 +41,11 @@ def tumblr_blog_name(url):
     return url.split('//')[-1].split('/')[0]
 
 
-def get_active_notices(user: Union[int, None] = None):
+def get_active_notices(user: Optional[int] = None):
     notices: List[Notice] = Notice.find_active().all()
 
     if user:
-        notices = filter(lambda notice: not notice.was_viewed_by(user), notices)
+        notices = list(filter(lambda notice: not notice.was_viewed_by(user), notices))
 
     return notices
 

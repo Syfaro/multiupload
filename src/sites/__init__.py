@@ -1,8 +1,9 @@
 from io import BytesIO
 from os.path import join
-from typing import Any, List, Union
+from typing import Any, List, Union, Optional
 
 from flask import current_app
+from werkzeug import Response
 from PIL import Image
 
 from models import Account, SavedSubmission, SubmissionGroup
@@ -27,18 +28,19 @@ class SiteError(Exception):
 
 class Site(object):
     credentials: Union[None, str, dict] = None
+    account: Optional[Account] = None
 
     def __init__(self, credentials=None, account=None):
         self.credentials = credentials
         self.account = account
 
-    def pre_add_account(self) -> Union[None, dict]:
+    def pre_add_account(self) -> Optional[Union[dict, Response]]:
         return None
 
     def add_account_callback(self) -> Union[None, str, dict]:
         return None
 
-    def parse_add_form(self, form) -> Union[None, dict]:
+    def parse_add_form(self, form) -> Optional[dict]:
         return None
 
     def add_account(self, data: dict) -> Union[Account, List[Account]]:
@@ -47,7 +49,7 @@ class Site(object):
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         raise NotImplementedError()
 
-    def map_rating(self, rating: Rating) -> Union[None, str]:
+    def map_rating(self, rating: Rating) -> Optional[Any]:
         return None
 
     def validate_submission(self, submission: SomeSubmission) -> List[str]:
@@ -56,7 +58,7 @@ class Site(object):
     def tag_str(self, tags: List[str]) -> str:
         return ' '.join(tags)
 
-    def get_folders(self, update=False) -> Union[None, List[dict]]:
+    def get_folders(self, update=False) -> Optional[List[dict]]:
         return None
 
     def upload_group(self, group: SubmissionGroup, extra: Any = None):

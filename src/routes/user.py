@@ -1,7 +1,7 @@
 import re
 from random import SystemRandom
 from string import ascii_letters
-from typing import Union
+from typing import Dict, Optional
 
 import bcrypt
 import passwordmeter
@@ -600,17 +600,17 @@ def update_theme():
     return redirect(url_for('user.settings'))
 
 
-def get_theme_by_name(name: str) -> Union[None, dict]:
+def get_theme_by_name(name: str) -> Optional[Dict[str, dict]]:
     themes = get_themes()
 
-    for theme in themes.get('themes'):
+    for theme in themes.get('themes', {}):
         if theme.get('name') == name:
             return theme
 
     return None
 
 
-def get_themes() -> dict:
+def get_themes() -> Dict[str, dict]:
     cached = cache.get('theme')
     if cached:
         return cached

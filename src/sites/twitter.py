@@ -2,7 +2,8 @@ import json
 from typing import Any, List
 
 import tweepy
-from flask import Response, current_app, g, redirect, request, session
+from flask import current_app, g, redirect, request, session
+from werkzeug import Response
 
 from constant import Sites
 from models import Account, SavedSubmission, SubmissionGroup, db

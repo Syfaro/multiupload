@@ -190,7 +190,11 @@ class DeviantArt(Site):
             'catpath': request.form.get('deviantart-category'),
         }
 
-        folders = extra.get('da-folders')
+        if isinstance(extra, dict):
+            folders = extra.get('da-folders')
+        else:
+            folders = None
+
         if folders:
             try:
                 folders = json.loads(folders)

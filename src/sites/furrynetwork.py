@@ -112,6 +112,9 @@ class FurryNetwork(Site):
 
         clear_recorded_pages()
 
+        if not isinstance(self.credentials, dict):
+            raise SiteError('Internal data is incorrect')
+
         character_id = self.credentials['character_id']
 
         req = sess.post(
@@ -157,6 +160,9 @@ class FurryNetwork(Site):
                 'Unable to find username, you may need to remove this account.'
             )
 
+        if not submission.image_filename:
+            raise SiteError('Image was missing filename')
+
         params = {
             'resumableChunkNumber': '1',
             'resumableChunkSize': submission.image_size,
@@ -199,9 +205,16 @@ class FurryNetwork(Site):
 
         collection_ids = []
 
-        collection = extra.get('folder-{0}'.format(self.account.id))
+        if isinstance(extra, dict):
+            collection = extra.get('folder-{0}'.format(self.account.id))
+        else:
+            collection = None
+
         if collection and collection != 'None':
             collection_ids.append(int(collection))
+
+        if not submission.rating:
+            raise SiteError('Unable to parse Submission rating')
 
         req = sess.patch(
             'https://beta.furrynetwork.com/api/artwork/{id}'.format(id=post_id),

@@ -60,6 +60,12 @@ class SoFurry(Site):
 
         clear_recorded_pages()
 
+        if not isinstance(self.credentials, dict):
+            raise SiteError('Invalid saved credentials')
+
+        if not isinstance(extra, dict):
+            raise SiteError('Incorrect extra data provided')
+
         req = sess.post(
             'https://www.sofurry.com/user/login',
             data={

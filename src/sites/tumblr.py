@@ -2,7 +2,8 @@ import json
 from typing import Any, List
 
 import tumblpy
-from flask import Response, current_app, flash, redirect, request, session
+from flask import current_app, flash, redirect, request, session
+from werkzeug import Response
 
 from constant import Sites
 from models import Account, AccountData, SubmissionGroup, db
@@ -108,6 +109,9 @@ class Tumblr(Site):
         return accounts
 
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
+        if not isinstance(self.credentials, dict):
+            raise SiteError('Bad saved credentials')
+
         t = tumblpy.Tumblpy(
             current_app.config['TUMBLR_KEY'],
             current_app.config['TUMBLR_SECRET'],
@@ -115,7 +119,13 @@ class Tumblr(Site):
             self.credentials['secret'],
         )
 
+        if not self.account:
+            raise SiteError('Missing account')
+
         if self.account['tumblr_title'] and self.account['tumblr_title'].val == 'yes':
+            if not submission.title or not submission.description:
+                raise SiteError('Missing Submission data')
+
             submission.description = (
                 '## ' + submission.title + '\n\n' + submission.description
             )
@@ -153,6 +163,9 @@ class Tumblr(Site):
         return ' ,'.join(tags)
 
     def upload_group(self, group: SubmissionGroup, extra: Any = None) -> str:
+        if not isinstance(self.credentials, dict):
+            raise SiteError('Bad saved credentials')
+
         t = tumblpy.Tumblpy(
             current_app.config['TUMBLR_KEY'],
             current_app.config['TUMBLR_SECRET'],
@@ -167,6 +180,9 @@ class Tumblr(Site):
         images = self.collect_images(submissions)
 
         image_bytes = [image['bytes'] for image in images]
+
+        if not self.account:
+            raise SiteError('Missing account')
 
         if self.account['tumblr_title'] and self.account['tumblr_title'].val == 'yes':
             master.description = '## ' + master.title + '\n\n' + master.description

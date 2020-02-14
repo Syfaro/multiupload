@@ -1,7 +1,7 @@
 from enum import Enum
 from io import BytesIO
 from os.path import join
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 from flask import current_app
 from PIL import Image
@@ -24,19 +24,23 @@ class Rating(Enum):
     explicit = 'explicit'
 
 
+class MissingImage(Exception):
+    pass
+
+
 class Submission(object):
     """Submission is a normalized representation of something to post."""
 
-    title: str = None  # Title of submission
-    description: str = None  # Description of submission
-    tags: List[str] = None  # Tags of submission
-    hashtags: List[str] = None  # Hashtags of submission (only for Twitter)
-    rating: Rating = None  # Rating of submission
+    title: Optional[str] = None  # Title of submission
+    description: Optional[str] = None  # Description of submission
+    tags: List[str] = []  # Tags of submission
+    hashtags: List[str] = []  # Hashtags of submission (only for Twitter)
+    rating: Optional[Rating] = None  # Rating of submission
 
-    image_filename: str = None  # Filename of submission
-    image_bytes: BytesIO = None  # Bytes of image in submission
-    image_mimetype: str = None  # Mime type of image in submission
-    _image_size: int = None
+    image_filename: Optional[str] = None  # Filename of submission
+    image_bytes: Optional[BytesIO] = None  # Bytes of image in submission
+    image_mimetype: Optional[str] = None  # Mime type of image in submission
+    _image_size: Optional[int] = None
 
     def __init__(self, title: str, description: str, tags: str, rating: str, image):
         """Create a new Submission automatically parsing tags into regular tags
@@ -67,10 +71,14 @@ class Submission(object):
 
     def get_image(self) -> Tuple[str, BytesIO]:
         """Returns a tuple suitable for uploading."""
+        if not self.image_bytes or not self.image_filename:
+            raise MissingImage()
         self.image_bytes.seek(0)
         return self.image_filename, self.image_bytes
 
     def image_res(self) -> Tuple[int, int]:
+        if not self.image_bytes:
+            raise MissingImage()
         image = Image.open(self.image_bytes)
         height, width = image.height, image.width
         self.image_bytes.seek(0)
@@ -80,6 +88,9 @@ class Submission(object):
         self, height: int, width: int, replace: bool = False
     ) -> Tuple[str, BytesIO]:
         """Resize image to specified height and width with antialiasing"""
+        if not self.image_bytes or not self.image_filename:
+            raise MissingImage()
+
         image = Image.open(self.image_bytes)
 
         if image.height <= height and image.width <= width:
@@ -114,12 +125,15 @@ class Submission(object):
 
     def description_for_site(self, site: Sites) -> str:
         """Returns a formatted description for a specific site."""
-        return parse_description(self.description, site.value)
+        return parse_description(self.description, site.value) or ''
 
     @property
     def image_size(self) -> int:
         if self._image_size:
             return self._image_size
+
+        if not self.image_bytes:
+            raise MissingImage()
 
         self._image_size = len(self.image_bytes.getbuffer())
         self.image_bytes.seek(0)
