@@ -1,5 +1,5 @@
 import json
-from typing import Any, List
+from typing import Any, List, Tuple, Optional, cast
 
 import tweepy
 from flask import current_app, g, redirect, request, session
@@ -8,7 +8,15 @@ from werkzeug import Response
 from multiupload.constant import Sites
 from multiupload.models import Account, SavedSubmission, SubmissionGroup, db
 from multiupload.sentry import sentry
-from multiupload.sites import AccountExists, BadCredentials, Site, SiteError
+from multiupload.sites import (
+    AccountExists,
+    BadCredentials,
+    BadData,
+    MissingAccount,
+    MissingCredentials,
+    Site,
+    SiteError,
+)
 from multiupload.submission import Rating, Submission
 
 SHORT_NAMES = {
@@ -22,13 +30,17 @@ SHORT_NAMES = {
     Sites.Twitter: 'Twitter',
 }
 
+TwitterLinks = List[Tuple[Sites, str]]
+
 
 class Twitter(Site):
     """Twitter."""
 
     SITE = Sites.Twitter
 
-    def __init__(self, credentials=None, account=None):
+    def __init__(
+        self, credentials: Optional[str] = None, account: Optional[Account] = None
+    ) -> None:
         super().__init__(credentials, account)
         if credentials:
             self.credentials = json.loads(credentials)
@@ -100,15 +112,20 @@ class Twitter(Site):
 
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         auth = self._get_oauth_handler()
+        if not self.credentials or not isinstance(self.credentials, dict):
+            raise MissingCredentials()
         auth.set_access_token(self.credentials['token'], self.credentials['secret'])
 
         api = tweepy.API(auth)
 
-        use_custom_text = extra.get('twitter-custom', 'n')
-        custom_text = extra.get('twitter-custom-text')
+        if not isinstance(extra, dict):
+            raise BadData()
 
-        tw_format: str = extra.get('twitter-format', '')
-        links: list = extra.get('twitter-links')
+        use_custom_text = extra.get('twitter-custom', 'n')
+        custom_text = extra.get('twitter-custom-text', '')
+
+        tw_format = extra.get('twitter-format', '')
+        links = cast(TwitterLinks, extra.get('twitter-links'))
 
         if use_custom_text == 'y':
             status = custom_text.strip()
@@ -136,6 +153,8 @@ class Twitter(Site):
                     status += '\n{name}: {link}'.format(name=name, link=link[1])
 
         try:
+            if not self.account:
+                raise MissingAccount()
             noimage = self.account['twitter_noimage']
 
             if submission.rating == Rating.explicit and (
@@ -160,7 +179,7 @@ class Twitter(Site):
             username=tweet.user.screen_name, id=tweet.id_str
         )
 
-    def upload_group(self, group: SubmissionGroup, extra: Any = None):
+    def upload_group(self, group: SubmissionGroup, extra: Any = None) -> str:
         master: SavedSubmission = group.master
         s: Submission = master.submission
         submissions: List[SavedSubmission] = group.submissions
@@ -168,6 +187,8 @@ class Twitter(Site):
         images = list(self.collect_images(submissions, max_size=2000))
 
         auth = self._get_oauth_handler()
+        if not self.credentials or not isinstance(self.credentials, dict):
+            raise MissingCredentials()
         auth.set_access_token(self.credentials['token'], self.credentials['secret'])
 
         api = tweepy.API(auth)
@@ -175,10 +196,12 @@ class Twitter(Site):
         data = master.data
 
         use_custom_text = data.get('twitter-custom', 'n')
-        custom_text = data.get('twitter-custom-text')
+        custom_text = data.get('twitter-custom-text', '')
         tw_format: str = data.get('twitter-format', '')
 
-        links: list = extra.get('twitter-links')
+        if not isinstance(extra, dict):
+            raise BadData()
+        links = cast(TwitterLinks, extra.get('twitter-links'))
 
         if use_custom_text == 'y':
             status = custom_text.strip()

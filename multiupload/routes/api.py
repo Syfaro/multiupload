@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Any
 import json
 
 import requests
@@ -18,7 +18,7 @@ app = Blueprint('api', __name__)
 
 
 @app.route('/sites')
-def sites():
+def sites() -> Any:
     s = []
 
     for site in known_list():
@@ -28,7 +28,7 @@ def sites():
 
 
 @app.route('/whoami')
-def whoami():
+def whoami() -> Any:
     session_id = session.get('id')
     if session_id:
         user: User = User.query.get(session['id'])
@@ -40,7 +40,7 @@ def whoami():
 
 @app.route('/accounts')
 @login_required
-def accounts():
+def accounts() -> Any:
     accts: List[dict] = []
     for account in Account.all():
         accts.append(
@@ -57,7 +57,7 @@ def accounts():
 
 @app.route('/submissions')
 @login_required
-def submissions():
+def submissions() -> Any:
     subs = SavedSubmission.query.filter_by(user_id=g.user.id).all()
 
     subs = list(
@@ -84,7 +84,7 @@ def submissions():
 
 @app.route('/description', methods=['POST'])
 @login_required
-def description():
+def description() -> Any:
     data = request.get_json()
 
     accts = data.get('accounts')
@@ -94,7 +94,7 @@ def description():
         return jsonify({'error': 'missing data'})
 
     descriptions = []
-    done = []
+    done: List[int] = []
 
     for site in accts.split(','):
         s = Sites(int(site))
@@ -115,12 +115,12 @@ def description():
 
 @app.route('/preview/description', methods=['POST'])
 @login_required
-def preview():
+def preview() -> Any:
     accountlist: List[str] = request.form.getlist('account')
     orig_description: str = request.form.get('description', '')
 
     descriptions = []
-    sites_done = []
+    sites_done: List[int] = []
 
     for site in accountlist:
         try:
@@ -150,7 +150,7 @@ def preview():
 
 @app.route('/deviantart/category', methods=['GET'])
 @login_required
-def get_deviantart_category():
+def get_deviantart_category() -> Any:
     path = request.args.get('path', '/')
     cached = cache.get('deviantart-' + path)
     if cached:
@@ -182,7 +182,7 @@ def get_deviantart_category():
 
 @app.route('/deviantart/folders', methods=['GET'])
 @login_required
-def get_deviantart_folders():
+def get_deviantart_folders() -> Any:
     account_id = request.args.get('account')
 
     try:
@@ -198,7 +198,7 @@ def get_deviantart_folders():
 
 @app.route('/templates', methods=['GET'])
 @login_required
-def get_templates():
+def get_templates() -> Any:
     templates = SavedTemplate.query.filter_by(user_id=g.user.id).all()
 
     return jsonify({'templates': list(map(lambda t: t.as_dict(), templates))})

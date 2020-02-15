@@ -3,7 +3,7 @@ import json
 import os
 import re
 import time
-from typing import Any
+from typing import Any, Optional, List, Dict
 
 import cfscrape
 from bs4 import BeautifulSoup
@@ -12,7 +12,14 @@ from requests import HTTPError
 
 from multiupload.constant import HEADERS, Sites
 from multiupload.models import Account, AccountData, db
-from multiupload.sites import AccountExists, BadCredentials, Site, SiteError
+from multiupload.sites import (
+    AccountExists,
+    BadCredentials,
+    BadData,
+    MissingAccount,
+    Site,
+    SiteError,
+)
 from multiupload.submission import Rating, Submission
 from multiupload.utils import (
     write_site_response,
@@ -27,7 +34,9 @@ class FurAffinity(Site):
 
     SITE = Sites.FurAffinity
 
-    def __init__(self, credentials=None, account=None):
+    def __init__(
+        self, credentials: Optional[str] = None, account: Optional[Account] = None
+    ) -> None:
         super().__init__(credentials, account)
         if credentials:
             self.credentials = json.loads(credentials)
@@ -86,7 +95,7 @@ class FurAffinity(Site):
 
         secure_data = {'a': a, 'b': session.pop('fa_cookie_b')}
 
-        j = json.dumps(secure_data).encode('utf-8')
+        j = json.dumps(secure_data)
 
         account = Account(self.SITE.value, session['id'], data['username'], j)
 
@@ -95,7 +104,7 @@ class FurAffinity(Site):
 
         return account
 
-    def parse_add_form(self, form) -> dict:
+    def parse_add_form(self, form: dict) -> dict:
         return {
             'username': form.get('username', ''),
             'password': form.get('password', ''),
@@ -175,7 +184,7 @@ class FurAffinity(Site):
 
         rating = submission.rating
         if not rating:
-            raise SiteError('Unable to parse Submission rating')
+            raise BadData()
 
         data = {
             'part': '5',
@@ -186,6 +195,9 @@ class FurAffinity(Site):
             'keywords': self.tag_str(submission.tags),
             'rating': self.map_rating(rating),
         }
+
+        if not self.account:
+            raise MissingAccount()
 
         if isinstance(extra, dict):
             folder = extra.get('folder-{0}'.format(self.account.id))
@@ -212,8 +224,8 @@ class FurAffinity(Site):
                 'You must have a few submissions on FurAffinity before you can use this site.'
             )
 
-        resolution = self.account['resolution_furaffinity']
-        resolution = not resolution or resolution.val == 'yes'
+        acc_val = self.account['resolution_furaffinity']
+        resolution = not acc_val or acc_val.val == 'yes'
 
         if needs_resize and resolution:
             search = re.search(r'view/(\d+)', link)
@@ -249,7 +261,10 @@ class FurAffinity(Site):
 
         return r
 
-    def get_folders(self, update=False):
+    def get_folders(self, update: bool = False) -> List[Dict[str, int]]:
+        if not self.account:
+            raise MissingAccount()
+
         prev_folders: AccountData = self.account.data.filter_by(key='folders').first()
         if prev_folders and not update:
             return prev_folders.json
@@ -272,11 +287,16 @@ class FurAffinity(Site):
             try:
                 link = a.get('href')
                 match = re.search(r'/(\d+)/', link)
+                if not match:
+                    raise SiteError('Unable to parse FA folder')
                 folder_id = int(match.group(1))
             except (IndexError, ValueError):
                 continue
 
             folders.append({'name': name, 'folder_id': folder_id})
+
+        if not self.account:
+            raise MissingAccount()
 
         if prev_folders:
             prev_folders.json = folders
@@ -289,5 +309,5 @@ class FurAffinity(Site):
         return folders
 
     @staticmethod
-    def supports_folder():
+    def supports_folder() -> bool:
         return True

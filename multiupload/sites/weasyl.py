@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, List, Dict
 
 import cfscrape
 from bs4 import BeautifulSoup
@@ -9,9 +9,11 @@ from multiupload.models import Account, AccountData, db
 from multiupload.sites import (
     AccountExists,
     BadCredentials,
+    BadData,
     Site,
     SiteError,
     SomeSubmission,
+    MissingAccount,
 )
 from multiupload.submission import Rating, Submission
 from multiupload.utils import write_site_response, clear_recorded_pages, record_page
@@ -26,7 +28,7 @@ class Weasyl(Site):
 
     SITE = Sites.Weasyl
 
-    def parse_add_form(self, form) -> dict:
+    def parse_add_form(self, form: dict) -> dict:
         return {'token': form.get('api_token', '').strip()}
 
     def add_account(self, data: dict) -> Account:
@@ -66,6 +68,9 @@ class Weasyl(Site):
 
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         auth_headers = HEADERS.copy()
+
+        if not isinstance(self.credentials, str):
+            raise BadCredentials()
         auth_headers[AUTH_HEADER] = self.credentials
 
         sess = cfscrape.create_scraper()
@@ -83,6 +88,9 @@ class Weasyl(Site):
         except ValueError:
             raise SiteError('Unable to get upload token')
 
+        if not submission.rating:
+            raise BadData()
+
         data = {
             'token': token,
             'title': submission.title,
@@ -90,6 +98,9 @@ class Weasyl(Site):
             'tags': self.tag_str(submission.tags),
             'rating': self.map_rating(submission.rating),
         }
+
+        if not isinstance(extra, dict) or not self.account:
+            raise MissingAccount()
 
         folder = extra.get('folder-{0}'.format(self.account.id))
         if folder and folder != 'None':
@@ -124,12 +135,17 @@ class Weasyl(Site):
 
         return errors
 
-    def get_folders(self, update=False):
+    def get_folders(self, update: bool = False) -> List[Dict[str, Any]]:
+        if not self.account:
+            raise MissingAccount()
+
         prev_folders: AccountData = self.account.data.filter_by(key='folders').first()
         if prev_folders and not update:
             return prev_folders.json
 
         auth_headers = HEADERS.copy()
+        if not isinstance(self.credentials, str):
+            raise BadCredentials()
         auth_headers[AUTH_HEADER] = self.credentials
 
         sess = cfscrape.create_scraper()
@@ -154,6 +170,8 @@ class Weasyl(Site):
         if prev_folders:
             prev_folders.json = all_folders
         else:
+            if not self.account:
+                raise MissingAccount()
             prev_folders = AccountData(self.account, 'folders', all_folders)
             db.session.add(prev_folders)
 
@@ -162,5 +180,5 @@ class Weasyl(Site):
         return all_folders
 
     @staticmethod
-    def supports_folder():
+    def supports_folder() -> bool:
         return True

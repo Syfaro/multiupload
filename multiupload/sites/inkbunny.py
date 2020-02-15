@@ -1,5 +1,5 @@
 import json
-from typing import Any
+from typing import Any, Optional
 
 import cfscrape
 from flask import session
@@ -16,12 +16,14 @@ class Inkbunny(Site):
 
     SITE = Sites.Inkbunny
 
-    def __init__(self, credentials=None, account=None):
+    def __init__(
+        self, credentials: Optional[str] = None, account: Optional[Account] = None
+    ) -> None:
         super().__init__(credentials, account)
         if credentials:
             self.credentials = json.loads(credentials)
 
-    def parse_add_form(self, form) -> dict:
+    def parse_add_form(self, form: dict) -> dict:
         return {
             'username': form.get('username', ''),
             'password': form.get('password', ''),
@@ -116,7 +118,7 @@ class Inkbunny(Site):
             id=j['submission_id']
         )
 
-    def upload_group(self, group: SubmissionGroup, extra: Any = None):
+    def upload_group(self, group: SubmissionGroup, extra: Any = None) -> str:
         sess = cfscrape.create_scraper()
 
         clear_recorded_pages()
@@ -189,5 +191,5 @@ class Inkbunny(Site):
         )
 
     @staticmethod
-    def supports_group():
+    def supports_group() -> bool:
         return True

@@ -7,6 +7,7 @@ from io import StringIO
 from os.path import join
 from typing import List, Tuple
 from zipfile import ZipFile
+from typing import Any, Optional, Generator, Type
 
 import magic
 from chardet import UniversalDetector
@@ -54,25 +55,27 @@ app = Blueprint('upload', __name__)
 
 @app.route('/art', methods=['GET'])
 @login_required
-def create_art():
+def create_art() -> Any:
     accounts = map(
         lambda account: {'account': account, 'selected': account.used_last},
         g.user.accounts,
     )
 
-    accounts = sorted(accounts, key=lambda a: a['account'].site.name)
+    items = sorted(accounts, key=lambda a: a['account'].site.name)
 
     templates = SavedTemplate.query.filter_by(user_id=g.user.id).all()
 
     return render_template(
-        'review/review.html',
-        accounts=accounts,
-        sub=SavedSubmission(),
-        templates=templates,
+        'review/review.html', accounts=items, sub=SavedSubmission(), templates=templates
     )
 
 
-def submit_art(submission, account, saved=None, twitter_links=None) -> dict:
+def submit_art(
+    submission: Submission,
+    account: Account,
+    saved: Optional[SavedSubmission] = None,
+    twitter_links: Optional[List[Tuple[Sites, str]]] = None,
+) -> Optional[dict]:
     """Upload an art submission to an account.
     :param submission: the Submission object to upload
     :param account: the Account to upload to
@@ -117,10 +120,12 @@ def submit_art(submission, account, saved=None, twitter_links=None) -> dict:
                 ),
             }
 
+    return None
+
 
 def upload_and_send(
     submission: SavedSubmission, accounts: List[Account], saved: SavedSubmission
-):
+) -> Generator[str, None, None]:
     twitter_account = saved.data.get('twitter-account')
     twitter_account_ids = []
     if twitter_account is not None:
@@ -192,7 +197,7 @@ def upload_and_send(
 
 @app.route('/art/saved', methods=['GET'])
 @login_required
-def create_art_post_saved():
+def create_art_post_saved() -> Any:
     saved_id = request.args.get('id')
     saved: SavedSubmission = SavedSubmission.find(saved_id)
 
@@ -217,7 +222,7 @@ def create_art_post_saved():
         accounts.append(account)
     db.session.commit()  # save currently used accounts
 
-    accounts: List[Account] = sorted(accounts, key=lambda x: x.site_id)
+    accounts = sorted(accounts, key=lambda x: x.site_id)
 
     return Response(
         stream_with_context(upload_and_send(submission, accounts, saved)),
@@ -227,7 +232,7 @@ def create_art_post_saved():
 
 @app.route('/art', methods=['POST'])
 @login_required
-def create_art_post():
+def create_art_post() -> Any:
     total_time = time.time()
 
     title = request.form.get('title')
@@ -315,14 +320,14 @@ def create_art_post():
 
     accounts: List[Account] = []
     for account_id in request.form.getlist('account'):
-        account: Account = Account.find(account_id)
+        acct = Account.find(account_id)
 
-        if not account:
+        if not acct:
             flash('Account does not exist.')
+            continue
 
-        account.used_last = 1
-
-        accounts.append(account)
+        acct.used_last = 1
+        accounts.append(acct)
 
     db.session.commit()
 
@@ -412,7 +417,7 @@ def create_art_post():
     return render_template('after_upload.html', uploads=uploads, user=g.user)
 
 
-def parse_csv(f, known_files=None, base_files=None):
+def parse_csv(f, known_files: List[str] = None, base_files: Optional[str] = None):
     detector = UniversalDetector()
     for line in f.readlines():
         detector.feed(line)
@@ -434,11 +439,14 @@ def parse_csv(f, known_files=None, base_files=None):
         title = row.get('title')
         description = row.get('description')
         tags = row.get('tags')
-        rating = row.get('rating')
-        if rating:
-            rating = Rating(rating.lower())
+        rating_str = row.get('rating', '')
+        rating: Optional[Rating]
+        if rating_str:
+            rating = Rating(rating_str.lower())
+        else:
+            rating = None
         filename = row.get('file')
-        accounts = row.get('accounts')
+        accounts = row.get('accounts', '')
 
         if all(v is None for v in [title, description, tags, rating, filename]):
             continue
@@ -499,13 +507,13 @@ def parse_csv(f, known_files=None, base_files=None):
 
 @app.route('/csv', methods=['GET'])
 @login_required
-def csv():
+def csv() -> Any:
     return redirect(url_for('upload.zip'))
 
 
 @app.route('/csv', methods=['POST'])
 @login_required
-def csv_post():
+def csv_post() -> Any:
     file = request.files.get('file')
     if not file:
         flash('Missing CSV file.')
@@ -518,13 +526,13 @@ def csv_post():
 
 @app.route('/zip', methods=['GET'])
 @login_required
-def zip():
+def zip() -> Any:
     return render_template('review/zip.html')
 
 
 @app.route('/zip', methods=['POST'])
 @login_required
-def zip_post():
+def zip_post() -> Any:
     file = request.files.get('file')
     if not file:
         flash('Missing ZIP file.')
@@ -583,8 +591,11 @@ def zip_post():
 
 @app.route('/review/<int:id>', methods=['GET'])
 @login_required
-def review(id=None):
-    sub: SavedSubmission = SavedSubmission.find(id)
+def review(sub_id: Optional[int] = None) -> Any:
+    if sub_id:
+        sub = SavedSubmission.find(sub_id)
+    else:
+        sub = None
 
     if sub:
         return render_template(
@@ -595,41 +606,41 @@ def review(id=None):
 
 
 @app.route('/imagepreview/<path:filename>')
-def image(filename):
+def image(filename: str) -> Any:
     return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
 
 
 @app.app_template_filter('has_text')
-def has_text(s):
+def has_text(s: bool) -> str:
     return '✗' if not s else '✓'
 
 
 @app.app_template_global('rating')
-def global_rating():
+def global_rating() -> Type[Rating]:
     return Rating
 
 
 @app.app_template_global('known_sites')
-def global_known_sites():
+def global_known_sites() -> List[Tuple[int, str]]:
     return known_list()
 
 
 @app.route('/group/create', methods=['GET'])
 @login_required
-def create_group():
-    accounts = map(
+def create_group() -> Any:
+    items = map(
         lambda account: {'account': account, 'selected': account.used_last},
         g.user.accounts,
     )
 
-    accounts = sorted(accounts, key=lambda a: a['account'].site.name)
+    accounts = sorted(items, key=lambda a: a['account'].site.name)
 
     return render_template('review/group.html', accounts=accounts, is_group=True)
 
 
 @app.route('/group/create', methods=['POST'])
 @login_required
-def create_group_post():
+def create_group_post() -> Any:
     title = request.form.get('title')
     description = request.form.get('description')
     keywords = request.form.get('keywords')
@@ -688,7 +699,7 @@ def create_group_post():
 
 @app.route('/master/<int:id>', methods=['GET'])
 @login_required
-def update_master(id):
+def update_master(id: int) -> Any:
     sub = SavedSubmission.find(id)
 
     return render_template(
@@ -698,7 +709,7 @@ def update_master(id):
 
 @app.route('/master', methods=['POST'])
 @login_required
-def update_master_post():
+def update_master_post() -> Any:
     sub_id = request.form.get('id')
     title = request.form.get('title')
     description = request.form.get('description')
@@ -721,7 +732,7 @@ def update_master_post():
     return redirect(url_for('list.index'))
 
 
-def perform_group_upload(group_id):
+def perform_group_upload(group_id: int) -> Generator[str, None, None]:
     group: SubmissionGroup = SubmissionGroup.find(group_id)
     master = group.master
 
@@ -729,7 +740,7 @@ def perform_group_upload(group_id):
 
     twitter_account = master.data.get('twitter-account')
     twitter_account_ids = []
-    twitter_links = []
+    twitter_links: List[Tuple[Any, str]] = []
     if twitter_account is not None:
         try:
             for i in twitter_account.split(' '):
@@ -906,8 +917,8 @@ def perform_group_upload(group_id):
 
 @app.route('/group/post')
 @login_required
-def group_upload():
-    group_id = request.args.get('id')
+def group_upload() -> Any:
+    group_id = request.args['id']
 
     return Response(
         stream_with_context(perform_group_upload(group_id)),

@@ -2,7 +2,7 @@ from typing import Optional
 import re
 
 
-def get_mastodon_link(username) -> Optional[str]:
+def get_mastodon_link(username: str) -> Optional[str]:
     if username.count('@') != 2:
         return None
 
@@ -12,8 +12,11 @@ def get_mastodon_link(username) -> Optional[str]:
     )
 
 
-def parse_description(description, uploading_to) -> Optional[str]:
+def parse_description(description: Optional[str], uploading_to: int) -> Optional[str]:
     """Attempt to parse a description into a format valid for each site."""
+    if not description:
+        return None
+
     exp = r'<\|(\S+?),(\d+?),(\d)\|>'
     match = re.search(exp, description)
 
@@ -233,7 +236,8 @@ def parse_description(description, uploading_to) -> Optional[str]:
 
         description = description[0:start] + new_text + description[end:]
 
-        match = re.search(exp, description)
+        # TODO: not sure why MyPy flags this
+        match = re.search(exp, description)  # type: ignore
 
     # Various sites don't support Markdown, try and convert some stuff
     if uploading_to in (1, 4, 5, 8):

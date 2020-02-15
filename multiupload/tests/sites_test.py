@@ -1,3 +1,5 @@
+# type: ignore
+
 import unittest
 
 from multiupload.models import SavedSubmission

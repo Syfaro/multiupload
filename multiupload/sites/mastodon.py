@@ -1,13 +1,14 @@
 import json
-from typing import Any, Optional, List
+from typing import Any, Optional, List, Union
 from urllib.parse import urlparse
 
 from flask import current_app, flash, redirect, request, session, url_for
+from werkzeug import Response
 from mastodon import Mastodon as MastodonAPI
 
 from multiupload.constant import Sites
 from multiupload.models import Account, db
-from multiupload.sites import Site, SiteError
+from multiupload.sites import BadData, MissingCredentials, Site, Credentials
 from multiupload.sites.twitter import SHORT_NAMES
 from multiupload.submission import Rating, Submission
 
@@ -16,28 +17,30 @@ class MastodonApp(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     url = db.Column(db.String(255), unique=True)
-    client_id = db.Column(db.String(255))
-    client_secret = db.Column(db.String(255))
+    client_id = db.Column(db.String(255), nullable=False)
+    client_secret = db.Column(db.String(255), nullable=False)
 
-    def __init__(self, url, client_id, client_secret):
+    def __init__(self, url: str, client_id: str, client_secret: str):
         self.url = url.lower()
         self.client_id = client_id
         self.client_secret = client_secret
 
     @classmethod
-    def get_for_url(cls, url):
+    def get_for_url(cls, url: str) -> Optional['MastodonApp']:
         return cls.query.filter_by(url=url.lower()).first()
 
 
 class Mastodon(Site):
     SITE = Sites.Mastodon
 
-    def __init__(self, credentials=None, account=None):
+    def __init__(
+        self, credentials: Optional[str] = None, account: Optional[Account] = None
+    ) -> None:
         super().__init__(credentials, account)
         if credentials:
             self.credentials = json.loads(credentials)
 
-    def pre_add_account(self):
+    def pre_add_account(self) -> Response:
         url = request.args.get('domain')
         if not url:
             flash('Missing domain name')
@@ -68,7 +71,7 @@ class Mastodon(Site):
             )
         )
 
-    def add_account_callback(self) -> dict:
+    def add_account_callback(self) -> Union[dict, Response]:
         url = session.get('MASTODON_URL')
         app = MastodonApp.get_for_url(url)
         if not app:
@@ -116,13 +119,16 @@ class Mastodon(Site):
 
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         if not isinstance(self.credentials, dict):
-            raise SiteError('Bad saved credentials')
+            raise MissingCredentials()
 
         if not isinstance(extra, dict):
-            raise SiteError('Incorrect extra data')
+            raise BadData()
 
         url = self.credentials['url']
         app = MastodonApp.get_for_url(url)
+
+        if not app:
+            raise BadData()
 
         api = MastodonAPI(
             app.client_id,
@@ -157,10 +163,14 @@ class Mastodon(Site):
                 status += '\n'
 
                 for link in links:
-                    name = SHORT_NAMES[link[0]]
+                    site = Sites(link[0])
+                    name = SHORT_NAMES[site]
                     status += '\n{name}: {link}'.format(name=name, link=link[1])
 
-        noimage = self.account['twitter_noimage']
+        if self.account:
+            noimage = self.account['twitter_noimage']
+        else:
+            noimage = None
 
         content_warning: Optional[str] = extra.get('mastodon-warning', None)
         image_desc: Optional[str] = extra.get('mastodon-image-desc', None)

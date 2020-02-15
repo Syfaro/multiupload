@@ -1,6 +1,7 @@
 from io import BytesIO
 from os.path import join
-from typing import Any, List, Union, Optional
+from typing import Any, List, Union, Optional, Generator, Dict
+from abc import ABCMeta
 
 from flask import current_app
 from werkzeug import Response
@@ -8,9 +9,11 @@ from PIL import Image
 
 from multiupload.models import Account, SavedSubmission, SubmissionGroup
 from multiupload.submission import Rating, Submission
+from multiupload.constant import Sites
 
 
 SomeSubmission = Union[Submission, SavedSubmission]
+Credentials = Optional[Union[str, dict]]
 
 
 class BadCredentials(Exception):
@@ -26,21 +29,37 @@ class SiteError(Exception):
         self.message = message
 
 
-class Site(object):
-    credentials: Union[None, str, dict] = None
-    account: Optional[Account] = None
+class MissingAccount(Exception):
+    pass
 
-    def __init__(self, credentials=None, account=None):
+
+class MissingCredentials(Exception):
+    pass
+
+
+class BadData(Exception):
+    pass
+
+
+class Site(metaclass=ABCMeta):
+    SITE: Sites
+
+    credentials: Credentials
+    account: Optional[Account]
+
+    def __init__(
+        self, credentials: Optional[str] = None, account: Optional[Account] = None
+    ) -> None:
         self.credentials = credentials
         self.account = account
 
     def pre_add_account(self) -> Optional[Union[dict, Response]]:
         return None
 
-    def add_account_callback(self) -> Union[None, str, dict]:
+    def add_account_callback(self) -> Optional[Union[str, dict, Response]]:
         return None
 
-    def parse_add_form(self, form) -> Optional[dict]:
+    def parse_add_form(self, form: dict) -> Optional[dict]:
         return None
 
     def add_account(self, data: dict) -> Union[Account, List[Account]]:
@@ -58,10 +77,10 @@ class Site(object):
     def tag_str(self, tags: List[str]) -> str:
         return ' '.join(tags)
 
-    def get_folders(self, update=False) -> Optional[List[dict]]:
+    def get_folders(self, update: bool = False) -> Optional[List[dict]]:
         return None
 
-    def upload_group(self, group: SubmissionGroup, extra: Any = None):
+    def upload_group(self, group: SubmissionGroup, extra: Any = None) -> str:
         raise NotImplementedError()
 
     @staticmethod
@@ -73,7 +92,11 @@ class Site(object):
         return False
 
     @staticmethod
-    def collect_images(submissions: List[SavedSubmission], max_size=None, format=None):
+    def collect_images(
+        submissions: List[SavedSubmission],
+        max_size: Optional[int] = None,
+        format: str = None,
+    ) -> Generator[Dict[str, Any], None, None]:
         for sub in submissions:
             with open(
                 join(current_app.config['UPLOAD_FOLDER'], sub.image_filename), 'rb'

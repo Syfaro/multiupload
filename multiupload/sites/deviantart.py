@@ -1,13 +1,22 @@
 import json
-from typing import Any
+from typing import Any, Dict, List
 from urllib.parse import urlencode
 
 import requests
-from flask import Response, current_app, flash, g, redirect, request, session
+from flask import current_app, flash, g, redirect, request, session
+from werkzeug import Response
 
 from multiupload.constant import HEADERS, Sites
 from multiupload.models import Account, AccountData, db
-from multiupload.sites import AccountExists, BadCredentials, Site, SiteError
+from multiupload.sites import (
+    AccountExists,
+    BadCredentials,
+    BadData,
+    MissingAccount,
+    MissingCredentials,
+    Site,
+    SiteError,
+)
 from multiupload.submission import Rating, Submission
 
 AUTH_ENDPOINT = 'https://www.deviantart.com/oauth2/authorize'
@@ -23,13 +32,15 @@ class DeviantArtAPI(object):
     redirect = None
     scope = None
 
-    def __init__(self, client_id, client_secret, redirect, scope):
+    def __init__(
+        self, client_id: str, client_secret: str, redirect: str, scope: str
+    ) -> None:
         self.client_id = client_id
         self.client_secret = client_secret
         self.redirect = redirect
         self.scope = scope
 
-    def auth_url(self, state=''):
+    def auth_url(self, state: str = '') -> str:
         return (
             AUTH_ENDPOINT
             + '?'
@@ -44,7 +55,7 @@ class DeviantArtAPI(object):
             )
         )
 
-    def access_token(self, code):
+    def access_token(self, code: str) -> Dict[str, Any]:
         return requests.post(
             TOKEN_ENDPOINT,
             data={
@@ -56,7 +67,7 @@ class DeviantArtAPI(object):
             },
         ).json()
 
-    def refresh_token(self, refresh):
+    def refresh_token(self, refresh: str) -> Dict[str, Any]:
         return requests.post(
             TOKEN_ENDPOINT,
             data={
@@ -68,7 +79,7 @@ class DeviantArtAPI(object):
         ).json()
 
     @staticmethod
-    def validate_token(token):
+    def validate_token(token: str) -> Dict[str, Any]:
         return requests.post(PLACEBO_CALL, data={'access_token': token}).json()
 
 
@@ -85,7 +96,11 @@ class DeviantArt(Site):
     def add_account_callback(self) -> dict:
         da = self.get_da()
 
-        r = da.access_token(request.args.get('code'))
+        code = request.args.get('code')
+        if not code:
+            raise BadData()
+
+        r = da.access_token(code)
 
         if r['status'] == 'success':
             session['da_refresh'] = r['refresh_token']
@@ -124,7 +139,7 @@ class DeviantArt(Site):
         return account
 
     @staticmethod
-    def _build_exception(resp) -> SiteError:
+    def _build_exception(resp: dict) -> SiteError:
         desc = resp.get('error_description')
         if not desc:
             return SiteError('Unknown error')
@@ -141,7 +156,12 @@ class DeviantArt(Site):
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         da = self.get_da()
 
+        if not self.credentials or not isinstance(self.credentials, str):
+            raise MissingCredentials()
+
         r = da.refresh_token(self.credentials)
+        if not self.account:
+            raise MissingAccount()
         self.account.update_credentials(r['refresh_token'])
         db.session.commit()
 
@@ -221,7 +241,13 @@ class DeviantArt(Site):
 
         return pub['url']
 
-    def get_folders(self, update=False):
+    def get_folders(self, update: bool = False) -> List[dict]:
+        if not self.account:
+            raise MissingAccount()
+
+        if not self.credentials or not isinstance(self.credentials, str):
+            raise MissingCredentials()
+
         prev_folders: AccountData = self.account.data.filter_by(key='folders').first()
         if prev_folders and not update:
             return prev_folders.json
@@ -232,7 +258,7 @@ class DeviantArt(Site):
         self.account.update_credentials(r['refresh_token'])
         db.session.commit()
 
-        all_folders = []
+        all_folders: List[dict] = []
 
         while True:
             data = {'access_token': r['access_token'], 'limit': 50}
@@ -262,6 +288,8 @@ class DeviantArt(Site):
         if prev_folders:
             prev_folders.json = all_folders
         else:
+            if not self.account:
+                raise MissingAccount()
             prev_folders = AccountData(self.account, 'folders', all_folders)
             db.session.add(prev_folders)
 
@@ -270,7 +298,7 @@ class DeviantArt(Site):
         return all_folders
 
     @staticmethod
-    def get_da():
+    def get_da() -> DeviantArtAPI:
         return DeviantArtAPI(
             current_app.config['DEVIANTART_KEY'],
             current_app.config['DEVIANTART_SECRET'],
@@ -279,5 +307,5 @@ class DeviantArt(Site):
         )
 
     @staticmethod
-    def supports_folder():
+    def supports_folder() -> bool:
         return True

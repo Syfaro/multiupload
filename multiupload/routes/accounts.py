@@ -1,5 +1,5 @@
 import time
-from typing import List
+from typing import List, Any
 
 from flask import (
     Blueprint,
@@ -25,13 +25,13 @@ app = Blueprint('accounts', __name__)
 
 @app.route('/manage')
 @login_required
-def manage():
+def manage() -> Any:
     return render_template('accounts/accounts.html', sites=known_list(), user=g.user)
 
 
 @app.route('/add/<int:site_id>', methods=['GET'])
 @login_required
-def add(site_id):
+def add(site_id: int) -> Any:
     try:
         site = Sites(site_id)
     except ValueError:
@@ -65,7 +65,7 @@ def add(site_id):
 
 @app.route('/add/<int:site_id>/callback', methods=['GET'])
 @login_required
-def add_callback(site_id):
+def add_callback(site_id: int) -> Any:
     site = Sites(site_id)
 
     if not site:
@@ -99,7 +99,7 @@ def add_callback(site_id):
 
 @app.route('/add/<int:site_id>', methods=['POST'])
 @login_required
-def add_post(site_id):
+def add_post(site_id: int) -> Any:
     start_time = time.time()
 
     try:
@@ -150,7 +150,7 @@ def add_post(site_id):
 
 @app.route('/remove/<int:account_id>')
 @login_required
-def remove(account_id):
+def remove(account_id: int) -> Any:
     account = Account.find(account_id)
 
     if not account:
@@ -162,7 +162,7 @@ def remove(account_id):
 
 @app.route('/remove', methods=['POST'])
 @login_required
-def remove_post():
+def remove_post() -> Any:
     account_id = request.form.get('id')
     if not account_id:
         flash('Missing account ID.')
@@ -183,7 +183,7 @@ def remove_post():
 
 @app.route('/refresh/folders', methods=['GET'])
 @login_required
-def refresh_folders():
+def refresh_folders() -> Any:
     accounts: List[Account] = g.user.accounts
 
     for account in accounts:

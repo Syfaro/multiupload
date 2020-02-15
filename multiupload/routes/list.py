@@ -1,5 +1,5 @@
 from os.path import join
-from typing import List, Optional
+from typing import List, Optional, Any
 
 from flask import (
     Blueprint,
@@ -23,7 +23,7 @@ app = Blueprint('list', __name__)
 
 @app.route('/index', methods=['GET'])
 @login_required
-def index():
+def index() -> Any:
     groups: List[SubmissionGroup] = SubmissionGroup.get_groups()
     ungrouped: List[SavedSubmission] = SubmissionGroup.get_ungrouped_submissions()
 
@@ -34,8 +34,8 @@ def index():
 
 @app.route('/remove', methods=['POST'])
 @login_required
-def remove():
-    sub_id: str = request.form.get('id')
+def remove() -> Any:
+    sub_id: Optional[str] = request.form.get('id')
 
     if not sub_id:
         return redirect(url_for('list.index'))
@@ -58,14 +58,17 @@ def remove():
 
 @app.route('/save', methods=['POST'])
 @login_required
-def save():
-    sub_id: str = request.form.get('id')
+def save() -> Any:
+    sub_id: str = request.form['id']
     title: Optional[str] = request.form.get('title')
     description: Optional[str] = request.form.get('description')
     tags: Optional[str] = request.form.get('keywords')
-    rating: Optional[str] = request.form.get('rating')
-    if rating:
-        rating = Rating(rating)
+    rating_str: Optional[str] = request.form.get('rating')
+    rating: Optional[Rating]
+    if rating_str:
+        rating = Rating(rating_str)
+    else:
+        rating = None
     accounts: List[str] = request.form.getlist('account')
     image: FileStorage = request.files.get('image')
 
@@ -103,7 +106,7 @@ def save():
 
 @app.route('/group/add', methods=['POST'])
 @login_required
-def group_add_post():
+def group_add_post() -> Any:
     j = request.get_json()
 
     posts: str = j.get('posts')
@@ -166,8 +169,8 @@ def group_add_post():
 
 @app.route('/group/remove', methods=['POST'])
 @login_required
-def group_remove_post():
-    group_id: str = request.form.get('group_id')
+def group_remove_post() -> Any:
+    group_id: Optional[str] = request.form.get('group_id')
     if not group_id:
         return redirect(url_for('list.index'))
 
@@ -194,8 +197,8 @@ def group_remove_post():
 
 @app.route('/group/delete', methods=['POST'])
 @login_required
-def group_delete_post():
-    group_id: str = request.form.get('group_id')
+def group_delete_post() -> Any:
+    group_id: Optional[str] = request.form.get('group_id')
     if not group_id:
         return redirect(url_for('list.index'))
 

@@ -1,5 +1,6 @@
 import passwordmeter
 import requests
+from typing import Any
 from flask import (
     Blueprint,
     current_app,
@@ -21,7 +22,7 @@ app = Blueprint('home', __name__)
 
 
 @app.route('/')
-def home():
+def home() -> Any:
     if 'id' in session and User.query.get(session['id']):
         return redirect(url_for('upload.create_art'))
 
@@ -31,7 +32,7 @@ def home():
 
 
 @app.route('/features')
-def features():
+def features() -> Any:
     if 'id' in session:
         g.user = User.query.get(session['id'])
 
@@ -39,21 +40,21 @@ def features():
 
 
 @app.route('/upload')
-def upload_redir():
+def upload_redir() -> Any:
     return redirect(url_for('upload.create_art'))
 
 
 @app.route('/logout')
-def logout():
+def logout() -> Any:
     session.clear()
 
     return redirect(url_for('home.home'))
 
 
 @app.route('/login', methods=['POST'])
-def login_post():
-    username: str = request.form.get('username')
-    password: str = request.form.get('password')
+def login_post() -> Any:
+    username: str = request.form.get('username', '')
+    password: str = request.form.get('password', '')
 
     if not username:
         flash('Missing username.')
@@ -65,7 +66,7 @@ def login_post():
         flash('Missing password.')
         return redirect(url_for('home.home'))
 
-    user: User = User.by_name_or_email(username)
+    user = User.by_name_or_email(username)
 
     if not user or not user.verify(password):
         flash('Invalid username or password.')
@@ -86,11 +87,11 @@ def login_post():
 
 
 @app.route('/register', methods=['POST'])
-def register_post():
-    username: str = request.form.get('username')
-    password: str = request.form.get('password')
-    confirm_password: str = request.form.get('confirm_password')
-    email: str = request.form.get('email')
+def register_post() -> Any:
+    username = request.form.get('username', '')
+    password = request.form.get('password', '')
+    confirm_password = request.form.get('confirm_password', '')
+    email = request.form.get('email', '')
 
     if not username:
         flash('Missing username.')
@@ -178,7 +179,7 @@ def register_post():
 
 
 @app.app_template_global('notices')
-def global_notices():
+def global_notices() -> Any:  # TODO: not be any
     if hasattr(g, 'user'):
         return get_active_notices(g.user.id)
     else:

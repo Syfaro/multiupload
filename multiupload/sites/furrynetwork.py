@@ -1,6 +1,6 @@
 import json
 import re
-from typing import Any, List
+from typing import Any, List, Dict, Optional
 
 import cfscrape
 from flask import flash, g, session
@@ -8,7 +8,14 @@ from flask import flash, g, session
 import simplecrypt
 from multiupload.constant import HEADERS, Sites
 from multiupload.models import Account, AccountData, db
-from multiupload.sites import BadCredentials, Site, SiteError
+from multiupload.sites import (
+    BadCredentials,
+    BadData,
+    MissingAccount,
+    MissingCredentials,
+    Site,
+    SiteError,
+)
 from multiupload.submission import Rating, Submission
 from multiupload.utils import write_site_response, clear_recorded_pages, record_page
 
@@ -18,12 +25,14 @@ class FurryNetwork(Site):
 
     SITE = Sites.FurryNetwork
 
-    def __init__(self, credentials=None, account=None):
+    def __init__(
+        self, credentials: Optional[str] = None, account: Optional[Account] = None
+    ) -> None:
         super().__init__(credentials, account)
         if credentials:
             self.credentials = json.loads(credentials)
 
-    def parse_add_form(self, form) -> dict:
+    def parse_add_form(self, form: dict) -> dict:
         return {'username': form.get('email', ''), 'password': form.get('password', '')}
 
     def add_account(self, data: dict) -> List[Account]:
@@ -113,7 +122,7 @@ class FurryNetwork(Site):
         clear_recorded_pages()
 
         if not isinstance(self.credentials, dict):
-            raise SiteError('Internal data is incorrect')
+            raise MissingCredentials()
 
         character_id = self.credentials['character_id']
 
@@ -206,6 +215,8 @@ class FurryNetwork(Site):
         collection_ids = []
 
         if isinstance(extra, dict):
+            if not self.account:
+                raise MissingAccount()
             collection = extra.get('folder-{0}'.format(self.account.id))
         else:
             collection = None
@@ -214,7 +225,7 @@ class FurryNetwork(Site):
             collection_ids.append(int(collection))
 
         if not submission.rating:
-            raise SiteError('Unable to parse Submission rating')
+            raise BadData()
 
         req = sess.patch(
             'https://beta.furrynetwork.com/api/artwork/{id}'.format(id=post_id),
@@ -260,12 +271,18 @@ class FurryNetwork(Site):
 
         return r
 
-    def get_folders(self, update=False):
+    def get_folders(self, update: bool = False) -> List[Dict[str, Any]]:
+        if not self.account:
+            raise MissingAccount()
+
         prev_folders: AccountData = self.account.data.filter_by(key='folders').first()
         if prev_folders and not update:
             return prev_folders.json
 
         sess = cfscrape.create_scraper()
+
+        if not self.credentials or not isinstance(self.credentials, dict):
+            raise MissingCredentials()
 
         character_id = self.credentials['character_id']
 
@@ -322,6 +339,8 @@ class FurryNetwork(Site):
         if prev_folders:
             prev_folders.json = folders
         else:
+            if not self.account:
+                raise MissingAccount()
             prev_folders = AccountData(self.account, 'folders', folders)
             db.session.add(prev_folders)
 
@@ -330,5 +349,5 @@ class FurryNetwork(Site):
         return folders
 
     @staticmethod
-    def supports_folder():
+    def supports_folder() -> bool:
         return True

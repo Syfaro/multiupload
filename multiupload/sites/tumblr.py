@@ -1,5 +1,5 @@
 import json
-from typing import Any, List
+from typing import Any, List, Optional
 
 import tumblpy
 from flask import current_app, flash, redirect, request, session
@@ -7,7 +7,14 @@ from werkzeug import Response
 
 from multiupload.constant import Sites
 from multiupload.models import Account, AccountData, SubmissionGroup, db
-from multiupload.sites import BadCredentials, Site, SiteError
+from multiupload.sites import (
+    BadCredentials,
+    BadData,
+    MissingAccount,
+    MissingCredentials,
+    Site,
+    SiteError,
+)
 from multiupload.submission import Submission
 from multiupload.utils import tumblr_blog_name
 
@@ -17,7 +24,9 @@ class Tumblr(Site):
 
     SITE = Sites.Tumblr
 
-    def __init__(self, credentials=None, account=None):
+    def __init__(
+        self, credentials: Optional[str] = None, account: Optional[Account] = None
+    ) -> None:
         super().__init__(credentials, account)
         if credentials:
             self.credentials = json.loads(credentials)
@@ -110,7 +119,7 @@ class Tumblr(Site):
 
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         if not isinstance(self.credentials, dict):
-            raise SiteError('Bad saved credentials')
+            raise MissingCredentials()
 
         t = tumblpy.Tumblpy(
             current_app.config['TUMBLR_KEY'],
@@ -120,11 +129,13 @@ class Tumblr(Site):
         )
 
         if not self.account:
-            raise SiteError('Missing account')
+            raise MissingCredentials()
 
-        if self.account['tumblr_title'] and self.account['tumblr_title'].val == 'yes':
+        title = self.account['tumblr_title']
+
+        if title and title.val == 'yes':
             if not submission.title or not submission.description:
-                raise SiteError('Missing Submission data')
+                raise BadData()
 
             submission.description = (
                 '## ' + submission.title + '\n\n' + submission.description
@@ -164,7 +175,7 @@ class Tumblr(Site):
 
     def upload_group(self, group: SubmissionGroup, extra: Any = None) -> str:
         if not isinstance(self.credentials, dict):
-            raise SiteError('Bad saved credentials')
+            raise MissingCredentials()
 
         t = tumblpy.Tumblpy(
             current_app.config['TUMBLR_KEY'],
@@ -182,9 +193,11 @@ class Tumblr(Site):
         image_bytes = [image['bytes'] for image in images]
 
         if not self.account:
-            raise SiteError('Missing account')
+            raise MissingAccount()
 
-        if self.account['tumblr_title'] and self.account['tumblr_title'].val == 'yes':
+        title = self.account['tumblr_title']
+
+        if title and title.val == 'yes':
             master.description = '## ' + master.title + '\n\n' + master.description
 
         params = {

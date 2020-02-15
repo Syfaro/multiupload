@@ -1,3 +1,5 @@
+# type: ignore
+
 import unittest
 
 from multiupload.description import get_mastodon_link, parse_description

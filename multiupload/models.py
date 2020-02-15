@@ -1,12 +1,13 @@
 import json
 from random import SystemRandom
 from string import ascii_letters
-from typing import Any, List, Union
+from typing import Any, List, Union, Optional, Dict
 
 from bcrypt import gensalt, hashpw
 from flask import g, session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
+from sqlalchemy.orm import Query
 from authlib.integrations.sqla_oauth2 import (
     OAuth2ClientMixin,
     OAuth2TokenMixin,
@@ -55,13 +56,13 @@ class User(db.Model):  # type: ignore
         return hashpw(password.encode('utf-8'), self_password) == self_password
 
     @classmethod
-    def by_name_or_email(cls, s: str):
+    def by_name_or_email(cls, s: str) -> Optional['User']:
         return cls.query.filter(
             (func.lower(cls.email) == func.lower(s))
             | (func.lower(cls.username) == func.lower(s))
         ).first()
 
-    def get_user_id(self):
+    def get_user_id(self) -> int:
         return self.id
 
 
@@ -104,7 +105,7 @@ class Account(db.Model):  # type: ignore
     def update_credentials(self, credentials: str) -> None:
         self.credentials = encrypt(session['password'], credentials)
 
-    def __getitem__(self, arg):
+    def __getitem__(self, arg: str) -> Optional['AccountConfig']:
         return self.config.filter_by(key=arg).first()
 
     @property
@@ -112,11 +113,11 @@ class Account(db.Model):  # type: ignore
         return Sites(self.site_id)
 
     @classmethod
-    def find(cls, account_id: int):
+    def find(cls, account_id: int) -> Optional['Account']:
         return cls.query.filter_by(id=account_id).filter_by(user_id=g.user.id).first()
 
     @classmethod
-    def all(cls):
+    def all(cls) -> List['Account']:
         return (
             cls.query.filter_by(user_id=g.user.id)
             .order_by(cls.site_id.asc())
@@ -125,7 +126,9 @@ class Account(db.Model):  # type: ignore
         )
 
     @classmethod
-    def lookup_username(cls, site: Sites, uid: int, username: str):
+    def lookup_username(
+        cls, site: Sites, uid: int, username: str
+    ) -> Optional['Account']:
         return (
             cls.query.filter_by(site_id=site.value)
             .filter_by(user_id=uid)
@@ -150,7 +153,7 @@ class AccountConfig(db.Model):  # type: ignore
         self.key = key
         self.val = val
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<AccountConfig {id}, {account_id}, {key}: {value}>'.format(
             id=self.id, account_id=self.account_id, key=self.key, value=self.val
         )
@@ -181,7 +184,7 @@ class AccountData(db.Model):  # type: ignore
         return json.loads(self.data)
 
     @json.setter
-    def json(self, data) -> None:
+    def json(self, data: Any) -> None:
         self.data = json.dumps(data)
 
 
@@ -193,11 +196,11 @@ class Notice(db.Model):  # type: ignore
     def __init__(self, text: str):
         self.text = text
 
-    def was_viewed_by(self, user: int):
+    def was_viewed_by(self, user: int) -> Optional['Notice']:
         return NoticeViewed.query.filter_by(notice_id=self.id, user_id=user).first()
 
     @classmethod
-    def find_active(cls):
+    def find_active(cls) -> Query:
         return cls.query.filter_by(active=True).order_by(cls.id.asc())
 
 
@@ -238,7 +241,7 @@ class SavedSubmission(db.Model):  # type: ignore
         title: str = None,
         description: str = None,
         tags: str = None,
-        rating: str = None,
+        rating: Rating = None,
     ):
         if user:
             self.user_id = user.id
@@ -247,11 +250,11 @@ class SavedSubmission(db.Model):  # type: ignore
         self.tags = tags
         self.rating = rating
 
-    def set_accounts(self, ids: List[int]) -> None:
+    def set_accounts(self, ids: List[str]) -> None:
         self.account_ids = ' '.join([str(i) for i in ids])
 
     @property
-    def group(self):
+    def group(self) -> Optional['SubmissionGroup']:
         return (
             SubmissionGroup.query.filter_by(user_id=g.user.id)
             .filter_by(id=self.group_id)
@@ -259,15 +262,18 @@ class SavedSubmission(db.Model):  # type: ignore
         )
 
     @property
-    def accounts(self):
+    def accounts(self) -> List[Optional[Account]]:
         if self.account_ids is None:
             return []
 
         account_ids = self.account_ids.split(' ')
 
-        return [Account.find(int(account)) for account in filter(None, account_ids)]
+        # TODO: figure out why MyPy doesn't like this
+        return [  # type: ignore
+            Account.find(int(account)) for account in filter(None, account_ids)
+        ]
 
-    def all_selected_accounts(self, user):
+    def all_selected_accounts(self, user: User) -> List[Dict[str, bool]]:
         accounts = self.accounts
         all_accounts = user.accounts
 
@@ -286,10 +292,6 @@ class SavedSubmission(db.Model):  # type: ignore
             self.title, self.description, self.tags, self.rating.value, self
         )
 
-    @property
-    def data(self) -> dict:
-        return json.loads(self.site_data) if self.site_data else {}
-
     def has_all(self, ignore_sites: bool = False) -> bool:
         return all(
             i is not None and i != ''
@@ -303,14 +305,16 @@ class SavedSubmission(db.Model):  # type: ignore
             ]
         )
 
-    # This gets ignored because mypy conflicts the data from the setter and
-    # the method.
-    @data.setter  # type: ignore
+    @property
+    def data(self) -> dict:
+        return json.loads(self.site_data) if self.site_data else {}
+
+    @data.setter
     def data(self, value: dict) -> None:
         self.site_data = json.dumps(value)
 
     @classmethod
-    def get_grouped(cls):
+    def get_grouped(cls) -> List['SavedSubmission']:
         return (
             cls.query.filter_by(user_id=g.user.id)
             .filter_by(master=False)
@@ -321,7 +325,7 @@ class SavedSubmission(db.Model):  # type: ignore
         )
 
     @classmethod
-    def find(cls, sub_id: int):
+    def find(cls, sub_id: int) -> Optional['SavedSubmission']:
         return cls.query.filter_by(user_id=g.user.id).filter_by(id=sub_id).first()
 
 
@@ -337,7 +341,7 @@ class SubmissionGroup(db.Model):  # type: ignore
         self.grouped = grouped
 
     @classmethod
-    def get_groups(cls):
+    def get_groups(cls) -> List['SubmissionGroup']:
         return cls.query.filter_by(user_id=g.user.id).all()
 
     @staticmethod
@@ -371,7 +375,7 @@ class SubmissionGroup(db.Model):  # type: ignore
         )
 
     @classmethod
-    def find(cls, group_id: int):
+    def find(cls, group_id: int) -> Optional['SubmissionGroup']:
         return cls.query.filter_by(user_id=g.user.id).filter_by(id=group_id).first()
 
 
@@ -390,7 +394,7 @@ class SavedTemplate(db.Model):  # type: ignore
         self.name = name
         self.content = content
 
-    def as_dict(self):
+    def as_dict(self) -> Dict[str, Any]:
         return {'id': self.id, 'name': self.name, 'content': self.content}
 
 

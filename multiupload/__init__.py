@@ -43,7 +43,7 @@ migrate = Migrate(app, db, render_as_batch=True)
 
 
 @app.before_request
-def start_influx():
+def start_influx() -> None:
     influx = app.config.get('INFLUXDB', None)
     if not influx:
         return
@@ -61,7 +61,7 @@ def nonce() -> str:
 
 
 @app.after_request
-def record_stats(resp):
+def record_stats(resp):  # type: ignore
     if not app.debug:
         if resp.content_type == 'text/html; charset=utf-8':
             resp.set_data(minify(resp.get_data(as_text=True)))
@@ -108,13 +108,13 @@ def record_stats(resp):
 
 
 @app.errorhandler(500)
-def internal_server_error(error):
+def internal_server_error(error):  # type: ignore
     event, dsn = g.sentry_event_id, sentry.client.get_public_dsn('https')
     return render_template('500.html', event_id=event, public_dsn=dsn), 500
 
 
 @app.errorhandler(403)
-def forbidden_error(error):
+def forbidden_error(error):  # type: ignore
     return render_template('403.html'), 403
 
 

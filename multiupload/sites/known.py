@@ -1,5 +1,6 @@
-from typing import Generator, List, Tuple
+from typing import Generator, List, Tuple, Type
 
+from multiupload.sites import Site
 from multiupload.sites.deviantart import DeviantArt
 from multiupload.sites.furaffinity import FurAffinity
 from multiupload.sites.furrynetwork import FurryNetwork
@@ -10,7 +11,7 @@ from multiupload.sites.tumblr import Tumblr
 from multiupload.sites.twitter import Twitter
 from multiupload.sites.weasyl import Weasyl
 
-KNOWN_SITES = [
+KNOWN_SITES: List[Type[Site]] = [
     DeviantArt,
     FurAffinity,
     FurryNetwork,

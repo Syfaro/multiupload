@@ -1,7 +1,7 @@
 from enum import Enum
 from io import BytesIO
 from os.path import join
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Any
 
 from flask import current_app
 from PIL import Image
@@ -42,7 +42,10 @@ class Submission(object):
     image_mimetype: Optional[str] = None  # Mime type of image in submission
     _image_size: Optional[int] = None
 
-    def __init__(self, title: str, description: str, tags: str, rating: str, image):
+    # TODO: fix image type
+    def __init__(
+        self, title: str, description: str, tags: str, rating: str, image: Any
+    ) -> None:
         """Create a new Submission automatically parsing tags into regular tags
         and hashtags, and reading the image in."""
         self.title = title

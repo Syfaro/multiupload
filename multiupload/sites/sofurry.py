@@ -1,5 +1,5 @@
 import json
-from typing import Any, List
+from typing import Any, List, Optional
 
 import cfscrape
 from bs4 import BeautifulSoup
@@ -7,7 +7,14 @@ from flask import session
 
 from multiupload.constant import HEADERS, Sites
 from multiupload.models import Account, db
-from multiupload.sites import BadCredentials, Site, SiteError
+from multiupload.sites import (
+    BadCredentials,
+    BadData,
+    Site,
+    SiteError,
+    MissingAccount,
+    MissingCredentials,
+)
 from multiupload.submission import Rating, Submission
 from multiupload.utils import write_site_response, record_page, clear_recorded_pages
 
@@ -15,12 +22,14 @@ from multiupload.utils import write_site_response, record_page, clear_recorded_p
 class SoFurry(Site):
     SITE = Sites.SoFurry
 
-    def __init__(self, credentials=None, account=None):
+    def __init__(
+        self, credentials: Optional[str] = None, account: Optional[Account] = None
+    ) -> None:
         super().__init__(credentials, account)
         if credentials:
             self.credentials = json.loads(credentials)
 
-    def parse_add_form(self, form) -> dict:
+    def parse_add_form(self, form: dict) -> dict:
         return {
             'username': form.get('username', ''),
             'password': form.get('password', ''),
@@ -61,10 +70,10 @@ class SoFurry(Site):
         clear_recorded_pages()
 
         if not isinstance(self.credentials, dict):
-            raise SiteError('Invalid saved credentials')
+            raise MissingCredentials()
 
         if not isinstance(extra, dict):
-            raise SiteError('Incorrect extra data provided')
+            raise BadData()
 
         req = sess.post(
             'https://www.sofurry.com/user/login',
@@ -95,6 +104,9 @@ class SoFurry(Site):
         except (IndexError, ValueError):
             raise SiteError('Unable to load upload page for SoFurry')
 
+        if not submission.rating:
+            raise BadData()
+
         req = sess.post(
             'https://www.sofurry.com/upload/details?contentType=1',
             data={
@@ -116,6 +128,9 @@ class SoFurry(Site):
 
     def map_rating(self, rating: Rating) -> str:
         r = '2'
+
+        if not self.account:
+            raise MissingAccount()
 
         should_remap = self.account['remap_sofurry']
         if should_remap and should_remap.val == 'yes':

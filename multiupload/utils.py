@@ -6,7 +6,7 @@ from functools import wraps
 from random import SystemRandom
 from string import ascii_lowercase
 from subprocess import PIPE, Popen
-from typing import List, Tuple, Union, Optional
+from typing import Any, Callable, List, Tuple, Union, Optional, cast, Iterable
 
 import requests
 from flask import current_app, flash, g, redirect, request, session, url_for
@@ -20,32 +20,34 @@ rng = SystemRandom()
 RESIZE_EXP = re.compile(r'(?P<height>\d+)\D{1,}(?P<width>\d+)')
 
 
-def random_string(length) -> str:
+def random_string(length: int) -> str:
     return ''.join(rng.choice(ascii_lowercase) for _ in range(length))
 
 
 def git_version() -> str:
     gitproc = Popen(['git', 'rev-parse', 'HEAD'], stdout=PIPE)
     (stdout, _) = gitproc.communicate()
-    return stdout.strip().decode('utf-8')
+    s = cast(bytes, stdout)
+    return s.decode('utf-8').strip()
 
 
-def english_series(items) -> str:
-    items = tuple(items)
+def english_series(series: Iterable[str]) -> str:
+    items = tuple(series)
     if len(items) <= 1:
         return ''.join(items)
     return ', '.join(x for x in items[:-1]) + ', and ' + items[-1]
 
 
-def tumblr_blog_name(url):
+def tumblr_blog_name(url: str) -> str:
     return url.split('//')[-1].split('/')[0]
 
 
-def get_active_notices(user: Optional[int] = None):
-    notices: List[Notice] = Notice.find_active().all()
+def get_active_notices(user: Optional[int] = None) -> List[Notice]:
+    notices = Notice.find_active().all()
 
     if user:
-        notices = list(filter(lambda notice: not notice.was_viewed_by(user), notices))
+        u: int = user  # I'm not sure why MyPy requires this
+        notices = list(filter(lambda notice: not notice.was_viewed_by(u), notices))
 
     return notices
 
@@ -62,9 +64,9 @@ def send_to_influx(point: dict) -> None:
         sentry.captureException()
 
 
-def login_required(f):
+def login_required(f: Callable[..., Any]) -> Callable[..., Any]:
     @wraps(f)
-    def decorated_function(*args, **kwargs):
+    def decorated_function(*args: tuple, **kwargs: dict) -> Callable[..., Any]:
         if 'id' not in session:
             flash('You must log in before you can view this page.')
 
@@ -72,6 +74,7 @@ def login_required(f):
 
             # See if we have a query string and can decode it
             # Query string is needed for OAuth redirect
+            query: Optional[str]
             try:
                 query = request.query_string.decode('utf-8')
             except:
@@ -113,19 +116,19 @@ def save_multi_dict(d: MultiDict) -> dict:
     return n
 
 
-def safe_ext(name: str) -> Union[bool, str]:
+def safe_ext(name: str) -> Optional[str]:
     if '.' not in name:
-        return False
+        return None
 
     split = name.rsplit('.', 1)[1].lower()
     if split not in current_app.config['ALLOWED_EXTENSIONS']:
-        return False
+        return None
 
     return split
 
 
 def write_upload_time(
-    start_time, site: int = None, measurement: str = 'upload_time'
+    start_time: float, site: int = None, measurement: str = 'upload_time'
 ) -> None:
     duration = time.time() - start_time
 
@@ -200,7 +203,7 @@ def save_debug_pages() -> None:
 
     os.mkdir(folder)
 
-    pages = g.debug_pages
+    pages: List[requests.Response] = g.debug_pages
 
     with open(os.path.join(folder, 'info.txt'), 'w') as f:
         f.write('Recorded At: %d\n\n' % time.time())
@@ -216,8 +219,8 @@ def save_debug_pages() -> None:
             f.write('URL: %s\n' % page.url)
             f.write('Status Code: %d\n' % page.status_code)
 
-        with open(os.path.join(folder, '%02d.html' % idx), 'wb') as f:
-            f.write(page.content)
+        with open(os.path.join(folder, '%02d.html' % idx), 'w') as f:
+            f.write(page.content.decode('utf-8'))
 
         if page.history:
             h_idx = 1
@@ -229,9 +232,9 @@ def save_debug_pages() -> None:
                     h.write('Status Code: %d\n' % history.status_code)
 
                 with open(
-                    os.path.join(folder, '%02d-%02d.html' % (idx, h_idx)), 'wb'
+                    os.path.join(folder, '%02d-%02d.html' % (idx, h_idx)), 'w'
                 ) as h:
-                    h.write(history.content)
+                    h.write(history.content.decode('utf-8'))
 
                 h_idx += 1
 

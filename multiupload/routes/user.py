@@ -1,7 +1,7 @@
 import re
 from random import SystemRandom
 from string import ascii_letters
-from typing import Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 import bcrypt
 import passwordmeter
@@ -42,7 +42,7 @@ _paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
 
 @app.app_template_filter('nl2br')
 @evalcontextfilter
-def nl2br(eval_ctx, value):
+def nl2br(eval_ctx, value) -> Union[str, Markup]:
     result = u'\n\n'.join(
         u'<p>%s</p>' % p.replace('\n', Markup('<br>\n'))
         for p in _paragraph_re.split(escape(value))
@@ -54,8 +54,8 @@ def nl2br(eval_ctx, value):
 
 @app.route('/dismiss', methods=['POST'])
 @login_required
-def dismiss_notice():
-    alert = request.form.get('id')
+def dismiss_notice() -> Any:
+    alert = request.form['id']
 
     viewed = NoticeViewed(alert, g.user.id)
 
@@ -66,7 +66,7 @@ def dismiss_notice():
 
 
 @app.route('/email/verify', methods=['GET'])
-def email_verify():
+def email_verify() -> Any:
     verifier = request.args.get('verifier')
 
     if not verifier:
@@ -90,7 +90,7 @@ def email_verify():
 
 @app.route('/email/subscribe')
 @login_required
-def email_subscribe():
+def email_subscribe() -> Any:
     requests.post(
         current_app.config['MAILGUN_LIST_ENDPOINT'],
         auth=('api', current_app.config['MAILGUN_KEY']),
@@ -106,7 +106,7 @@ def email_subscribe():
 
 @app.route('/email/unsubscribe')
 @login_required
-def email_unsubscribe():
+def email_unsubscribe() -> Any:
     requests.delete(
         current_app.config['MAILGUN_LIST_ENDPOINT'] + '/' + g.user.email,
         auth=('api', current_app.config['MAILGUN_KEY']),
@@ -121,13 +121,13 @@ def email_unsubscribe():
 
 @app.route('/email', methods=['GET'])
 @login_required
-def change_email():
+def change_email() -> Any:
     return render_template('user/change_email.html')
 
 
 @app.route('/email', methods=['POST'])
 @login_required
-def change_email_post():
+def change_email_post() -> Any:
     email = request.form.get('email')
     password = request.form.get('password')
 
@@ -172,13 +172,13 @@ def change_email_post():
 
 @app.route('/username', methods=['GET'])
 @login_required
-def change_username():
+def change_username() -> Any:
     return render_template('user/change_username.html')
 
 
 @app.route('/username', methods=['POST'])
 @login_required
-def change_username_post():
+def change_username_post() -> Any:
     username = request.form.get('username')
     password = request.form.get('password')
 
@@ -206,13 +206,13 @@ def change_username_post():
 
 @app.route('/password', methods=['GET'])
 @login_required
-def change_password():
+def change_password() -> Any:
     return render_template('user/change_password.html')
 
 
 @app.route('/password', methods=['POST'])
 @login_required
-def change_password_post():
+def change_password_post() -> Any:
     current_password = request.form.get('current_password', None)
     new_password = request.form.get('new_password', None)
     new_password_confirm = request.form.get('new_password_confirm', None)
@@ -255,12 +255,12 @@ def change_password_post():
 
 
 @app.route('/reset', methods=['GET'])
-def password_reset():
+def password_reset() -> Any:
     return render_template('user/reset.html')
 
 
 @app.route('/reset', methods=['POST'])
-def password_reset_post():
+def password_reset_post() -> Any:
     email = request.form.get('email')
     if not email:
         flash('Missing email address')
@@ -306,7 +306,7 @@ def password_reset_post():
 
 
 @app.route('/reset/verify', methods=['GET'])
-def password_reset_verify():
+def password_reset_verify() -> Any:
     if session.get('verifier'):
         verifier = session.pop('verifier')
     else:
@@ -324,7 +324,7 @@ def password_reset_verify():
 
 
 @app.route('/reset/verify', methods=['POST'])
-def password_reset_verify_post():
+def password_reset_verify_post() -> Any:
     verifier = request.form.get('verifier')
     password = request.form.get('password')
     confirm_password = request.form.get('confirm-password')
@@ -371,7 +371,7 @@ def password_reset_verify_post():
 
 @app.route('/settings')
 @login_required
-def settings():
+def settings() -> Any:
     sofurry = []
     furaffinity = []
     tumblr = []
@@ -447,7 +447,7 @@ def settings():
 
 @app.route('/debug', methods=['POST'])
 @login_required
-def settings_debug():
+def settings_debug() -> Any:
     if not g.user.save_errors:
         g.user.save_errors = True
         flash('Now logging site errors, thank you!')
@@ -462,7 +462,7 @@ def settings_debug():
 
 @app.route('/sofurry/remap', methods=['POST'])
 @login_required
-def settings_sofurry_remap_post():
+def settings_sofurry_remap_post() -> Any:
     sofurry_accounts = [
         account for account in g.user.accounts if account.site == Sites.SoFurry
     ]
@@ -486,7 +486,7 @@ def settings_sofurry_remap_post():
 
 @app.route('/furaffinity/resolution', methods=['POST'])
 @login_required
-def settings_furaffinity_resolution_post():
+def settings_furaffinity_resolution_post() -> Any:
     furaffinity_accounts = [
         account for account in g.user.accounts if account.site == Sites.FurAffinity
     ]
@@ -510,7 +510,7 @@ def settings_furaffinity_resolution_post():
 
 @app.route('/tumblr/title', methods=['POST'])
 @login_required
-def settings_tumblr_title_post():
+def settings_tumblr_title_post() -> Any:
     tumblr_accounts = [
         account for account in g.user.accounts if account.site == Sites.Tumblr
     ]
@@ -534,7 +534,7 @@ def settings_tumblr_title_post():
 
 @app.route('/twitter/nsfw', methods=['POST'])
 @login_required
-def settings_twitter_nsfw():
+def settings_twitter_nsfw() -> Any:
     twitter_accounts = [
         account for account in g.user.accounts if account.site == Sites.Twitter
     ]
@@ -558,7 +558,7 @@ def settings_twitter_nsfw():
 
 @app.route('/twitter/noimage', methods=['POST'])
 @login_required
-def settings_twitter_noimage():
+def settings_twitter_noimage() -> Any:
     twitter_accounts = [
         account for account in g.user.accounts if account.site == Sites.Twitter
     ]
@@ -582,8 +582,8 @@ def settings_twitter_noimage():
 
 @app.route('/theme', methods=['POST'])
 @login_required
-def update_theme():
-    theme_name = request.form.get('theme')
+def update_theme() -> Any:
+    theme_name = request.form['theme']
 
     if theme_name == 'Default':
         g.user.theme = None
@@ -624,7 +624,7 @@ def get_themes() -> Dict[str, dict]:
 
 @app.route('/template', methods=['GET'])
 @login_required
-def get_template():
+def get_template() -> Any:
     templates = SavedTemplate.query.filter_by(user_id=g.user.id).all()
 
     return render_template('user/template.html', templates=templates)
@@ -632,7 +632,7 @@ def get_template():
 
 @app.route('/template', methods=['POST'])
 @login_required
-def post_template():
+def post_template() -> Any:
     name = request.form.get('name')
     content = request.form.get('content')
 
@@ -652,7 +652,7 @@ def post_template():
 
 @app.route('/template/remove', methods=['POST'])
 @login_required
-def post_template_remove():
+def post_template_remove() -> Any:
     template_id = request.form.get('id')
 
     template = (
