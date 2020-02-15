@@ -69,6 +69,17 @@ def login_required(f):
             flash('You must log in before you can view this page.')
 
             session['redir'] = request.path
+
+            # See if we have a query string and can decode it
+            # Query string is needed for OAuth redirect
+            try:
+                query = request.query_string.decode('utf-8')
+            except:
+                query = None
+
+            if query:
+                session['redir'] += '?' + query
+
             return redirect(url_for('home.home'))
 
         user: User = User.query.get(session['id'])

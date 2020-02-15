@@ -145,7 +145,7 @@ def change_email_post():
         SystemRandom().choice(ascii_letters) for _ in range(16)
     )
 
-    with open('templates/email.txt') as f:
+    with open('multiupload/templates/email.txt') as f:
         email_body = f.read()
 
     requests.post(
@@ -281,7 +281,7 @@ def password_reset_post():
     )
     db.session.commit()
 
-    with open('templates/user/reset.txt') as f:
+    with open('multiupload/templates/user/reset.txt') as f:
         email_body = f.read()
 
     requests.post(

@@ -16,6 +16,7 @@ from multiupload.routes.home import app as home_app
 from multiupload.routes.list import app as list_app
 from multiupload.routes.upload import app as upload_app
 from multiupload.routes.user import app as user_app
+from multiupload.routes.oauth import app as oauth_app
 from multiupload.sentry import sentry
 from multiupload.utils import random_string
 
@@ -34,6 +35,7 @@ app.register_blueprint(user_app, url_prefix='/user')
 app.register_blueprint(accounts_app, url_prefix='/account')
 app.register_blueprint(list_app, url_prefix='/list')
 app.register_blueprint(api_app, url_prefix='/api/v1')
+app.register_blueprint(oauth_app, url_prefix='/oauth')
 
 app.jinja_env.globals['git_version'] = app.config['SENTRY_RELEASE']
 
@@ -122,6 +124,10 @@ with app.app_context():
 
     db.init_app(app)
     db.create_all()
+
+    from multiupload.oauth import config_oauth
+
+    config_oauth(app)
 
     from multiupload.models import Site
     from multiupload.sites.known import known_list

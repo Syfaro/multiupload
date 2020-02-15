@@ -7,6 +7,11 @@ from bcrypt import gensalt, hashpw
 from flask import g, session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
+from authlib.integrations.sqla_oauth2 import (
+    OAuth2ClientMixin,
+    OAuth2TokenMixin,
+    OAuth2AuthorizationCodeMixin,
+)
 
 from multiupload.constant import Sites
 from simplecrypt import encrypt
@@ -55,6 +60,9 @@ class User(db.Model):  # type: ignore
             (func.lower(cls.email) == func.lower(s))
             | (func.lower(cls.username) == func.lower(s))
         ).first()
+
+    def get_user_id(self):
+        return self.id
 
 
 class Site(db.Model):  # type: ignore
@@ -384,3 +392,21 @@ class SavedTemplate(db.Model):  # type: ignore
 
     def as_dict(self):
         return {'id': self.id, 'name': self.name, 'content': self.content}
+
+
+class Client(db.Model, OAuth2ClientMixin):  # type: ignore
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
+    user = db.relationship('User')
+
+
+class Token(db.Model, OAuth2TokenMixin):  # type: ignore
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
+    user = db.relationship('User')
+
+
+class AuthorizationCode(db.Model, OAuth2AuthorizationCodeMixin):  # type: ignore
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
+    user = db.relationship('User')

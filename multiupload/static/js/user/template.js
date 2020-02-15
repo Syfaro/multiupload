@@ -1,4 +1,7 @@
-import { h, Component, render } from 'preact';
+const h = preact.h;
+const Component = preact.Component;
+const render = preact.render;
+
 function chunk(arr, len) {
     let chunks = [], i = 0;
     const n = arr.length;

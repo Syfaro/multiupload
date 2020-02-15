@@ -27,6 +27,7 @@ Flask-Migrate = "*"
 Flask-SeaSurf = "*"
 "mastodon.py" = "*"
 cachelib = "*"
+authlib = "*"
 
 [dev-packages]
 pylint = "*"

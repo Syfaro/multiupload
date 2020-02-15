@@ -152,7 +152,7 @@ def register_post():
     session['password'] = password
 
     if email:
-        with open('templates/email.txt') as f:
+        with open('multiupload/templates/email.txt') as f:
             email_body = f.read()
 
         requests.post(
