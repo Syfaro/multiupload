@@ -219,15 +219,15 @@ def change_password_post():
 
     if not current_password:
         flash('Missing current password.')
-        return redirect(url_for('user.change_password_form'))
+        return redirect(url_for('user.change_password'))
 
     if not new_password:
         flash('Missing new password.')
-        return redirect(url_for('user.change_password_form'))
+        return redirect(url_for('user.change_password'))
 
     if not new_password_confirm or new_password != new_password_confirm:
         flash('Password confirmation does not match.')
-        return redirect(url_for('user.change_password_form'))
+        return redirect(url_for('user.change_password'))
 
     strength, improvements = passwordmeter.test(new_password)
     if strength < 0.3:
@@ -235,11 +235,11 @@ def change_password_post():
             'Weak password. You may wish to try the following suggestions.<br><ul><li>%s</ul></ul>'
             % ('</li><li>'.join(improvements.values()))
         )
-        return redirect(url_for('user.change_password_form'))
+        return redirect(url_for('user.change_password'))
 
     if not g.user.verify(current_password):
         flash('Current password is incorrect.')
-        return redirect(url_for('user.change_password_form'))
+        return redirect(url_for('user.change_password'))
 
     g.user.password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
 
