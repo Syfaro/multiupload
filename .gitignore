@@ -12,7 +12,6 @@ config.py
 *.db
 *.pyc
 *.sublime*
-*.ini
 *.sql
 package-lock.json
 *.map
