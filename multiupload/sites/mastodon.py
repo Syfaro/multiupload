@@ -99,7 +99,7 @@ class Mastodon(Site):
             ),
         }
 
-    def add_account(self, data: dict) -> Account:
+    def add_account(self, data: dict) -> List[Account]:
         url = session.pop('MASTODON_URL')
 
         username = request.form['username']
@@ -115,7 +115,7 @@ class Mastodon(Site):
         db.session.add(account)
         db.session.commit()
 
-        return account
+        return [account]
 
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         if not isinstance(self.credentials, dict):

@@ -86,7 +86,7 @@ class Twitter(Site):
 
         return {'me': me}
 
-    def add_account(self, data: dict) -> Account:
+    def add_account(self, data: dict) -> List[Account]:
         auth = self._get_oauth_handler()
         auth.set_access_token(session['taccess'], session['tsecret'])
 
@@ -108,7 +108,7 @@ class Twitter(Site):
         db.session.add(account)
         db.session.commit()
 
-        return account
+        return [account]
 
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         auth = self._get_oauth_handler()
@@ -224,7 +224,7 @@ class Twitter(Site):
             media_ids = []
             for image in images:
                 res = api.media_upload(
-                    filename=image['original_filename'], file=image['bytes']
+                    filename=image.original_filename, file=image.data
                 )
                 media_ids.append(res.media_id)
 

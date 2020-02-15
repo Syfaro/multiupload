@@ -42,7 +42,7 @@ _paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
 
 @app.app_template_filter('nl2br')
 @evalcontextfilter
-def nl2br(eval_ctx, value) -> Union[str, Markup]:
+def nl2br(eval_ctx, value) -> Union[str, Markup]:  # type: ignore
     result = u'\n\n'.join(
         u'<p>%s</p>' % p.replace('\n', Markup('<br>\n'))
         for p in _paragraph_re.split(escape(value))
@@ -590,6 +590,10 @@ def update_theme() -> Any:
         g.user.theme_url = None
     else:
         theme = get_theme_by_name(theme_name)
+
+        if not theme:
+            flash('Unable to find selected theme')
+            return redirect(url_for('user.settings'))
 
         g.user.theme = theme['name']
         g.user.theme_url = theme['cssCdn']

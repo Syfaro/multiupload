@@ -190,7 +190,7 @@ class Tumblr(Site):
 
         images = self.collect_images(submissions)
 
-        image_bytes = [image['bytes'] for image in images]
+        image_bytes = [image.data for image in images]
 
         if not self.account:
             raise MissingAccount()

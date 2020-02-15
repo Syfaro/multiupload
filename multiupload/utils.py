@@ -116,7 +116,10 @@ def save_multi_dict(d: MultiDict) -> dict:
     return n
 
 
-def safe_ext(name: str) -> Optional[str]:
+def safe_ext(name: Optional[str]) -> Optional[str]:
+    if not name:
+        return None
+
     if '.' not in name:
         return None
 

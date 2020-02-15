@@ -1,5 +1,5 @@
 import json
-from typing import Any, Optional
+from typing import Any, Optional, List
 
 import cfscrape
 from flask import session
@@ -29,7 +29,7 @@ class Inkbunny(Site):
             'password': form.get('password', ''),
         }
 
-    def add_account(self, data: dict) -> Account:
+    def add_account(self, data: dict) -> List[Account]:
         sess = cfscrape.create_scraper()
 
         req = sess.post(
@@ -55,7 +55,7 @@ class Inkbunny(Site):
         db.session.add(account)
         db.session.commit()
 
-        return account
+        return [account]
 
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         sess = cfscrape.create_scraper()
@@ -138,10 +138,7 @@ class Inkbunny(Site):
         submissions = group.submissions
 
         images = [
-            (
-                'uploadedfile[]',
-                (image['original_filename'], image['bytes'], image['mimetype']),
-            )
+            ('uploadedfile[]', (image.original_filename, image.data, image.mimetype))
             for image in self.collect_images(submissions)
         ]
 

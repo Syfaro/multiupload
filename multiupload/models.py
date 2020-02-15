@@ -170,6 +170,7 @@ class AccountData(db.Model):  # type: ignore
 
     account = db.relationship('Account', back_populates='data')
 
+    # TODO: make account consistent
     def __init__(self, account: Union[Account, int], key: str, data: Any):
         if isinstance(account, Account):
             self.account_id = account.id

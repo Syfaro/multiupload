@@ -70,7 +70,7 @@ def save() -> Any:
     else:
         rating = None
     accounts: List[str] = request.form.getlist('account')
-    image: FileStorage = request.files.get('image')
+    image: Optional[FileStorage] = request.files.get('image')
 
     try:
         sub: Optional[SavedSubmission] = SavedSubmission.find(int(sub_id))
@@ -88,15 +88,16 @@ def save() -> Any:
     sub.set_accounts(accounts)
     sub.data = save_multi_dict(request.form)
 
-    ext = safe_ext(image.filename) if image else None
-    if ext:
-        sub.original_filename = secure_filename(image.filename)
+    if image:
+        ext = safe_ext(image.filename)
+        if ext:
+            sub.original_filename = secure_filename(image.filename)
 
-        name = random_string(16) + '.' + ext
+            name = random_string(16) + '.' + ext
 
-        image.save(join(current_app.config['UPLOAD_FOLDER'], name))
-        sub.image_filename = name
-        sub.image_mimetype = image.mimetype
+            image.save(join(current_app.config['UPLOAD_FOLDER'], name))
+            sub.image_filename = name
+            sub.image_mimetype = image.mimetype
 
     db.session.commit()
 
@@ -119,7 +120,12 @@ def group_add_post() -> Any:
 
     if group_id and group_id != 'new':
         try:
-            group: SubmissionGroup = SubmissionGroup.find(int(group_id))
+            find = SubmissionGroup.find(int(group_id))
+            if not find:
+                flash('Unable to find group ID.')
+                return redirect(url_for('list.index'))
+            else:
+                group = find
         except (TypeError, ValueError):
             flash('Invalid group ID.')
             return redirect(url_for('list.index'))
@@ -135,7 +141,7 @@ def group_add_post() -> Any:
 
     for post_id in posts:
         try:
-            post: SavedSubmission = SavedSubmission.find(int(post_id))
+            post = SavedSubmission.find(int(post_id))
         except ValueError:
             flash('Invalid post ID.')
             return redirect(url_for('list.index'))
@@ -150,16 +156,16 @@ def group_add_post() -> Any:
 
     for group_id in touched_groups:
         try:
-            group: SubmissionGroup = SubmissionGroup.find(int(group_id))
+            touched_group = SubmissionGroup.find(int(group_id))
         except ValueError:
             flash('Invalid group ID.')
             return redirect(url_for('list.index'))
 
-        if not group:
+        if not touched_group:
             continue
 
-        if not group.submissions and not group.master:
-            db.session.delete(group)
+        if not touched_group.submissions and not touched_group.master:
+            db.session.delete(touched_group)
 
     db.session.commit()
 
@@ -175,9 +181,13 @@ def group_remove_post() -> Any:
         return redirect(url_for('list.index'))
 
     try:
-        group: SubmissionGroup = SubmissionGroup.find(int(group_id))
+        group = SubmissionGroup.find(int(group_id))
     except ValueError:
         flash('Bad group ID.')
+        return redirect(url_for('list.index'))
+
+    if not group:
+        flash('Unable to find group ID.')
         return redirect(url_for('list.index'))
 
     for sub in group.submissions:
@@ -203,9 +213,13 @@ def group_delete_post() -> Any:
         return redirect(url_for('list.index'))
 
     try:
-        group: SubmissionGroup = SubmissionGroup.find(int(group_id))
+        group = SubmissionGroup.find(int(group_id))
     except ValueError:
         flash('Bad group ID.')
+        return redirect(url_for('list.index'))
+
+    if not group:
+        flash('Unable to find group ID.')
         return redirect(url_for('list.index'))
 
     for sub in group.submissions:

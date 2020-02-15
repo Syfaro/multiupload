@@ -16,3 +16,4 @@ config.py
 package-lock.json
 *.map
 .mypy_cache/
+upload

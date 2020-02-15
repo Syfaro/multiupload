@@ -115,7 +115,7 @@ class DeviantArt(Site):
 
         return {}
 
-    def add_account(self, data: dict) -> Account:
+    def add_account(self, data: dict) -> List[Account]:
         da = self.get_da()
 
         r = da.refresh_token(session['da_refresh'])
@@ -136,7 +136,7 @@ class DeviantArt(Site):
         db.session.add(account)
         db.session.commit()
 
-        return account
+        return [account]
 
     @staticmethod
     def _build_exception(resp: dict) -> SiteError:

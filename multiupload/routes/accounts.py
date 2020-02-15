@@ -113,21 +113,20 @@ def add_post(site_id: int) -> Any:
             if known_site.SITE == site:
                 s = known_site()
                 data = s.parse_add_form(request.form)
-                accounts = s.add_account(data)
-                if isinstance(accounts, list):
-                    for account in accounts:
-                        decrypted = simplecrypt.decrypt(
-                            session['password'], account.credentials
-                        )
 
-                        s = known_site(decrypted, account)
-                        s.get_folders()
-                else:
+                if not data:
+                    flash('Bad data provided')
+                    return redirect(url_for('accounts.manage'))
+
+                accounts = s.add_account(data)
+                for account in accounts:
                     decrypted = simplecrypt.decrypt(
-                        session['password'], accounts.credentials
+                        session['password'], account.credentials
                     )
-                    s = known_site(decrypted, accounts)
-                    s.get_folders()
+
+                    s = known_site(decrypted, account)
+                    if s.supports_folder():
+                        s.get_folders()
 
     except BadCredentials:
         flash('Unable to authenticate')

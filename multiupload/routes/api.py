@@ -156,11 +156,14 @@ def get_deviantart_category() -> Any:
     if cached:
         return Response(cached, mimetype='application/json')
 
-    account_id = request.args.get('account')
+    account_id = request.args['account']
     try:
-        account: Account = Account.find(int(account_id))
+        account = Account.find(int(account_id))
     except ValueError:
         return jsonify({'error': 'bad account'})
+
+    if not account:
+        return jsonify({'error': 'missing account'})
 
     da = DeviantArt.get_da()
     r = da.refresh_token(decrypt(session['password'], account.credentials))
@@ -183,12 +186,15 @@ def get_deviantart_category() -> Any:
 @app.route('/deviantart/folders', methods=['GET'])
 @login_required
 def get_deviantart_folders() -> Any:
-    account_id = request.args.get('account')
+    account_id = request.args['account']
 
     try:
-        account: Account = Account.find(int(account_id))
+        account = Account.find(int(account_id))
     except ValueError:
         return jsonify({'error': 'bad account'})
+
+    if not account:
+        return jsonify({'error': 'missing account'})
 
     decrypted = simplecrypt.decrypt(session['password'], account.credentials)
     da = DeviantArt(decrypted, account)
