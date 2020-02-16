@@ -1,8 +1,8 @@
 import json
-from typing import Any, List, Tuple, Optional, cast
+from typing import Any, List, Optional, Tuple, cast
 
-import tweepy
 from flask import current_app, g, redirect, request, session
+import tweepy
 from werkzeug import Response
 
 from multiupload.constant import Sites
@@ -39,7 +39,7 @@ class Twitter(Site):
     SITE = Sites.Twitter
 
     def __init__(
-        self, credentials: Optional[str] = None, account: Optional[Account] = None
+        self, credentials: Optional[bytes] = None, account: Optional[Account] = None
     ) -> None:
         super().__init__(credentials, account)
         if credentials:
@@ -86,7 +86,7 @@ class Twitter(Site):
 
         return {'me': me}
 
-    def add_account(self, data: dict) -> List[Account]:
+    def add_account(self, data: Optional[dict]) -> List[Account]:
         auth = self._get_oauth_handler()
         auth.set_access_token(session['taccess'], session['tsecret'])
 

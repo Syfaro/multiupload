@@ -1,8 +1,8 @@
 import json
 from typing import Any, List, Optional
 
-import cfscrape
 from bs4 import BeautifulSoup
+import cfscrape
 from flask import session
 
 from multiupload.constant import HEADERS, Sites
@@ -10,20 +10,20 @@ from multiupload.models import Account, db
 from multiupload.sites import (
     BadCredentials,
     BadData,
-    Site,
-    SiteError,
     MissingAccount,
     MissingCredentials,
+    Site,
+    SiteError,
 )
 from multiupload.submission import Rating, Submission
-from multiupload.utils import write_site_response, record_page, clear_recorded_pages
+from multiupload.utils import clear_recorded_pages, record_page, write_site_response
 
 
 class SoFurry(Site):
     SITE = Sites.SoFurry
 
     def __init__(
-        self, credentials: Optional[str] = None, account: Optional[Account] = None
+        self, credentials: Optional[bytes] = None, account: Optional[Account] = None
     ) -> None:
         super().__init__(credentials, account)
         if credentials:
@@ -35,8 +35,10 @@ class SoFurry(Site):
             'password': form.get('password', ''),
         }
 
-    def add_account(self, data: dict) -> List[Account]:
+    def add_account(self, data: Optional[dict]) -> List[Account]:
         sess = cfscrape.create_scraper()
+
+        assert data is not None
 
         req = sess.post(
             'https://www.sofurry.com/user/login',

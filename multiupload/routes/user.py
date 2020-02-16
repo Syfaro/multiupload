@@ -1,11 +1,9 @@
-import re
 from random import SystemRandom
+import re
 from string import ascii_letters
 from typing import Any, Dict, Optional, Union
 
 import bcrypt
-import passwordmeter
-import requests
 from flask import (
     Blueprint,
     current_app,
@@ -18,9 +16,11 @@ from flask import (
     url_for,
 )
 from jinja2 import Markup, escape, evalcontextfilter
+import passwordmeter
+import requests
+import simplecrypt
 from sqlalchemy import func
 
-import simplecrypt
 from multiupload.cache import cache
 from multiupload.constant import Sites
 from multiupload.models import (

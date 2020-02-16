@@ -1,21 +1,21 @@
 import json
 from random import SystemRandom
 from string import ascii_letters
-from typing import Any, List, Union, Optional, Dict
+from typing import Any, Dict, List, Optional, Union
 
+from authlib.integrations.sqla_oauth2 import (
+    OAuth2AuthorizationCodeMixin,
+    OAuth2ClientMixin,
+    OAuth2TokenMixin,
+)
 from bcrypt import gensalt, hashpw
 from flask import g, session
 from flask_sqlalchemy import SQLAlchemy
+from simplecrypt import encrypt
 from sqlalchemy import func
 from sqlalchemy.orm import Query
-from authlib.integrations.sqla_oauth2 import (
-    OAuth2ClientMixin,
-    OAuth2TokenMixin,
-    OAuth2AuthorizationCodeMixin,
-)
 
 from multiupload.constant import Sites
-from simplecrypt import encrypt
 from multiupload.submission import Rating, Submission
 
 db = SQLAlchemy()
@@ -404,6 +404,51 @@ class SavedTemplate(db.Model):  # type: ignore
 
     def as_dict(self) -> Dict[str, Any]:
         return {'id': self.id, 'name': self.name, 'content': self.content}
+
+
+class MastodonApp(db.Model):  # type: ignore
+    id = db.Column(db.Integer, primary_key=True)
+
+    url = db.Column(db.String(255), unique=True)
+    client_id = db.Column(db.String(255), nullable=False)
+    client_secret = db.Column(db.String(255), nullable=False)
+
+    def __init__(self, url: str, client_id: str, client_secret: str):
+        self.url = url.lower()
+        self.client_id = client_id
+        self.client_secret = client_secret
+
+    @classmethod
+    def get_for_url(cls, url: str) -> Optional['MastodonApp']:
+        return cls.query.filter_by(url=url.lower()).first()
+
+
+class DeviantArtCategory(db.Model):  # type: ignore
+    id = db.Column(db.Integer, primary_key=True)
+
+    path = db.Column(db.String(255), unique=True)
+    value = db.Column(db.Text, nullable=False)
+
+    def __init__(self, path: str, value: bytes):
+        self.path = path
+        self.value = json.dumps(value.decode('utf-8'))
+
+    @property
+    def data(self) -> Any:
+        return json.loads(self.value)
+
+    @data.setter
+    def data(self, data: bytes) -> None:
+        self.value = json.dumps(data.decode('utf-8'))
+
+    @classmethod
+    def lookup_path(cls, path: str) -> Optional[Any]:
+        result = cls.query.filter_by(path=path).first()
+
+        if result:
+            return result.data
+        else:
+            return None
 
 
 class Client(db.Model, OAuth2ClientMixin):  # type: ignore

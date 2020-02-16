@@ -1,15 +1,17 @@
+from typing import Any, List, Optional
+
 from authlib.integrations.flask_oauth2 import AuthorizationServer, ResourceProtector
 from authlib.integrations.sqla_oauth2 import create_bearer_token_validator
 from authlib.oauth2.rfc6749.grants import (
     AuthorizationCodeGrant as _AuthorizationCodeGrant
 )
 from authlib.oauth2.rfc6749.wrappers import OAuth2Request
-from authlib.oidc.core.grants import OpenIDCode as _OpenIDCode
 from authlib.oidc.core import UserInfo
-from werkzeug.security import gen_salt
-from multiupload.models import db, User, Client, AuthorizationCode, Token
-from typing import Optional, List, Any
+from authlib.oidc.core.grants import OpenIDCode as _OpenIDCode
 from flask import Flask
+from werkzeug.security import gen_salt
+
+from multiupload.models import AuthorizationCode, Client, Token, User, db
 
 
 class _JWTConfig:

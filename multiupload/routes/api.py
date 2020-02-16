@@ -1,16 +1,21 @@
-from typing import List, Any
 import json
+from typing import Any, List
 
-import requests
 from flask import Blueprint, Response, g, jsonify, request, session
-
-import simplecrypt
+import requests
 from simplecrypt import decrypt
-from multiupload.cache import cache
+
 from multiupload.constant import HEADERS, Sites
 from multiupload.description import parse_description
-from multiupload.models import Account, SavedTemplate, SavedSubmission, User, db
-from multiupload.sites.deviantart import DeviantArt
+from multiupload.models import (
+    Account,
+    DeviantArtCategory,
+    SavedSubmission,
+    SavedTemplate,
+    User,
+    db,
+)
+from multiupload.sites.deviantart import DeviantArt, DeviantArtAPI
 from multiupload.sites.known import known_list
 from multiupload.utils import login_required
 
@@ -31,7 +36,7 @@ def sites() -> Any:
 def whoami() -> Any:
     session_id = session.get('id')
     if session_id:
-        user: User = User.query.get(session['id'])
+        user = User.query.get(session['id'])
         if user:
             return jsonify({'id': user.id, 'username': user.username})
 
@@ -42,6 +47,7 @@ def whoami() -> Any:
 @login_required
 def accounts() -> Any:
     accts: List[dict] = []
+
     for account in Account.all():
         accts.append(
             {
@@ -152,7 +158,7 @@ def preview() -> Any:
 @login_required
 def get_deviantart_category() -> Any:
     path = request.args.get('path', '/')
-    cached = cache.get('deviantart-' + path)
+    cached = DeviantArtCategory.lookup_path(path)
     if cached:
         return Response(cached, mimetype='application/json')
 
@@ -176,13 +182,14 @@ def get_deviantart_category() -> Any:
         params={'access_token': r['access_token'], 'catpath': path},
     ).content
 
-    cache.set(
-        'deviantart-' + path, sub, timeout=60 * 60 * 24
-    )  # keep cached for 24 hours
+    da_category = DeviantArtCategory(path, sub)
+    db.session.add(da_category)
+    db.session.commit()
 
     return Response(sub, mimetype='application/json')
 
 
+# TODO: we shouldn't need an API endpoint for this as they're already stored
 @app.route('/deviantart/folders', methods=['GET'])
 @login_required
 def get_deviantart_folders() -> Any:
@@ -196,10 +203,16 @@ def get_deviantart_folders() -> Any:
     if not account:
         return jsonify({'error': 'missing account'})
 
-    decrypted = simplecrypt.decrypt(session['password'], account.credentials)
-    da = DeviantArt(decrypted, account)
+    if account.site_id != Sites.DeviantArt.value:
+        return jsonify({'error': 'account was not deviantart'})
 
-    return jsonify({'folders': da.get_folders()})
+    folders = account.data.filter_by(key='folders').first()
+    if folders:
+        data = folders.json
+    else:
+        data = None
+
+    return jsonify({'folders': data})
 
 
 @app.route('/templates', methods=['GET'])

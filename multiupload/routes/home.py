@@ -1,6 +1,5 @@
-import passwordmeter
-import requests
 from typing import Any
+
 from flask import (
     Blueprint,
     current_app,
@@ -12,6 +11,8 @@ from flask import (
     session,
     url_for,
 )
+import passwordmeter
+import requests
 from sqlalchemy import func
 
 from multiupload.models import Notice, User, db

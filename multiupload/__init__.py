@@ -1,12 +1,12 @@
 import os
 import time
 
-import requests
 from flask import Flask, g, render_template, request
 from flask_migrate import Migrate
 from htmlmin.main import minify
 from influxdb import InfluxDBClient
 from raven import fetch_git_sha
+import requests
 
 from multiupload.csrf import csrf
 from multiupload.models import db
@@ -14,9 +14,9 @@ from multiupload.routes.accounts import app as accounts_app
 from multiupload.routes.api import app as api_app
 from multiupload.routes.home import app as home_app
 from multiupload.routes.list import app as list_app
+from multiupload.routes.oauth import app as oauth_app
 from multiupload.routes.upload import app as upload_app
 from multiupload.routes.user import app as user_app
-from multiupload.routes.oauth import app as oauth_app
 from multiupload.sentry import sentry
 from multiupload.utils import random_string
 

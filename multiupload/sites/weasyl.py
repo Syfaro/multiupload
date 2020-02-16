@@ -1,7 +1,7 @@
-from typing import Any, List, Dict
+from typing import Any, Dict, List, Optional
 
-import cfscrape
 from bs4 import BeautifulSoup
+import cfscrape
 from flask import g, session
 
 from multiupload.constant import HEADERS, Sites
@@ -10,13 +10,13 @@ from multiupload.sites import (
     AccountExists,
     BadCredentials,
     BadData,
+    MissingAccount,
     Site,
     SiteError,
     SomeSubmission,
-    MissingAccount,
 )
 from multiupload.submission import Rating, Submission
-from multiupload.utils import write_site_response, clear_recorded_pages, record_page
+from multiupload.utils import clear_recorded_pages, record_page, write_site_response
 
 AUTH_HEADER = 'X-Weasyl-API-Key'
 
@@ -31,8 +31,10 @@ class Weasyl(Site):
     def parse_add_form(self, form: dict) -> dict:
         return {'token': form.get('api_token', '').strip()}
 
-    def add_account(self, data: dict) -> List[Account]:
+    def add_account(self, data: Optional[dict]) -> List[Account]:
         sess = cfscrape.create_scraper()
+
+        assert data is not None
 
         auth_headers = HEADERS.copy()
         auth_headers[AUTH_HEADER] = data['token']
@@ -69,9 +71,9 @@ class Weasyl(Site):
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         auth_headers = HEADERS.copy()
 
-        if not isinstance(self.credentials, str):
+        if not isinstance(self.credentials, bytes):
             raise BadCredentials()
-        auth_headers[AUTH_HEADER] = self.credentials
+        auth_headers[AUTH_HEADER] = self.credentials.decode('utf-8')
 
         sess = cfscrape.create_scraper()
 
@@ -144,9 +146,9 @@ class Weasyl(Site):
             return prev_folders.json
 
         auth_headers = HEADERS.copy()
-        if not isinstance(self.credentials, str):
+        if not isinstance(self.credentials, bytes):
             raise BadCredentials()
-        auth_headers[AUTH_HEADER] = self.credentials
+        auth_headers[AUTH_HEADER] = self.credentials.decode('utf-8')
 
         sess = cfscrape.create_scraper()
 

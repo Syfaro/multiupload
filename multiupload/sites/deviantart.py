@@ -1,9 +1,9 @@
 import json
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from urllib.parse import urlencode
 
-import requests
 from flask import current_app, flash, g, redirect, request, session
+import requests
 from werkzeug import Response
 
 from multiupload.constant import HEADERS, Sites
@@ -115,7 +115,7 @@ class DeviantArt(Site):
 
         return {}
 
-    def add_account(self, data: dict) -> List[Account]:
+    def add_account(self, data: Optional[dict]) -> List[Account]:
         da = self.get_da()
 
         r = da.refresh_token(session['da_refresh'])
@@ -156,10 +156,12 @@ class DeviantArt(Site):
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         da = self.get_da()
 
-        if not self.credentials or not isinstance(self.credentials, str):
+        if not self.credentials or not isinstance(self.credentials, bytes):
             raise MissingCredentials()
 
-        r = da.refresh_token(self.credentials)
+        credentials = self.credentials.decode('utf-8')
+
+        r = da.refresh_token(credentials)
         if not self.account:
             raise MissingAccount()
         self.account.update_credentials(r['refresh_token'])
@@ -245,8 +247,10 @@ class DeviantArt(Site):
         if not self.account:
             raise MissingAccount()
 
-        if not self.credentials or not isinstance(self.credentials, str):
+        if not self.credentials or not isinstance(self.credentials, bytes):
             raise MissingCredentials()
+
+        credentials = self.credentials.decode('utf-8')
 
         prev_folders: AccountData = self.account.data.filter_by(key='folders').first()
         if prev_folders and not update:
@@ -254,7 +258,7 @@ class DeviantArt(Site):
 
         da = self.get_da()
 
-        r = da.refresh_token(self.credentials)
+        r = da.refresh_token(credentials)
         self.account.update_credentials(r['refresh_token'])
         db.session.commit()
 

@@ -1,18 +1,19 @@
-import json
-import os
-import shutil
-import time
 from csv import DictReader
 from io import StringIO
+import json
+import os
 from os.path import join
-from typing import BinaryIO, List, Tuple, Any, Optional, Generator, Type, cast
+import shutil
+import time
+from typing import Any, BinaryIO, Generator, List, Optional, Tuple, Type, cast
 from zipfile import ZipFile
 
-import filetype
 from chardet import UniversalDetector
+import filetype
 from flask import (
     Blueprint,
     Response,
+    abort,
     current_app,
     flash,
     g,
@@ -23,12 +24,11 @@ from flask import (
     session,
     stream_with_context,
     url_for,
-    abort,
 )
 from requests import HTTPError
+import simplecrypt
 from werkzeug.utils import secure_filename
 
-import simplecrypt
 from multiupload.constant import Sites
 from multiupload.models import (
     Account,
@@ -45,9 +45,9 @@ from multiupload.utils import (
     parse_resize,
     random_string,
     safe_ext,
+    save_debug_pages,
     save_multi_dict,
     write_upload_time,
-    save_debug_pages,
 )
 
 app = Blueprint('upload', __name__)

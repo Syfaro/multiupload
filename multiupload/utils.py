@@ -1,15 +1,15 @@
-import os
-import re
-import time
-import uuid
 from functools import wraps
+import os
 from random import SystemRandom
+import re
 from string import ascii_lowercase
 from subprocess import PIPE, Popen
-from typing import Any, Callable, List, Tuple, Union, Optional, cast, Iterable
+import time
+from typing import Any, Callable, Iterable, List, Optional, Tuple, Union, cast
+import uuid
 
-import requests
 from flask import current_app, flash, g, redirect, request, session, url_for
+import requests
 from werkzeug.datastructures import MultiDict
 
 from multiupload.models import Notice, User

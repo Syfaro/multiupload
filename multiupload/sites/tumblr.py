@@ -1,8 +1,8 @@
 import json
 from typing import Any, List, Optional
 
-import tumblpy
 from flask import current_app, flash, redirect, request, session
+import tumblpy
 from werkzeug import Response
 
 from multiupload.constant import Sites
@@ -25,7 +25,7 @@ class Tumblr(Site):
     SITE = Sites.Tumblr
 
     def __init__(
-        self, credentials: Optional[str] = None, account: Optional[Account] = None
+        self, credentials: Optional[bytes] = None, account: Optional[Account] = None
     ) -> None:
         super().__init__(credentials, account)
         if credentials:
@@ -74,7 +74,7 @@ class Tumblr(Site):
         except tumblpy.TumblpyAuthError as ex:
             raise SiteError(ex.msg)
 
-    def add_account(self, data: dict) -> List[Account]:
+    def add_account(self, data: Optional[dict]) -> List[Account]:
         t = tumblpy.Tumblpy(
             current_app.config['TUMBLR_KEY'],
             current_app.config['TUMBLR_SECRET'],

@@ -1,21 +1,21 @@
-from io import BytesIO
-from os.path import join
-from typing import Any, List, Union, Optional, Generator, Dict
 from abc import ABCMeta
 from dataclasses import dataclass
+from io import BytesIO
+from os.path import join
+from typing import Any, Dict, Generator, List, Optional, Union
 
+from PIL import Image
 from flask import current_app
 from werkzeug import Response
 from werkzeug.datastructures import ImmutableMultiDict
-from PIL import Image
 
+from multiupload.constant import Sites
 from multiupload.models import Account, SavedSubmission, SubmissionGroup
 from multiupload.submission import Rating, Submission
-from multiupload.constant import Sites
 
 
 SomeSubmission = Union[Submission, SavedSubmission]
-Credentials = Optional[Union[str, dict]]
+Credentials = Optional[Union[bytes, dict]]
 
 
 class BadCredentials(Exception):
@@ -58,7 +58,7 @@ class Site(metaclass=ABCMeta):
     account: Optional[Account]
 
     def __init__(
-        self, credentials: Optional[str] = None, account: Optional[Account] = None
+        self, credentials: Optional[bytes] = None, account: Optional[Account] = None
     ) -> None:
         self.credentials = credentials
         self.account = account
@@ -77,7 +77,7 @@ class Site(metaclass=ABCMeta):
         """Extract data from a form into your own dict."""
         return None
 
-    def add_account(self, data: Dict[str, Any]) -> List[Account]:
+    def add_account(self, data: Optional[Dict[str, Any]]) -> List[Account]:
         """Add a new account from your data extracted with parse_add_form.
 
         Always returned as a list for sites that can add multiple accounts for

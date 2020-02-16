@@ -1,40 +1,23 @@
 import json
-from typing import Any, Optional, List, Union
+from typing import Any, List, Optional, Union
 from urllib.parse import urlparse
 
 from flask import current_app, flash, redirect, request, session, url_for
-from werkzeug import Response
 from mastodon import Mastodon as MastodonAPI
+from werkzeug import Response
 
 from multiupload.constant import Sites
-from multiupload.models import Account, db
-from multiupload.sites import BadData, MissingCredentials, Site, Credentials
+from multiupload.models import Account, MastodonApp, db
+from multiupload.sites import BadData, MissingCredentials, Site
 from multiupload.sites.twitter import SHORT_NAMES
 from multiupload.submission import Rating, Submission
-
-
-class MastodonApp(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-
-    url = db.Column(db.String(255), unique=True)
-    client_id = db.Column(db.String(255), nullable=False)
-    client_secret = db.Column(db.String(255), nullable=False)
-
-    def __init__(self, url: str, client_id: str, client_secret: str):
-        self.url = url.lower()
-        self.client_id = client_id
-        self.client_secret = client_secret
-
-    @classmethod
-    def get_for_url(cls, url: str) -> Optional['MastodonApp']:
-        return cls.query.filter_by(url=url.lower()).first()
 
 
 class Mastodon(Site):
     SITE = Sites.Mastodon
 
     def __init__(
-        self, credentials: Optional[str] = None, account: Optional[Account] = None
+        self, credentials: Optional[bytes] = None, account: Optional[Account] = None
     ) -> None:
         super().__init__(credentials, account)
         if credentials:
@@ -99,7 +82,7 @@ class Mastodon(Site):
             ),
         }
 
-    def add_account(self, data: dict) -> List[Account]:
+    def add_account(self, data: Optional[dict]) -> List[Account]:
         url = session.pop('MASTODON_URL')
 
         username = request.form['username']

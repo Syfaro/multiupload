@@ -1,10 +1,11 @@
-from flask import Blueprint, g, jsonify
-from authlib.integrations.flask_oauth2 import current_token
 from typing import Any
 
+from authlib.integrations.flask_oauth2 import current_token
+from flask import Blueprint, g, jsonify
+
+from multiupload.csrf import csrf
 from multiupload.oauth import authorization, require_oauth
 from multiupload.utils import login_required
-from multiupload.csrf import csrf
 
 
 app = Blueprint('oauth', __name__)

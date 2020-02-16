@@ -1,11 +1,11 @@
 import json
 import re
-from typing import Any, List, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import cfscrape
 from flask import flash, g, session
-
 import simplecrypt
+
 from multiupload.constant import HEADERS, Sites
 from multiupload.models import Account, AccountData, db
 from multiupload.sites import (
@@ -17,7 +17,7 @@ from multiupload.sites import (
     SiteError,
 )
 from multiupload.submission import Rating, Submission
-from multiupload.utils import write_site_response, clear_recorded_pages, record_page
+from multiupload.utils import clear_recorded_pages, record_page, write_site_response
 
 
 class FurryNetwork(Site):
@@ -26,7 +26,7 @@ class FurryNetwork(Site):
     SITE = Sites.FurryNetwork
 
     def __init__(
-        self, credentials: Optional[str] = None, account: Optional[Account] = None
+        self, credentials: Optional[bytes] = None, account: Optional[Account] = None
     ) -> None:
         super().__init__(credentials, account)
         if credentials:
@@ -35,8 +35,10 @@ class FurryNetwork(Site):
     def parse_add_form(self, form: dict) -> dict:
         return {'username': form.get('email', ''), 'password': form.get('password', '')}
 
-    def add_account(self, data: dict) -> List[Account]:
+    def add_account(self, data: Optional[dict]) -> List[Account]:
         sess = cfscrape.create_scraper()
+
+        assert data is not None
 
         req = sess.post(
             'https://beta.furrynetwork.com/api/oauth/token',

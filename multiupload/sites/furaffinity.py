@@ -3,10 +3,10 @@ import json
 import os
 import re
 import time
-from typing import Any, Optional, List, Dict
+from typing import Any, Dict, List, Optional
 
-import cfscrape
 from bs4 import BeautifulSoup
+import cfscrape
 from flask import current_app, flash, g, session
 from requests import HTTPError
 
@@ -22,10 +22,10 @@ from multiupload.sites import (
 )
 from multiupload.submission import Rating, Submission
 from multiupload.utils import (
-    write_site_response,
+    clear_recorded_pages,
     record_page,
     save_debug_pages,
-    clear_recorded_pages,
+    write_site_response,
 )
 
 
@@ -35,7 +35,7 @@ class FurAffinity(Site):
     SITE = Sites.FurAffinity
 
     def __init__(
-        self, credentials: Optional[str] = None, account: Optional[Account] = None
+        self, credentials: Optional[bytes] = None, account: Optional[Account] = None
     ) -> None:
         super().__init__(credentials, account)
         if credentials:
@@ -58,8 +58,10 @@ class FurAffinity(Site):
 
         return {'captcha': base64.b64encode(captcha.content).decode('utf-8')}
 
-    def add_account(self, data: dict) -> List[Account]:
+    def add_account(self, data: Optional[dict]) -> List[Account]:
         sess = cfscrape.create_scraper()
+
+        assert data is not None
 
         if Account.lookup_username(self.SITE, g.user.id, data['username']):
             raise AccountExists()
