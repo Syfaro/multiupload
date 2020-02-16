@@ -263,16 +263,23 @@ class SavedSubmission(db.Model):  # type: ignore
         )
 
     @property
-    def accounts(self) -> List[Optional[Account]]:
+    def accounts(self) -> List[Account]:
         if self.account_ids is None:
             return []
 
         account_ids = self.account_ids.split(' ')
 
-        # TODO: figure out why MyPy doesn't like this
-        return [  # type: ignore
-            Account.find(int(account)) for account in filter(None, account_ids)
-        ]
+        accounts = []
+
+        for account in account_ids:
+            if not account:
+                continue
+
+            find = Account.find(int(account))
+            if find:
+                accounts.append(find)
+
+        return accounts
 
     def all_selected_accounts(self, user: User) -> List[Dict[str, bool]]:
         accounts = self.accounts

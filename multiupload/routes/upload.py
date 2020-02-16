@@ -5,11 +5,10 @@ import time
 from csv import DictReader
 from io import StringIO
 from os.path import join
-from typing import List, Tuple
+from typing import BinaryIO, List, Tuple, Any, Optional, Generator, Type, cast
 from zipfile import ZipFile
-from typing import Any, Optional, Generator, Type
 
-import magic
+import filetype
 from chardet import UniversalDetector
 from flask import (
     Blueprint,
@@ -24,6 +23,7 @@ from flask import (
     session,
     stream_with_context,
     url_for,
+    abort,
 )
 from requests import HTTPError
 from werkzeug.utils import secure_filename
@@ -96,6 +96,8 @@ def submit_art(
                     flash(error)
                     continue
 
+            # If this was not empty, it should have been caught by now.
+            assert submission.image_bytes is not None
             submission.image_bytes.seek(0)
 
             extra = {}
@@ -124,7 +126,7 @@ def submit_art(
 
 
 def upload_and_send(
-    submission: SavedSubmission, accounts: List[Account], saved: SavedSubmission
+    submission: Submission, accounts: List[Account], saved: SavedSubmission
 ) -> Generator[str, None, None]:
     twitter_account = saved.data.get('twitter-account')
     twitter_account_ids = []
@@ -145,6 +147,9 @@ def upload_and_send(
         try:
             result = submit_art(submission, account, saved, twitter_links)
             yield 'event: upload\ndata: {res}\n\n'.format(res=json.dumps(result))
+
+            # Must be valid as we did not throw an Exception
+            assert result is not None
 
             if account.id in twitter_account_ids:
                 twitter_links.append((account.site, result['link']))
@@ -198,8 +203,11 @@ def upload_and_send(
 @app.route('/art/saved', methods=['GET'])
 @login_required
 def create_art_post_saved() -> Any:
-    saved_id = request.args.get('id')
-    saved: SavedSubmission = SavedSubmission.find(saved_id)
+    saved_id = request.args['id']
+    try:
+        saved = SavedSubmission.find(int(saved_id))
+    except ValueError:
+        saved = None
 
     if not saved:
         flash('Unknown item.')
@@ -213,13 +221,13 @@ def create_art_post_saved() -> Any:
         account.used_last = 0
 
     accounts: List[Account] = []
-    for account in saved.accounts:
-        if not account or account.user_id != g.user.id:
+    for saved_account in saved.accounts:
+        if not saved_account or saved_account.user_id != g.user.id:
             flash('Account does not exist or does not belong to current user.')
             return redirect(url_for('upload.create_art'))
 
-        account.used_last = 1
-        accounts.append(account)
+        saved_account.used_last = 1
+        accounts.append(saved_account)
     db.session.commit()  # save currently used accounts
 
     accounts = sorted(accounts, key=lambda x: x.site_id)
@@ -235,14 +243,14 @@ def create_art_post_saved() -> Any:
 def create_art_post() -> Any:
     total_time = time.time()
 
-    title = request.form.get('title')
-    description = request.form.get('description')
-    keywords = request.form.get('keywords')
-    rating = request.form.get('rating')
-    resize = request.form.get('resize')
+    title = request.form.get('title', '')
+    description = request.form.get('description', '')
+    keywords = request.form.get('keywords', '')
+    rating = request.form.get('rating', '')
+    resize = request.form.get('resize', '')
     upload = request.files.get('image', None)
 
-    saved_id = request.form.get('id')
+    saved_id = request.form.get('id', '')
 
     if saved_id:
         saved: SavedSubmission = SavedSubmission.query.filter_by(
@@ -254,7 +262,9 @@ def create_art_post() -> Any:
         if rating:
             saved.rating = Rating(rating)
     else:
-        saved = SavedSubmission(g.user, title, description, keywords, rating)
+        saved = SavedSubmission(g.user, title, description, keywords, None)
+        if rating:
+            saved.rating = Rating(rating)
         db.session.add(saved)
 
     saved.data = save_multi_dict(request.form)
@@ -306,7 +316,7 @@ def create_art_post() -> Any:
         db.session.commit()
         i = saved.id
 
-        return redirect(url_for('upload.review', id=i))
+        return redirect(url_for('upload.review', sub_id=i))
 
     if upload:
         image_upload = upload
@@ -357,6 +367,7 @@ def create_art_post() -> Any:
     for account in accounts:
         try:
             result = submit_art(submission, account, saved, twitter_links)
+            assert result is not None  # Would have thrown exception otherwise
             uploads.append(result)
             uploaded_accounts.append(account)
 
@@ -392,7 +403,7 @@ def create_art_post() -> Any:
             'As an error occured, the submission has not been removed from the pending review list.'
         )
 
-        needs_upload = [a for a in uploaded_accounts if a not in uploaded_accounts]
+        needs_upload = [a.id for a in uploaded_accounts if a not in uploaded_accounts]
         saved.set_accounts(needs_upload)  # remove accounts already uploaded to
 
         if upload:
@@ -417,7 +428,9 @@ def create_art_post() -> Any:
     return render_template('after_upload.html', uploads=uploads, user=g.user)
 
 
-def parse_csv(f, known_files: List[str] = None, base_files: Optional[str] = None):
+def parse_csv(
+    f: BinaryIO, known_files: List[str] = None, base_files: Optional[str] = None
+) -> int:
     detector = UniversalDetector()
     for line in f.readlines():
         detector.feed(line)
@@ -428,10 +441,12 @@ def parse_csv(f, known_files: List[str] = None, base_files: Optional[str] = None
     r = f.read().decode(detector.result.get('encoding', 'utf-8'))
     reader = DictReader(StringIO(r))
 
-    mime = magic.Magic(mime=True)
-
+    foldername: Optional[str]
     if base_files:
-        foldername = base_files.split('/')[-1]
+        path = os.path.normpath(base_files)
+        foldername = path.split(os.sep)[-1]
+    else:
+        foldername = None
 
     count = 0
 
@@ -459,8 +474,7 @@ def parse_csv(f, known_files: List[str] = None, base_files: Optional[str] = None
         user_accounts: List[Account] = Account.query.filter_by(user_id=g.user.id).all()
 
         if accounts:
-            accounts = accounts.split()
-            for account in accounts:
+            for account in accounts.split():
                 sitename, username = account.split('.', 1)
 
                 for site in known_list():
@@ -491,10 +505,18 @@ def parse_csv(f, known_files: List[str] = None, base_files: Optional[str] = None
         count += 1
 
         if base_files:
+            assert filename is not None
+            assert known_files is not None
+
             if filename in known_files:
                 sub.original_filename = filename
-                sub.image_filename = foldername + '/' + filename
-                sub.image_mimetype = mime.from_file(os.path.join(base_files, filename))
+                if foldername:
+                    sub.image_filename = foldername + '/' + filename
+                else:
+                    sub.image_filename = filename
+                sub.image_mimetype = filetype.guess_mime(
+                    os.path.join(base_files, filename)
+                )
             else:
                 flash('Unknown image: {name}'.format(name=filename))
 
@@ -582,20 +604,17 @@ def zip_post() -> Any:
 
     for c in csv_files:
         with open(os.path.join(folder, c), 'rb') as f:
-            count += parse_csv(f, image_files, folder)
+            count += parse_csv(cast(BinaryIO, f), image_files, folder)
 
     flash('Added {count} submissions.'.format(count=count))
 
     return redirect(url_for('list.index'))
 
 
-@app.route('/review/<int:id>', methods=['GET'])
+@app.route('/review/<int:sub_id>', methods=['GET'])
 @login_required
-def review(sub_id: Optional[int] = None) -> Any:
-    if sub_id:
-        sub = SavedSubmission.find(sub_id)
-    else:
-        sub = None
+def review(sub_id: int) -> Any:
+    sub = SavedSubmission.find(sub_id)
 
     if sub:
         return render_template(
@@ -641,7 +660,7 @@ def create_group() -> Any:
 @app.route('/group/create', methods=['POST'])
 @login_required
 def create_group_post() -> Any:
-    title = request.form.get('title')
+    title = request.form['title']
     description = request.form.get('description')
     keywords = request.form.get('keywords')
     rating = request.form.get('rating')
@@ -702,6 +721,9 @@ def create_group_post() -> Any:
 def update_master(id: int) -> Any:
     sub = SavedSubmission.find(id)
 
+    if not sub:
+        return abort(404)
+
     return render_template(
         'review/master.html', sub=sub, accounts=sub.all_selected_accounts(g.user)
     )
@@ -710,19 +732,23 @@ def update_master(id: int) -> Any:
 @app.route('/master', methods=['POST'])
 @login_required
 def update_master_post() -> Any:
-    sub_id = request.form.get('id')
+    sub_id = request.form['id']
     title = request.form.get('title')
     description = request.form.get('description')
     keywords = request.form.get('keywords')
     rating = request.form.get('rating')
 
-    sub: SavedSubmission = SavedSubmission.find(sub_id)
+    sub = SavedSubmission.find(sub_id)
+    if not sub:
+        return abort(404)
+
     sub.title = title
     sub.description = description
     sub.tags = keywords
     sub.rating = Rating(rating)
     sub.data = save_multi_dict(request.form)
 
+    assert sub.group is not None
     sub.group.name = title
 
     db.session.commit()
@@ -733,7 +759,9 @@ def update_master_post() -> Any:
 
 
 def perform_group_upload(group_id: int) -> Generator[str, None, None]:
-    group: SubmissionGroup = SubmissionGroup.find(group_id)
+    group = SubmissionGroup.find(group_id)
+    if not group:
+        raise Exception()
     master = group.master
 
     had_error = False
@@ -750,6 +778,7 @@ def perform_group_upload(group_id: int) -> Generator[str, None, None]:
 
     extra = master.data
 
+    assert master.accounts is not None
     accounts: List[Account] = sorted(master.accounts, key=lambda x: x.site_id)
 
     yield 'event: count\ndata: {0}\n\n'.format(len(accounts))

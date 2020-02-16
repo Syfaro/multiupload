@@ -39,7 +39,7 @@
                                     Submit
                                 </button>
                             {% endif %}
-                            <a href="{{ url_for('upload.review', id=sub.id) }}"
+                            <a href="{{ url_for('upload.review', sub_id=sub.id) }}"
                                class="btn btn-sm btn-secondary">Review</a>
                             <button type="submit" class="btn btn-danger btn-sm">Remove</button>
                         </form>

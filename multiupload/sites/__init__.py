@@ -5,7 +5,8 @@ from abc import ABCMeta
 from dataclasses import dataclass
 
 from flask import current_app
-from werkzeug import Response, ImmutableMultiDict
+from werkzeug import Response
+from werkzeug.datastructures import ImmutableMultiDict
 from PIL import Image
 
 from multiupload.models import Account, SavedSubmission, SubmissionGroup

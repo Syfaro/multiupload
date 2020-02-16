@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "7253b81c66f47d05af5b41506a98b19c69995d0e9ca96384603b9669c4aa2726"
+            "sha256": "8726e1df446592af4470c92f8d4b086d2b3c042fb5934bfadf63a381175b583f"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -200,6 +200,14 @@
                 "sha256:a92474b4312bd8b4c1789792f3ec8c571cd8afa8e7502a2b1c64dd48cd67e59c"
             ],
             "version": "==2.4.0"
+        },
+        "filetype": {
+            "hashes": [
+                "sha256:17a3b885f19034da29640b083d767e0f13c2dcb5dcc267945c8b6e5a5a9013c7",
+                "sha256:4967124d982a71700d94a08c49c4926423500e79382a92070f5ab248d44fe461"
+            ],
+            "index": "pypi",
+            "version": "==1.0.5"
         },
         "flask": {
             "hashes": [
@@ -452,7 +460,6 @@
                 "sha256:f2674dcfad52ae6c49d4803fa027809540b130db1dec928cfbb9240316831375",
                 "sha256:f3765c0f582d2dfc72c15f3b5a82aecfae9498bd29ca840d72f37d7bd38bfcd5"
             ],
-            "index": "pypi",
             "version": "==0.4.15"
         },
         "python-tumblpy": {
