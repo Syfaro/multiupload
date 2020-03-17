@@ -50,7 +50,10 @@ class FurAffinity(Site):
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
-        session['fa_cookie_b'] = req.cookies['b']
+        try:
+            session['fa_cookie_b'] = sess.cookies['b']
+        except ValueError:
+            raise SiteError('Unable to get login cookie from FurAffinity')
 
         src = BeautifulSoup(req.content, 'html.parser').select('#captcha_img')[0]['src']
 
@@ -60,6 +63,7 @@ class FurAffinity(Site):
 
     def add_account(self, data: Optional[dict]) -> List[Account]:
         sess = cfscrape.create_scraper()
+        sess.cookies['b'] = session['fa_cookie_b']
 
         assert data is not None
 
@@ -68,7 +72,6 @@ class FurAffinity(Site):
 
         req = sess.get(
             'https://www.furaffinity.net/login/?mode=imagecaptcha',
-            cookies={'b': session['fa_cookie_b']},
             headers=HEADERS,
         )
         write_site_response(self.SITE.value, req)
@@ -76,7 +79,6 @@ class FurAffinity(Site):
 
         req = sess.post(
             'https://www.furaffinity.net/login/',
-            cookies={'b': session['fa_cookie_b']},
             data={
                 'action': 'login',
                 'name': data['username'],
@@ -84,13 +86,12 @@ class FurAffinity(Site):
                 'captcha': data['captcha'],
                 'use_old_captcha': '1',
             },
-            allow_redirects=False,
             headers=HEADERS,
         )
         write_site_response(self.SITE.value, req)
         req.raise_for_status()
 
-        a = req.cookies.get('a', None)
+        a = sess.cookies.get('a', None)
 
         if not a:
             raise BadCredentials()
@@ -116,6 +117,10 @@ class FurAffinity(Site):
     def submit_artwork(self, submission: Submission, extra: Any = None) -> str:
         sess = cfscrape.create_scraper()
 
+        assert isinstance(self.credentials, dict)
+        for (cookie_name, cookie_value) in self.credentials.items():
+            sess.cookies[cookie_name] = cookie_value
+
         height, width = submission.image_res()
         needs_resize = height > 1280 or width > 1280
 
@@ -123,7 +128,6 @@ class FurAffinity(Site):
 
         req = sess.get(
             'https://www.furaffinity.net/submit/',
-            cookies=self.credentials,
             headers=HEADERS,
         )
         record_page(req)
@@ -133,7 +137,6 @@ class FurAffinity(Site):
         req = sess.post(
             'https://www.furaffinity.net/submit/',
             data={'part': '2', 'submission_type': 'submission'},
-            cookies=self.credentials,
             headers=HEADERS,
         )
         record_page(req)
@@ -156,7 +159,6 @@ class FurAffinity(Site):
             'https://www.furaffinity.net/submit/',
             data={'part': '3', 'submission_type': 'submission', 'key': key},
             files={'submission': image},
-            cookies=self.credentials,
             headers=HEADERS,
         )
         record_page(req)
@@ -212,7 +214,6 @@ class FurAffinity(Site):
         req = sess.post(
             'https://www.furaffinity.net/submit/',
             data=data,
-            cookies=self.credentials,
             headers=HEADERS,
         )
         record_page(req)
@@ -240,7 +241,6 @@ class FurAffinity(Site):
                 % match,
                 data={'update': 'yes', 'rebuild-thumbnail': '1'},
                 files={'newsubmission': submission.get_image()},
-                cookies=self.credentials,
                 headers=HEADERS,
             )
             record_page(req)
@@ -250,6 +250,8 @@ class FurAffinity(Site):
                 req.raise_for_status()
             except HTTPError:
                 flash('Unable to increase resolution on FurAffinity submission.')
+
+        save_debug_pages()
 
         return link
 
