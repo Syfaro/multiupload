@@ -145,7 +145,7 @@ class FurAffinity(Site):
 
         try:
             page = BeautifulSoup(req.content, 'html.parser')
-            key = page.select('#myform input[name="key"]')[0]['value']
+            key = page.select('form[name="myform"] input[name="key"]')[0]['value']
         except (ValueError, IndexError):
             raise SiteError('Unable to get FurAffinity upload token from part 2')
 
