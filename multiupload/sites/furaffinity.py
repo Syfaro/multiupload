@@ -144,9 +144,8 @@ class FurAffinity(Site):
         req.raise_for_status()
 
         try:
-            key = BeautifulSoup(req.content, 'html.parser').select('input[name="key"]')[
-                0
-            ]['value']
+            page = BeautifulSoup(req.content, 'html.parser')
+            key = page.select('#myform input[name="key"]')[0]['value']
         except (ValueError, IndexError):
             raise SiteError('Unable to get FurAffinity upload token from part 2')
 
@@ -168,7 +167,7 @@ class FurAffinity(Site):
         page = BeautifulSoup(req.content, 'html.parser')
 
         try:
-            key = page.select('input[name="key"]')[0]['value']
+            key = page.select('#myform input[name="key"]')[0]['value']
         except (ValueError, IndexError):
             text = page.select('font')
             print(text)
